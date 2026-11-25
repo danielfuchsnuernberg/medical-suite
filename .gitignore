@@ -1,0 +1,49 @@
+# ---------------------------------------------------------------
+# Medical Suite / REACH Inventory — what never goes into Git
+# ---------------------------------------------------------------
+
+# Real stock and patient data: keep it in data/ (ignored) or outside the repo
+data/
+private/
+real-data/
+*.xlsx
+*.xls
+*.numbers
+*.csv
+*backup*.json
+inventory-*.json
+medical-suite-backup-*.json
+*.sqlite
+*.sqlite3
+*.db
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.mobileprovision
+secrets.*
+credentials*.json
+.claude/settings.local.json
+
+# Build output and dependencies
+node_modules/
+dist/
+build/
+out/
+.expo/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+coverage/
+.cache/
+
+# OS and editor clutter
+.DS_Store
+Icon?
+*.swp
+.vscode/
+.idea/

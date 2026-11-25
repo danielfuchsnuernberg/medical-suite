@@ -1,0 +1,572 @@
+<title>REACH Inventory Stock-take</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a field report — tab bar, then a screen map and data flow; questions as explainer + live mock side by side */
+:root{
+  --bg:#F3F4F7; --surface:#FFFFFF; --surface-2:#F8F8FB; --line:#E1E2EA; --line-2:#CDCFDA;
+  --fg:#1A1B24; --muted:#5F6170; --faint:#9095A5;
+  --accent:#4F46E5; --accent-soft:#ECEBFD; --on-accent:#FFFFFF;
+  --ok:#17804F; --ok-soft:#E3F4EA; --warn:#A8620A; --warn-soft:#FBF0DC; --bad:#C23434; --bad-soft:#FBE7E7;
+  --mock-bg:#F4F4F6; --mock-side:#F0F0F3;
+  --f-body:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --f-head:"Space Grotesk","Inter",-apple-system,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12131A; --surface:#1B1C25; --surface-2:#20212C; --line:#2E303D; --line-2:#3B3E4E;
+  --fg:#ECEDF3; --muted:#A4A7B8; --faint:#737789;
+  --accent:#8F88FF; --accent-soft:#2A2850; --on-accent:#12131A;
+  --ok:#4CC88A; --ok-soft:#173527; --warn:#E9A845; --warn-soft:#3A2C14; --bad:#F07070; --bad-soft:#3E1C1F;
+  --mock-bg:#16171F; --mock-side:#1E1F29; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12131A; --surface:#1B1C25; --surface-2:#20212C; --line:#2E303D; --line-2:#3B3E4E;
+  --fg:#ECEDF3; --muted:#A4A7B8; --faint:#737789;
+  --accent:#8F88FF; --accent-soft:#2A2850; --on-accent:#12131A;
+  --ok:#4CC88A; --ok-soft:#173527; --warn:#E9A845; --warn-soft:#3A2C14; --bad:#F07070; --bad-soft:#3E1C1F;
+  --mock-bg:#16171F; --mock-side:#1E1F29; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 60px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1,h2,h3{font-family:var(--f-head);margin:0;text-wrap:balance;line-height:1.15}
+h1{font-size:clamp(24px,4vw,32px);font-weight:700;letter-spacing:-.3px}
+h2{font-size:20px;font-weight:600}
+h3{font-size:15px;font-weight:600}
+p{margin:0}
+.mono{font-family:var(--f-mono);font-size:12.5px}
+.muted{color:var(--muted)}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.9px;text-transform:uppercase;color:var(--accent)}
+header.top{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between}
+header.top .sub{color:var(--muted);max-width:70ch}
+.tabs{display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px}
+.tabs a{padding:8px 16px;border-radius:9px;text-decoration:none;color:var(--muted);font-weight:600;font-size:14px}
+.tabs a[aria-current="page"]{background:var(--accent);color:var(--on-accent)}
+.tabs a:focus-visible,button:focus-visible,textarea:focus-visible{outline:3px solid var(--accent-soft);outline-offset:2px}
+section.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.d-ok{background:var(--ok)} .d-warn{background:var(--warn)} .d-bad{background:var(--bad)}
+.nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.num{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--surface-2)}
+.num b{display:block;font-family:var(--f-head);font-size:26px;font-variant-numeric:tabular-nums}
+.num span{font-size:12.5px;color:var(--muted)}
+/* screen map */
+.map{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.group{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--surface-2);min-width:0}
+.group h3{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.node{border-radius:9px;padding:9px 11px;font-size:13.5px;border-left:4px solid;display:flex;flex-direction:column;gap:2px}
+.node b{font-weight:600}
+.node small{color:var(--muted);font-size:12.5px;line-height:1.4}
+.n-ok{border-color:var(--ok);background:var(--ok-soft)}
+.n-warn{border-color:var(--warn);background:var(--warn-soft)}
+.n-bad{border-color:var(--bad);background:var(--bad-soft)}
+.tag{font-family:var(--f-mono);font-size:11px;font-weight:600;padding:1px 6px;border-radius:5px;background:var(--surface);border:1px solid var(--line-2);color:var(--muted);margin-left:4px;white-space:nowrap}
+/* data flow */
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px}
+.flow .step{flex:1 1 170px;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface-2);display:flex;flex-direction:column;gap:6px;min-width:0}
+.flow .arrow{align-self:center;color:var(--faint);font-size:22px;flex:none}
+@media (max-width:720px){.flow .arrow{transform:rotate(90deg);width:100%;text-align:center}}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+.tablewrap{overflow-x:auto}
+th{text-align:left;font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--faint);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+.pill{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap;display:inline-block}
+.p-ok{background:var(--ok-soft);color:var(--ok)} .p-warn{background:var(--warn-soft);color:var(--warn)} .p-bad{background:var(--bad-soft);color:var(--bad)} .p-acc{background:var(--accent-soft);color:var(--accent)}
+.versions{display:flex;flex-direction:column;gap:8px;font-size:13.5px}
+.versions div{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+/* questions */
+.qnav{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.qnav button{font:600 13px var(--f-mono);width:42px;height:34px;border-radius:8px;border:1px solid var(--line-2);background:var(--surface);color:var(--fg);cursor:pointer;position:relative}
+.qnav button.cur{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.qnav button.done::after{content:"";position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:var(--ok);border:2px solid var(--surface)}
+.qgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:18px;align-items:start}
+@media (max-width:920px){.qgrid{grid-template-columns:1fr}}
+.explain{display:flex;flex-direction:column;gap:12px}
+.box{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:var(--surface-2)}
+.box .k{font-size:11px;letter-spacing:.8px;text-transform:uppercase;font-weight:700;color:var(--faint)}
+.qtitle{font-size:21px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{text-align:left;font:inherit;color:inherit;background:var(--surface);border:1.5px solid var(--line-2);border-radius:10px;padding:10px 12px;cursor:pointer;display:grid;grid-template-columns:22px 1fr;gap:4px 10px;align-items:start}
+.opt:hover{border-color:var(--accent)}
+.opt .mk{width:18px;height:18px;border-radius:50%;border:2px solid var(--line-2);margin-top:2px}
+.opt.multi .mk{border-radius:5px}
+.opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+.opt.sel .mk{background:var(--accent);border-color:var(--accent);box-shadow:inset 0 0 0 3px var(--surface)}
+.opt .lab{font-weight:600;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.opt .eff{grid-column:2;font-size:13px;color:var(--muted)}
+.prop{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:5px;background:var(--ok-soft);color:var(--ok)}
+.opt.unsure .lab{font-weight:500;color:var(--muted)}
+textarea{width:100%;min-height:64px;font:inherit;font-size:14px;padding:10px;border-radius:9px;border:1px solid var(--line-2);background:var(--surface);color:var(--fg);resize:vertical}
+.savebar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.btn{font:600 14px var(--f-body);padding:9px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--surface);color:var(--fg);cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.status{font-size:13px;color:var(--muted)}
+/* mock of the real app */
+.stage{position:sticky;top:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.stage .cap{font-size:12.5px;color:var(--muted)}
+.mockwrap{border:1px solid var(--line);border-radius:14px;padding:16px;background:repeating-linear-gradient(45deg,var(--surface-2) 0 10px,var(--surface) 10px 20px);overflow-x:auto}
+.dev{margin:0 auto;border:8px solid #2A2B33;border-radius:18px;background:var(--mock-bg);overflow:hidden;font-size:11px;color:var(--fg);position:relative}
+.dev.desk{border-width:6px;border-radius:10px;width:100%;min-width:420px}
+.dev.pad{width:100%;max-width:440px;min-width:340px}
+.dev.phone{width:220px;border-radius:26px}
+.bar{background:var(--surface);border-bottom:1px solid var(--line);padding:5px 8px;display:flex;gap:6px;align-items:center;font-family:var(--f-mono);font-size:10px;color:var(--muted)}
+.bar .url{flex:1;background:var(--mock-bg);border-radius:5px;padding:2px 7px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.app{display:grid;grid-template-columns:96px 1fr;min-height:230px}
+.app.noside{grid-template-columns:1fr}
+.side{background:var(--mock-side);border-right:1px solid var(--line);padding:8px 6px;display:flex;flex-direction:column;gap:2px}
+.side .brand{font-weight:700;font-size:10.5px;padding:2px 4px 8px;line-height:1.2}
+.side .brand small{display:block;font-weight:500;color:var(--muted);font-size:9px}
+.side .it{padding:4px 5px;border-radius:5px;color:var(--muted);font-size:10px}
+.side .it.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.side .it.ph{opacity:.5;text-decoration:line-through}
+.main{display:flex;flex-direction:column;min-width:0}
+.tb{background:var(--surface);border-bottom:1px solid var(--line);padding:6px 9px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tb b{font-size:12px;font-family:var(--f-head)}
+.tb .sp{flex:1}
+.chip{font-size:9.5px;padding:2px 6px;border-radius:99px;background:var(--mock-bg);border:1px solid var(--line);white-space:nowrap}
+.av{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;color:#fff;font-size:8px;font-weight:700;margin-left:-4px;border:1.5px solid var(--surface)}
+.ct{padding:9px;display:flex;flex-direction:column;gap:6px}
+.mrow{display:grid;grid-template-columns:1fr auto auto;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:5px 7px;align-items:center}
+.mrow .q{font-family:var(--f-mono);font-weight:600}
+.mbadge{font-size:9px;font-weight:600;padding:1px 6px;border-radius:99px}
+.hl{outline:3px dashed var(--accent);outline-offset:2px;border-radius:6px;position:relative}
+.callout{font-size:10px;font-weight:700;color:var(--on-accent);background:var(--accent);padding:2px 7px;border-radius:5px;display:inline-block}
+.devrow{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;align-items:flex-end}
+.devlabel{text-align:center;font-size:11.5px;color:var(--muted);margin-top:6px;font-weight:600}
+.dlg{background:var(--surface);border:1px solid var(--line-2);border-radius:9px;padding:10px;display:flex;flex-direction:column;gap:6px;box-shadow:0 8px 24px -10px rgba(0,0,0,.35);margin:6px}
+.fld{display:flex;flex-direction:column;gap:2px}
+.fld span{font-size:9px;color:var(--muted);font-weight:600}
+.fld i{font-style:normal;border:1px solid var(--line-2);border-radius:5px;padding:3px 6px;background:var(--mock-bg);font-size:10px}
+.flowsvg{width:100%;height:auto;display:block}
+.flowsvg text{fill:var(--fg);font-family:var(--f-body)}
+.flowsvg .sm{fill:var(--muted);font-size:11px}
+.note{border-left:3px solid var(--warn);background:var(--warn-soft);padding:10px 12px;border-radius:0 8px 8px 0;font-size:13.5px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <span class="eyebrow">REACH · Medical side · Stage 1</span>
+      <h1>Inventory stock-take</h1>
+      <p class="sub">What exists, what works and what's missing in the app you built in June (the "Medical Suite"), measured on 26 Nov 2026. Nothing in the app has been changed.</p>
+    </div>
+    <nav class="tabs" aria-label="Sections">
+      <a href="#map" id="tab-map">1 · Map</a>
+      <a href="#questions" id="tab-questions">2 · Questions</a>
+    </nav>
+  </header>
+
+  <!-- ===================== MAP ===================== -->
+  <div id="view-map" class="wrap" style="max-width:none">
+    <section class="panel">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center">
+        <h2>Measured in the app</h2>
+        <div class="legend"><span><i class="dot d-ok"></i>works</span><span><i class="dot d-warn"></i>half-done or buggy</span><span><i class="dot d-bad"></i>missing or broken</span></div>
+      </div>
+      <div class="nums">
+        <div class="num"><b>784</b><span>kinds of item</span></div>
+        <div class="num"><b>902</b><span>stock lines (item × place)</span></div>
+        <div class="num"><b>9</b><span>places: Store + 8 bags</span></div>
+        <div class="num"><b>208</b><span>lines at zero</span></div>
+        <div class="num"><b>201</b><span>lines expired by today</span></div>
+        <div class="num"><b>12</b><span>bugs written down (B1–B12)</span></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Screens</h2>
+      <div class="map">
+        <div class="group">
+          <h3>Frame <span class="pill p-warn">desktop only</span></h3>
+          <div class="node n-ok"><b>Home</b><small>7 cards, one per module</small></div>
+          <div class="node n-ok"><b>Search (top bar)</b><small>finds staff and items</small></div>
+          <div class="node n-warn"><b>"Acting as" switch</b><small>pretend login: anyone can pick Admin <span class="tag">B12</span></small></div>
+          <div class="node n-bad"><b>Phone layout</b><small>menu disappears, no way back to Home, table cut off <span class="tag">B5</span></small></div>
+        </div>
+        <div class="group">
+          <h3>Inventory <span class="pill p-acc">the core</span></h3>
+          <div class="node n-warn"><b>Overview</b><small>totals and alerts work; "bag ready" is wrong: a full bag shows as short <span class="tag">B1</span></small></div>
+          <div class="node n-ok"><b>By location</b><small>Store or a bag; filter, sort, CSV export</small></div>
+          <div class="node n-ok"><b>Item page</b><small>stock per place, lot, expiry, history</small></div>
+          <div class="node n-ok"><b>Restock + / Dispense −</b><small>tested: 1000 → 998 → 1001</small></div>
+          <div class="node n-ok"><b>Count stock</b><small>edit all quantities, save once</small></div>
+          <div class="node n-warn"><b>Stock takes (frozen counts)</b><small>work, but wiped by a version upload <span class="tag">B3</span></small></div>
+          <div class="node n-warn"><b>Store reorder level</b><small>0 of 378 Store lines have one, so the Store never says "low" <span class="tag">B10</span></small></div>
+          <div class="node n-bad"><b>"Used in MedEvacs"</b><small>empty box, waiting for EDP (F79)</small></div>
+        </div>
+        <div class="group">
+          <h3>Personnel</h3>
+          <div class="node n-ok"><b>Staff list + profile</b><small>5 people, filters, archive</small></div>
+          <div class="node n-ok"><b>Training &amp; certificates</b><small>assign, complete, expiry warnings</small></div>
+          <div class="node n-warn"><b>Belongs here?</b><small>EDP has crew too, see Q6 and Q7</small></div>
+        </div>
+        <div class="group">
+          <h3>System</h3>
+          <div class="node n-ok"><b>Activity log</b><small>who did what, when</small></div>
+          <div class="node n-warn"><b>Settings</b><small>departments, courses, categories, bags; text boxes unstyled <span class="tag">B8</span></small></div>
+          <div class="node n-ok"><b>Export backup</b><small>whole store as one JSON file</small></div>
+          <div class="node n-warn"><b>Import backup</b><small>Inventory then shows "undefined" until reload <span class="tag">B2</span></small></div>
+        </div>
+        <div class="group">
+          <h3>Empty modules <span class="pill p-bad">placeholders</span></h3>
+          <div class="node n-bad"><b>Patient Archive</b><small>"isn't built yet"</small></div>
+          <div class="node n-bad"><b>Roster</b><small>"isn't built yet"</small></div>
+          <div class="node n-bad"><b>Calendar</b><small>"isn't built yet"</small></div>
+          <div class="node n-bad"><b>Library</b><small>"isn't built yet"</small></div>
+          <div class="node n-bad"><b>Dispatch</b><small>that's EDP's job</small></div>
+        </div>
+        <div class="group">
+          <h3>Missing for a real app</h3>
+          <div class="node n-bad"><b>Real sign-in</b><small>no passwords, no accounts</small></div>
+          <div class="node n-bad"><b>Shared stock</b><small>every device keeps its own copy, no sync</small></div>
+          <div class="node n-bad"><b>Install + offline</b><small>no app icon, not usable without internet</small></div>
+          <div class="node n-bad"><b>EDP link</b><small>only a stub function, no safeguards <span class="tag">B11</span></small></div>
+          <div class="node n-bad"><b>Controlled-drug register</b><small>13 items treated like gauze</small></div>
+          <div class="node n-bad"><b>Safe text handling</b><small>a typed name can run code <span class="tag">B4</span></small></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Where the data lives</h2>
+      <div class="flow">
+        <div class="step"><span class="pill p-acc" style="align-self:flex-start">source</span><b>Two spreadsheets in iCloud</b><small class="muted">Stock Take 2026.xlsx · Medevac Bag Check List.xlsx. Stay out of Git.</small></div>
+        <div class="arrow">→</div>
+        <div class="step" style="border-color:var(--bad)"><span class="pill p-bad" style="align-self:flex-start">public</span><b>Built into the app file</b><small class="muted">All 902 lines, lots, expiries and 5 staff names are inside index.html, which is a <b>public</b> GitHub repo and web page. <span class="tag">B9 → Q1</span></small></div>
+        <div class="arrow">→</div>
+        <div class="step" style="border-color:var(--warn)"><span class="pill p-warn" style="align-self:flex-start">per device</span><b>Browser storage</b><small class="muted">On first open, each browser copies it and saves changes there. Your Dock app, Safari and an iPad each hold a <b>different</b> copy.</small></div>
+        <div class="arrow">→</div>
+        <div class="step"><span class="pill p-ok" style="align-self:flex-start">out</span><b>Backup JSON · CSV</b><small class="muted">Exported by hand. The only way to move data between devices today.</small></div>
+      </div>
+      <p class="note">Your real counts since June, if you entered any, are only in your Dock app's own browser storage. I did not open it. Before any change, the safe step is <b>Settings › Export backup</b> from the Dock app.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Bugs (B1–B12)</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th>ID</th><th>What you'd see</th><th>Measured</th><th>State</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">B1</td><td>A bag holding exactly its required amount shows "short", so no bag can ever be "Ready"</td><td>289 of 437 lines; Snake Bite Kit 0 of 18 ok</td><td><span class="pill p-bad">broken</span></td></tr>
+          <tr><td class="mono">B2</td><td>After Import backup, Inventory shows "undefined" and an empty table</td><td>0 rows until reload</td><td><span class="pill p-bad">broken</span></td></tr>
+          <tr><td class="mono">B3</td><td>A new app version silently wipes every count, stock take and log entry</td><td>4242 went back to 1000</td><td><span class="pill p-bad">data loss</span></td></tr>
+          <tr><td class="mono">B4</td><td>Typed names are run as code</td><td>test name ran its script</td><td><span class="pill p-bad">security</span></td></tr>
+          <tr><td class="mono">B5</td><td>Phone: no menu, no way back, table cut off</td><td>top bar 629 px on a 375 px screen</td><td><span class="pill p-bad">broken</span></td></tr>
+          <tr><td class="mono">B6</td><td>Spreadsheet leftovers: 3 expiry dates in 1900/1905, 258 names with double spaces, typos</td><td>script count</td><td><span class="pill p-warn">data</span></td></tr>
+          <tr><td class="mono">B7</td><td>"Today" freezes when the page opens; left open overnight, expiry is a day old</td><td>from the code</td><td><span class="pill p-warn">minor</span></td></tr>
+          <tr><td class="mono">B8</td><td>Settings text boxes are plain grey boxes</td><td>no style defined</td><td><span class="pill p-warn">looks</span></td></tr>
+          <tr><td class="mono">B9</td><td>Real stock list and staff names are public</td><td>repo is public</td><td><span class="pill p-bad">privacy → Q1</span></td></tr>
+          <tr><td class="mono">B10</td><td>The Store has no reorder levels</td><td>0 of 378</td><td><span class="pill p-warn">half-done</span></td></tr>
+          <tr><td class="mono">B11</td><td>EDP hook: drops to 0 without warning; a message arriving twice subtracts twice</td><td>9999 dispensed → 0</td><td><span class="pill p-warn">stub</span></td></tr>
+          <tr><td class="mono">B12</td><td>Anyone can be Admin; every role can permanently delete items</td><td>from the code</td><td><span class="pill p-warn">by design for now</span></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="panel">
+      <h2>Which version I took</h2>
+      <div class="versions">
+        <div><span class="pill p-ok">taken</span><b>medical-suite.html · 26 Jun 2026, 17:05 · 368,540 bytes</b><span class="muted">same file in iCloud (AI Projects › Medical Suite › Inventory), Downloads _14 / _15, GitHub and your Dock app</span></div>
+        <div><span class="pill p-warn">older</span><span>Downloads medical-suite.html … _13 (same day, earlier steps) and "medical-suite copy.html"</span></div>
+        <div><span class="pill p-acc">not it</span><span>"the-suite" in GitHub is Pilot Tools (BK117). "7 Checklist Template - Medics" is a separate checklist builder, noted for later.</span></div>
+        <div><span class="pill p-acc">now at</span><span class="mono">~/Documents/GitHub/medical-suite</span><span class="muted">cloned from GitHub; project files added, nothing committed</span></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===================== QUESTIONS ===================== -->
+  <div id="view-questions" class="wrap" style="max-width:none" hidden>
+    <section class="panel">
+      <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center">
+        <div class="qnav" id="qnav" aria-label="Questions"></div>
+        <span class="status" id="saveMode">Connecting…</span>
+      </div>
+      <div class="qgrid">
+        <div class="explain" id="explain"></div>
+        <div class="stage">
+          <span class="cap" id="mockcap"></span>
+          <div class="mockwrap" id="mock"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+/* ---------- tabs ---------- */
+function route(){
+  const q = location.hash === "#questions";
+  document.getElementById("view-map").hidden = q;
+  document.getElementById("view-questions").hidden = !q;
+  document.getElementById("tab-map").setAttribute("aria-current", q ? "false" : "page");
+  document.getElementById("tab-questions").setAttribute("aria-current", q ? "page" : "false");
+}
+addEventListener("hashchange", route); route();
+
+/* ---------- escaping (all user text goes through this) ---------- */
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* ---------- mock building blocks ---------- */
+const NAV_ALL = ["Personnel","Inventory","Patient Archive","Roster","Calendar","Library","Dispatch"];
+function side(items, brand, opts={}){
+  return `<div class="side ${opts.hl?'hl':''}"><div class="brand">${brand.name}<small>${brand.sub}</small></div>
+    ${items.map(i=>`<div class="it ${i.on?'on':''} ${i.ph?'ph':''}">${i.t}</div>`).join("")}</div>`;
+}
+function topbar(title, right, hl){ return `<div class="tb ${hl?'hl':''}"><b>${title}</b><span class="sp"></span>${right||''}</div>`; }
+const rowsDemo = [
+  ["Amoxicillin 500 mg caps","Store","1000","ok"],
+  ["Morphine 10 mg amp","MAMA's Bag","4","low"],
+  ["Gauze swab 10×10","Trauma Bag","0","out"],
+  ["Oxytocin 10 IU amp","MAMA's Bag","6","ok"]
+];
+function mrow(r){ const c={ok:["var(--ok-soft)","var(--ok)","In stock"],low:["var(--warn-soft)","var(--warn)","Low"],out:["var(--bad-soft)","var(--bad)","Out"]}[r[3]];
+  return `<div class="mrow"><span>${r[0]}<br><span class="muted" style="font-size:9.5px">${r[1]}</span></span><span class="q">${r[2]}</span><span class="mbadge" style="background:${c[0]};color:${c[1]}">${c[2]}</span></div>`; }
+function app({device="desk", url="danielfuchsnuernberg.github.io/medical-suite/", nav, brand={name:"Medical Suite",sub:"MAMA MedEvac"}, title="Inventory", right="", content, hlSide=false, hlTop=false, noside=false, statusbar=""}){
+  const navItems = nav || NAV_ALL.map(t=>({t,on:t==="Inventory"}));
+  const bar = device==="phone" ? `<div class="bar" style="justify-content:space-between"><span>9:41</span>${statusbar||'<span>●●● 4G</span>'}</div>` : `<div class="bar"><span>● ● ●</span><span class="url">${url}</span>${statusbar}</div>`;
+  return `<div class="dev ${device}">${bar}<div class="app ${noside||device==='phone'?'noside':''}">
+    ${noside||device==='phone'?'':side(navItems, brand, {hl:hlSide})}
+    <div class="main">${topbar(title,right,hlTop)}<div class="ct">${content ?? rowsDemo.map(mrow).join("")}</div></div></div></div>`;
+}
+const avatars = (list)=>`<span style="display:inline-flex;padding-left:4px">${list.map((c,i)=>`<span class="av" style="background:${c}">${String.fromCharCode(65+i)}</span>`).join("")}</span>`;
+
+/* ---------- the questions ---------- */
+const Q = [
+{ id:"Q1", title:"Your real stock list is on a public web page. What do we do?",
+  what:"The app file has your whole stock list built in (784 items, 902 lines with lot numbers and expiry dates) and 5 real staff names with their roles. That file is your GitHub repo, which is public, and it is the page your Dock app opens. Anyone with the link can read it.",
+  why:"Found in the stock-take (B9). It breaks your rule \"no real stock or patient data in Git\". For a medical store it also shows what drugs are held where. Removing it from new versions is easy. The old copies stay readable in the repo's history unless that history is rewritten, and rewriting it means a force-push, which needs your explicit OK.",
+  proposed:"a", multi:false,
+  opts:[
+    {k:"a", t:"Take it out and wipe the history", e:"The app starts empty and loads your stock from a file you keep off Git. The repo's history is rewritten so no old copy stays readable. One force-push, with your OK."},
+    {k:"b", t:"Take it out of new versions only", e:"Same empty start. The June copies stay readable in GitHub's history."},
+    {k:"c", t:"Leave it as it is", e:"Nothing changes. The list stays public."}],
+  mock(v){
+    const pub = v==="c"||!v;
+    const content = pub ? rowsDemo.map(mrow).join("")+`<span class="callout" style="background:var(--bad)">Readable by anyone</span>`
+      : `<div style="text-align:center;padding:18px 6px;display:flex;flex-direction:column;gap:6px;align-items:center"><b style="font-size:12px">No stock loaded on this device</b><span class="muted">Load your stock file to start</span><span class="chip" style="background:var(--accent);color:#fff;border:none">Load stock file…</span></div>`;
+    const hist = v==="a" ? `<span class="chip" style="color:var(--ok)">History: clean</span>` : v==="b" ? `<span class="chip" style="color:var(--warn)">History: June copy still readable</span>` : "";
+    return {cap:"The live page, as anyone on the internet sees it", html: app({content, right:hist, hlTop:false}).replace('class="ct"','class="ct hl"')};
+  }},
+{ id:"Q2", title:"Who uses the Inventory?",
+  what:"Who opens the app and changes counts: just you, a few medics and nurses at the base, or the whole medical team including field crews on MedEvacs.",
+  why:"Today there is no sign-in, only an \"Acting as\" menu where anyone can pick Admin (B12). A real app needs to know who took what, especially for controlled drugs. The more people, the more sign-in, roles and audit trail it needs.",
+  proposed:"b", multi:false,
+  opts:[
+    {k:"a", t:"Only me", e:"One user. Simple sign-in or none; the log just says \"Danny\"."},
+    {k:"b", t:"A few medics and nurses at the base, me as admin", e:"Personal sign-in for each. Roles: staff can count and dispense, admin manages items and bags."},
+    {k:"c", t:"The whole medical team, field crews included", e:"Same as above plus people working away from base on phones. Sign-in must also work offline."}],
+  mock(v){
+    const right = v==="a" ? `<span class="chip">Danny · Admin</span>` : v==="c" ? `${avatars(["#4F46E5","#17804F","#A8620A","#C23434","#0D9488","#7C3AED"])}<span class="chip">+ field crews</span>` : v==="b" ? `${avatars(["#4F46E5","#17804F","#A8620A","#C23434"])}<span class="chip">Signed in: Medic</span>` : `<span class="chip">Acting as: System Administrator ▾</span>`;
+    return {cap:"Top bar: who is signed in", html: app({right, hlTop:true})};
+  }},
+{ id:"Q3", title:"On which devices will it be used?",
+  what:"Pick every device someone will use the Inventory on. You can pick several.",
+  why:"Today it only works on a big screen. On a phone the menu disappears and you get stuck (B5). Each device you pick is a layout I have to design and test. A bag check at the aircraft is usually done on a phone or iPad, admin work on a computer.",
+  proposed:["iphone","ipad","mac"], multi:true,
+  opts:[
+    {k:"iphone", t:"iPhone", e:"Bag checks and dispensing in the field."},
+    {k:"ipad", t:"iPad", e:"Counting in the Store, bag checks at the aircraft."},
+    {k:"mac", t:"Mac", e:"Admin: items, bags, stock takes, exports."},
+    {k:"win", t:"Windows PC", e:"If the clinic or office has PCs."},
+    {k:"android", t:"Android phone", e:"If local staff use their own Android phones."}],
+  mock(v){
+    const sel = Array.isArray(v)&&v.length ? v : [];
+    const small = (d,l)=>`<div><div class="hl">${app({device:d, content: rowsDemo.slice(0,d==='phone'?2:3).map(mrow).join("")})}</div><div class="devlabel">${l}</div></div>`;
+    const map = {iphone:["phone","iPhone"],ipad:["pad","iPad"],mac:["desk","Mac"],win:["desk","Windows PC"],android:["phone","Android"]};
+    const html = sel.length ? `<div class="devrow">${sel.map(k=>small(...map[k])).join("")}</div>` : `<div class="devrow"><div>${app({device:"phone"})}<div class="devlabel" style="color:var(--bad)">Today on a phone: no menu, no way back</div></div></div>`;
+    return {cap: sel.length ? "Each picked device gets its own layout" : "Pick devices to see them", html};
+  }},
+{ id:"Q4", title:"What does \"a real app\" mean for the Inventory?",
+  what:"How people get it and open it: an icon on the home screen that works offline (an installable web app), an App Store app, a Mac app in the Dock, or just a web page.",
+  why:"Today it is a web page without an install option, so it doesn't work without internet. App Store apps need Apple review, signing and uploads for every change, and your team has no registered devices yet. An installable web app runs on iPhone, iPad, Mac and Windows from one code base and updates itself.",
+  proposed:"a", multi:false,
+  opts:[
+    {k:"a", t:"Installable web app (icon on home screen, works offline)", e:"One app for every device. Updates arrive by themselves; no App Store review."},
+    {k:"b", t:"Native iPhone and iPad app from the App Store", e:"Most \"app-like\". Apple-only, review for every update, signing work for you in Xcode."},
+    {k:"c", t:"Mac desktop app", e:"Good for admin work; doesn't help in the field."},
+    {k:"d", t:"A website is enough", e:"Like today. Needs internet every time."}],
+  mock(v){
+    let html;
+    if(v==="b") html = `<div class="dev phone"><div class="bar"><span>App Store</span></div><div class="ct" style="align-items:center;text-align:center;padding:20px 8px"><div style="width:54px;height:54px;border-radius:14px;background:var(--accent);display:grid;place-items:center;color:#fff;font-size:22px">+</div><b style="font-size:12px">REACH Inventory</b><span class="muted">Medical</span><span class="chip hl" style="background:var(--accent);color:#fff;border:none">GET</span><span class="muted" style="font-size:9px">every update: Xcode → upload → Apple review</span></div></div>`;
+    else if(v==="c") html = `<div class="hl">${app({url:"REACH Inventory.app"})}</div><div class="devlabel">its own window, icon in the Dock</div>`;
+    else if(v==="d") html = app({right:`<span class="chip">needs internet</span>`}).replace('class="bar"','class="bar hl"');
+    else html = `<div class="dev phone"><div class="bar"><span>9:41</span><span>no signal</span></div><div class="ct" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:16px 10px">${["Mail","Maps","Notes","EDP"].map(n=>`<div style="text-align:center"><div style="width:36px;height:36px;margin:0 auto;border-radius:10px;background:var(--line-2)"></div><span style="font-size:8.5px">${n}</span></div>`).join("")}<div style="text-align:center" class="hl"><div style="width:36px;height:36px;margin:0 auto;border-radius:10px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700">+</div><span style="font-size:8.5px">Inventory</span></div></div><div class="ct"><span class="chip" style="text-align:center">opens without signal</span></div></div>`;
+    return {cap: v ? "How it is opened" : "Proposed: home-screen icon, works offline", html};
+  }},
+{ id:"Q5", title:"Should everyone see the same stock?",
+  what:"When a medic takes 2 ampoules out of MAMA's Bag on their iPhone, should the iPad at the base show that straight away?",
+  why:"Today every device keeps its own separate copy (no server, no sync). Two people counting on two devices end up with two different truths, and the only bridge is exporting and importing files by hand. Shared stock needs a small server or cloud database, which is a big architecture choice.",
+  proposed:"b", multi:false,
+  opts:[
+    {k:"a", t:"No: each device has its own stock", e:"No server. Fine for one person on one device."},
+    {k:"b", t:"Yes: one shared stock, synced", e:"A small cloud database. Every device shows the same numbers; changes made offline sync later."},
+    {k:"c", t:"Share by passing backup files", e:"No server, but someone must export and import by hand; easy to overwrite newer counts."}],
+  mock(v){
+    const num = (n,col)=>`<div style="text-align:center;padding:12px 4px"><span class="muted">Morphine 10 mg · MAMA's Bag</span><div style="font:700 26px var(--f-head);color:${col}">${n}</div></div>`;
+    const field = v==="b"?num(4,"var(--ok)"):num(4,"var(--fg)");
+    const base = v==="b"?num(4,"var(--ok)"):num(6,"var(--bad)");
+    const mid = v==="b"?`<span class="callout" style="background:var(--ok)">⇄ synced</span>`:v==="c"?`<span class="callout" style="background:var(--warn)">export → AirDrop → import</span>`:`<span class="callout" style="background:var(--bad)">no link</span>`;
+    return {cap:"Medic dispensed 2 on the iPhone. What does the base iPad show?", html:`<div class="devrow"><div>${app({device:"phone",content:field})}<div class="devlabel">iPhone, field</div></div><div style="align-self:center">${mid}</div><div class="hl">${app({device:"pad",content:base,noside:true})}<div class="devlabel">iPad, base</div></div></div>`};
+  }},
+{ id:"Q6", title:"Which parts of the \"Medical Suite\" belong in this app?",
+  what:"The June prototype is a whole suite: Inventory, Personnel, and five empty modules (Patient Archive, Roster, Calendar, Library, Dispatch). You called this app \"the Inventory\".",
+  why:"EDP already plans crew, rosters and cases. Building the same thing twice means two staff lists that disagree. Keeping only Inventory here makes the app smaller and quicker to make real. The parts that move out are written down in PLAN.md, not lost.",
+  proposed:"a", multi:false,
+  opts:[
+    {k:"a", t:"Inventory only", e:"Staff come from a shared REACH people list. The other modules become later apps or EDP features."},
+    {k:"b", t:"Inventory + Personnel", e:"Keeps the staff list and training records here as well."},
+    {k:"c", t:"Keep the whole Medical Suite", e:"This app grows into the medical side's all-in-one, including patients."}],
+  mock(v){
+    const keep = v==="a"?["Inventory"]:v==="b"?["Inventory","Personnel"]:NAV_ALL;
+    const nav = NAV_ALL.map(t=>({t, on:t==="Inventory", ph:!keep.includes(t)}));
+    return {cap:"Side menu: crossed out = moves out of this app", html: app({nav, hlSide:true, brand: v==="a"||v==="b"?{name:"Inventory",sub:"REACH medical"}:{name:"Medical Suite",sub:"MAMA MedEvac"}})};
+  }},
+{ id:"Q7", title:"What must the Inventory share with EDP and the other REACH apps?",
+  what:"Pick what both sides should know about each other. The first link is already planned: EDP sends \"medication used on case X\" (EDP F79).",
+  why:"Whatever is shared must have one owner and one ID on both sides, or numbers drift apart. For example, if EDP calls it \"Morphine 10mg\" and the Inventory says IT-1042, nothing gets taken off stock. This decides what we design together with EDP (and F53 for the look).",
+  proposed:["login","catalog","bags","used","log"], multi:true,
+  opts:[
+    {k:"login", t:"Sign-in and people", e:"One REACH account per person, the same in every app."},
+    {k:"catalog", t:"Item list (owned by Inventory)", e:"EDP picks drugs from this list, so the IDs match."},
+    {k:"bags", t:"Bags, and which aircraft carries them", e:"EDP knows a case used MAMA's Bag on P2-ABC; Inventory knows what's in it."},
+    {k:"used", t:"\"Used on a case\" message", e:"EDP → Inventory: case, item, quantity, lot, who, when."},
+    {k:"log", t:"Activity log", e:"One shared trail of who did what, across apps."},
+    {k:"look", t:"Common REACH look", e:"Decided with EDP F53 later; noted, not built now."}],
+  mock(v){
+    const s = Array.isArray(v)?v:[];
+    const L = {login:"Sign-in + people",catalog:"Item list →",bags:"Bags ↔ aircraft",used:"← Used on case",log:"Activity log",look:"Common look (F53)"};
+    const lines = Object.keys(L).map((k,i)=>{const on=s.includes(k);const y=34+i*30;
+      return `<line x1="150" y1="${y}" x2="330" y2="${y}" stroke="${on?'var(--accent)':'var(--line-2)'}" stroke-width="${on?3:1.5}" stroke-dasharray="${on?'':'4 4'}"/><text x="240" y="${y-6}" text-anchor="middle" class="sm" style="${on?'fill:var(--accent);font-weight:600':''}">${L[k]}</text>`;}).join("");
+    const html = `<svg class="flowsvg hl" viewBox="0 0 480 220" role="img" aria-label="Links between EDP and Inventory">
+      <rect x="10" y="14" width="140" height="190" rx="12" fill="var(--surface)" stroke="var(--line-2)"/><text x="80" y="104" text-anchor="middle" font-weight="700" font-size="16">EDP</text><text x="80" y="124" text-anchor="middle" class="sm">dispatch, cases</text>
+      <rect x="330" y="14" width="140" height="190" rx="12" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="400" y="104" text-anchor="middle" font-weight="700" font-size="16">Inventory</text><text x="400" y="124" text-anchor="middle" class="sm">stock, bags</text>
+      ${lines}</svg>`;
+    return {cap:"Solid line = shared", html};
+  }},
+{ id:"Q8", title:"Controlled drugs: do they need stricter recording?",
+  what:"13 items are in the category \"Control Drugs\" (for example morphine). Today they are handled exactly like gauze: type a number, done.",
+  why:"Controlled drugs usually need a register: every movement with a reason, a witness, and a running balance that can be checked. If the app can't show that, the paper register stays and the two drift apart. The rules differ by country, so they become a setting.",
+  proposed:"a", multi:false,
+  opts:[
+    {k:"a", t:"Yes: full register", e:"Each movement needs a reason, a second person as witness, and shows the running balance. Printable register."},
+    {k:"b", t:"Reason only", e:"A reason is required, no witness."},
+    {k:"c", t:"No: same as everything else", e:"Like today. Paper register stays separate."}],
+  mock(v){
+    const extra = v==="a" ? `<div class="fld"><span>Reason</span><i>Used on case EDP-0412</i></div><div class="fld"><span>Witness</span><i>Second medic: signs in</i></div><div class="fld"><span>Balance</span><i>6 → 4 · register line CD-03/118</i></div>`
+      : v==="b" ? `<div class="fld"><span>Reason</span><i>Used on case EDP-0412</i></div>` : "";
+    const content = `<div class="dlg hl"><b style="font-size:11.5px">Dispense: Morphine 10 mg amp</b><span class="muted">MAMA's Bag · currently 6</span><div class="fld"><span>Quantity</span><i>2</i></div>${extra}<div style="display:flex;justify-content:flex-end;gap:5px"><span class="chip">Cancel</span><span class="chip" style="background:var(--accent);color:#fff;border:none">Dispense</span></div></div>`;
+    return {cap:"The Dispense window for a controlled drug", html: app({content})};
+  }},
+{ id:"Q9", title:"Must it work with no internet?",
+  what:"Remote strips and aircraft in PNG often have no signal. Should counting and dispensing still work there?",
+  why:"Today the page needs internet to open at all. If the app only works online, a medic at a remote strip can't record what was used and the numbers go wrong. Full offline use means changes wait on the device and sync later, which adds design work around conflicts.",
+  proposed:"a", multi:false,
+  opts:[
+    {k:"a", t:"Yes, fully: everything works, syncs later", e:"Count, dispense, restock offline. \"3 changes waiting to sync\"."},
+    {k:"b", t:"Look only", e:"Offline you can see stock but not change it."},
+    {k:"c", t:"No, online only", e:"No signal means no app."}],
+  mock(v){
+    let content;
+    if(v==="c") content = `<div style="text-align:center;padding:30px 8px;display:flex;flex-direction:column;gap:6px"><b style="color:var(--bad)">No connection</b><span class="muted">Try again when you have signal</span></div>`;
+    else content = rowsDemo.slice(0,3).map(r=>mrow(r)+`<div style="display:flex;gap:4px;justify-content:flex-end;margin-top:-3px"><span class="chip" style="${v==='b'?'opacity:.35':''}">−</span><span class="chip" style="${v==='b'?'opacity:.35':''}">+</span></div>`).join("") + (v==="a"?`<span class="callout">3 changes waiting to sync</span>`:v==="b"?`<span class="callout" style="background:var(--warn)">Offline: view only</span>`:"");
+    return {cap:"At a remote strip, no signal", html:`<div class="hl" style="display:inline-block;margin:0 auto">${app({device:"phone",statusbar:'<span style="color:var(--bad)">No signal</span>',content})}</div>`};
+  }},
+{ id:"Q10", title:"Which name goes on the app?",
+  what:"The prototype says \"Medical Suite · MAMA MedEvac\" in the corner and on Home.",
+  why:"REACH is the organisation the app is built for, and the look and naming of all REACH apps is decided with EDP F53. A country or operator name built into the code would break the \"country-specific is a setting\" rule for Peru.",
+  proposed:"c", multi:false,
+  opts:[
+    {k:"a", t:"Keep \"MAMA MedEvac\"", e:"As today."},
+    {k:"b", t:"\"REACH Inventory\"", e:"Fixed REACH name now."},
+    {k:"c", t:"A setting, decided with F53", e:"Name and operator come from settings, so PNG and Peru can differ. Final name with F53."}],
+  mock(v){
+    const brand = v==="b"?{name:"REACH Inventory",sub:"Medical"}:v==="c"?{name:"Inventory",sub:"Operator: from settings"}:{name:"Medical Suite",sub:"MAMA MedEvac"};
+    return {cap:"Name in the corner of the app", html: app({brand, hlSide:true})};
+  }}
+];
+
+/* ---------- answers: shared store, with a local fallback ---------- */
+let answers = {}; let cur = 0; let db = null; let mode = "local";
+try{ answers = JSON.parse(localStorage.getItem("inv-stocktake-answers")||"{}"); }catch(e){ answers = {}; }
+function setMode(t){ document.getElementById("saveMode").textContent = t; }
+
+function renderNav(){
+  document.getElementById("qnav").innerHTML = Q.map((q,i)=>`<button type="button" data-i="${i}" class="${i===cur?'cur':''} ${answers[q.id]&&hasChoice(answers[q.id].choice)?'done':''}" aria-label="Question ${i+1}">${q.id}</button>`).join("");
+  document.querySelectorAll("#qnav button").forEach(b=>b.onclick=()=>{ cur=+b.dataset.i; render(); });
+}
+const hasChoice = c => Array.isArray(c) ? c.length>0 : !!c;
+
+function render(){
+  const q = Q[cur]; const a = answers[q.id] || {};
+  const choice = a.choice !== undefined ? a.choice : null;
+  const isSel = k => q.multi ? Array.isArray(choice) && choice.includes(k) : choice===k;
+  const isProp = k => q.multi ? q.proposed.includes(k) : q.proposed===k;
+  document.getElementById("explain").innerHTML = `
+    <span class="eyebrow">${q.id} of ${Q.length}</span>
+    <h2 class="qtitle">${q.title}</h2>
+    <div class="box"><span class="k">What this is about</span><p>${q.what}</p></div>
+    <div class="box"><span class="k">Why it matters</span><p>${q.why}</p></div>
+    <div class="box" style="background:var(--surface)"><span class="k">What each answer changes${q.multi?' · pick several':''} · the mock on the right follows your click</span>
+      <div class="opts">
+        ${q.opts.map(o=>`<button type="button" class="opt ${q.multi?'multi':''} ${isSel(o.k)?'sel':''}" data-k="${o.k}"><span class="mk"></span><span class="lab">${o.t}${isProp(o.k)?'<span class="prop">Proposed</span>':''}</span><span class="eff">${o.e}</span></button>`).join("")}
+        <button type="button" class="opt unsure ${choice==='unsure'?'sel':''}" data-k="unsure"><span class="mk"></span><span class="lab">Not sure: explain it differently</span></button>
+      </div>
+      ${q.multi?`<button type="button" class="btn" id="useProp" style="align-self:flex-start">Use the proposed set</button>`:''}
+    </div>
+    <label class="box" for="note"><span class="k">Anything to add (optional)</span><textarea id="note" placeholder="e.g. who exactly, which devices, a rule I should know"></textarea></label>
+    <div class="savebar"><span class="status" id="saved">${a.at?'Saved '+esc(new Date(a.at).toLocaleString()):'Not answered yet'}</span>
+      <span style="display:flex;gap:8px"><button type="button" class="btn" id="prev" ${cur===0?'disabled':''}>← Back</button><button type="button" class="btn primary" id="next">${cur===Q.length-1?'Done':'Next →'}</button></span></div>`;
+  document.getElementById("note").value = a.note || "";
+  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>pick(b.dataset.k));
+  const up = document.getElementById("useProp"); if(up) up.onclick=()=>save({choice:q.proposed.slice()});
+  let t; document.getElementById("note").oninput = e=>{ clearTimeout(t); const v=e.target.value; t=setTimeout(()=>save({note:v}),700); };
+  document.getElementById("prev").onclick=()=>{ if(cur>0){cur--;render();} };
+  document.getElementById("next").onclick=()=>{ if(cur<Q.length-1){cur++;render();} else { document.getElementById("saved").textContent = summaryText(); } };
+  const preview = choice===null||choice==="unsure" ? (q.multi?[]:null) : choice;
+  const m = q.mock(preview===null&&!q.multi?null:preview);
+  document.getElementById("mockcap").textContent = (choice===null?"Today · ":"") + m.cap;
+  document.getElementById("mock").innerHTML = m.html;
+  renderNav();
+}
+function pick(k){
+  const q = Q[cur]; const a = answers[q.id] || {};
+  let choice;
+  if(k==="unsure") choice = "unsure";
+  else if(q.multi){ const c = Array.isArray(a.choice)?a.choice.slice():[]; const i=c.indexOf(k); if(i>=0) c.splice(i,1); else c.push(k); choice=c; }
+  else choice = k;
+  save({choice});
+}
+function summaryText(){ const n = Q.filter(q=>answers[q.id]&&hasChoice(answers[q.id].choice)).length; return `${n} of ${Q.length} answered. Tell Claude in chat when you're done.`; }
+
+async function save(patch){
+  const q = Q[cur];
+  const rec = Object.assign({qid:q.id}, answers[q.id]||{}, patch, {at:new Date().toISOString()});
+  answers[q.id] = rec;
+  try{ localStorage.setItem("inv-stocktake-answers", JSON.stringify(answers)); }catch(e){}
+  if(!("note" in patch)) render(); else { const s=document.getElementById("saved"); if(s) s.textContent="Saving…"; }
+  if(db){
+    try{ await db.collection("answers").doc(q.id).set(rec); const s=document.getElementById("saved"); if(s) s.textContent="Saved for Claude · "+new Date(rec.at).toLocaleTimeString(); }
+    catch(e){ const s=document.getElementById("saved"); if(s) s.textContent="Couldn't save for Claude ("+esc(e&&e.code||"error")+"). Kept in this browser; tell Claude in chat."; }
+  } else { const s=document.getElementById("saved"); if(s) s.textContent="Kept in this browser only. Tell Claude your answers in chat."; }
+}
+
+render();
+setMode("Answers save in this browser");
+(async ()=>{
+  try{
+    db = await (window.claude && window.claude.use ? window.claude.use("db") : null);
+  }catch(e){ db = null; }
+  if(!db){ setMode("Saving for Claude isn't available here: your answers stay in this browser"); return; }
+  setMode("Answers save automatically for Claude");
+  const timer = setTimeout(()=>setMode("Can't reach the saved answers yet; still trying"),10000);
+  db.collection("answers").onSnapshot(snap=>{
+    if(!snap.metadata || !snap.metadata.fromCache) clearTimeout(timer);
+    snap.docs.forEach(d=>{ const v=d.data(); if(v && v.qid) answers[v.qid]=v; });
+    const ta = document.getElementById("note");
+    if(!(ta && document.activeElement===ta)) render();
+  }, err=>{ clearTimeout(timer); setMode("Saved answers unavailable ("+(err&&err.code||"error")+"); kept in this browser"); });
+})();
+</script>

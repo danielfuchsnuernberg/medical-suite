@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medical Suite — Style Guide · Graphite Indigo</title>
+<style>
+/* === Canonical tokens (mirror of tokens.css) === */
+:root{
+  --bg:#F4F4F6; --surface:#FFFFFF; --surface-2:#FAFAFB; --sidebar:#F0F0F3;
+  --border:#E4E4EA; --border-strong:#D2D2DA;
+  --text:#1B1B23; --text-muted:#6B6B78; --text-faint:#9B9BA6;
+  --accent:#4F46E5; --accent-hover:#4338CA; --accent-active:#3730A3;
+  --accent-soft:#EEEDFD; --accent-border:#C9C6F7; --on-accent:#FFFFFF;
+  --success:#1E9E62; --success-soft:#E7F5EE; --warning:#C77A12; --warning-soft:#F8EFDF;
+  --danger:#D14343; --danger-soft:#FAEAEA; --info:#4F46E5; --info-soft:#EEEDFD;
+  --font-sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --fs-h1:18px; --fs-h2:14.5px; --fs-body:13.5px; --fs-sm:12.5px; --fs-xs:11.5px;
+  --fs-label:10.5px; --fs-stat:26px; --fs-mono:12px;
+  --fw-regular:400; --fw-medium:500; --fw-semibold:600; --fw-bold:700; --ls-label:.6px;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px;
+  --r-sm:6px; --r-md:10px; --r-lg:14px; --r-pill:999px;
+  --shadow-sm:0 1px 2px rgba(20,20,35,.06); --shadow-md:0 6px 18px -8px rgba(20,20,35,.18);
+  --shadow-pop:0 14px 40px -12px rgba(20,20,35,.28);
+  --bw:1px; --focus-ring:0 0 0 3px var(--accent-soft); --t-fast:.12s ease;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-sans);font-size:var(--fs-body);line-height:1.45;-webkit-font-smoothing:antialiased;}
+
+/* page chrome */
+.gtop{position:sticky;top:0;z-index:10;background:rgba(244,244,246,.86);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:18px 40px;display:flex;align-items:center;gap:14px;}
+.gtop .mark{width:32px;height:32px;border-radius:8px;background:var(--accent);display:grid;place-items:center;color:#fff;}
+.gtop h1{font-size:16px;font-weight:700;}
+.gtop .tag{font-size:11px;font-weight:600;letter-spacing:.4px;color:var(--accent);background:var(--accent-soft);padding:3px 9px;border-radius:var(--r-pill);}
+.gtop .v{margin-left:auto;font-size:12px;color:var(--text-muted);font-family:var(--font-mono);}
+
+.wrap{max-width:1060px;margin:0 auto;padding:40px;}
+section{margin-bottom:48px;}
+.eyebrow{font-size:var(--fs-label);font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-faint);margin-bottom:8px;}
+.sec-title{font-size:22px;font-weight:700;letter-spacing:-.3px;margin-bottom:6px;}
+.sec-note{color:var(--text-muted);font-size:13.5px;max-width:62ch;margin-bottom:22px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:24px;}
+.grid{display:grid;gap:14px;}
+
+/* swatches */
+.swatches{grid-template-columns:repeat(4,1fr);}
+.sw{border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;background:var(--surface);}
+.sw .chip{height:64px;}
+.sw .meta{padding:10px 12px;}
+.sw .nm{font-size:12.5px;font-weight:600;}
+.sw .tok{font-family:var(--font-mono);font-size:11px;color:var(--text-muted);margin-top:2px;}
+.sw .hex{font-family:var(--font-mono);font-size:11px;color:var(--text-faint);}
+
+/* type scale */
+.typerow{display:flex;align-items:baseline;gap:18px;padding:12px 0;border-bottom:1px solid var(--border);}
+.typerow:last-child{border-bottom:none;}
+.typerow .spec{margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--text-faint);white-space:nowrap;}
+
+/* spacing */
+.spaces{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;}
+.spc{text-align:center;}
+.spc .bar{background:var(--accent);border-radius:3px;width:28px;}
+.spc .lbl{font-family:var(--font-mono);font-size:10.5px;color:var(--text-muted);margin-top:6px;}
+
+/* radius */
+.radii{display:flex;gap:18px;flex-wrap:wrap;}
+.rad{text-align:center;}
+.rad .box{width:74px;height:56px;background:var(--accent-soft);border:1px solid var(--accent-border);}
+.rad .lbl{font-family:var(--font-mono);font-size:10.5px;color:var(--text-muted);margin-top:6px;}
+
+/* component primitives */
+.btn{font:var(--fw-semibold) var(--fs-body)/1 var(--font-sans);display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:var(--r-sm);border:1px solid transparent;cursor:pointer;transition:var(--t-fast);}
+.btn svg{width:15px;height:15px;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent-hover);}
+.btn-ghost{background:var(--surface);color:var(--text);border-color:var(--border);}
+.btn-ghost:hover{background:var(--bg);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-sm{padding:5px 12px;font-size:var(--fs-sm);}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+
+.badge{font-size:var(--fs-xs);font-weight:600;padding:3px 9px;border-radius:var(--r-pill);display:inline-flex;align-items:center;gap:5px;}
+.badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
+.badge-success{background:var(--success-soft);color:var(--success);}
+.badge-warning{background:var(--warning-soft);color:var(--warning);}
+.badge-danger{background:var(--danger-soft);color:var(--danger);}
+.badge-muted{background:color-mix(in srgb,var(--text-muted) 12%,transparent);color:var(--text-muted);}
+
+.input{font:var(--fw-regular) var(--fs-body)/1.2 var(--font-sans);width:100%;padding:8px 12px;background:var(--surface);color:var(--text);border:1px solid var(--border-strong);border-radius:var(--r-sm);transition:var(--t-fast);}
+.input::placeholder{color:var(--text-faint);}
+.input:focus{outline:none;box-shadow:var(--focus-ring);border-color:var(--accent);}
+.field-label{font-size:var(--fs-sm);font-weight:600;color:var(--text-muted);display:block;margin-bottom:8px;}
+
+.alert{display:flex;gap:12px;padding:12px 16px;border-radius:var(--r-md);font-size:var(--fs-sm);align-items:center;}
+.alert svg{width:18px;height:18px;flex:none;}
+.alert-warning{background:var(--warning-soft);color:var(--warning);}
+.alert-danger{background:var(--danger-soft);color:var(--danger);}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{text-align:left;font-size:var(--fs-label);letter-spacing:.6px;text-transform:uppercase;color:var(--text-faint);font-weight:600;padding:10px 16px;border-bottom:1px solid var(--border);}
+tbody td{padding:11px 16px;border-bottom:1px solid var(--border);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:color-mix(in srgb,var(--accent) 4%,transparent);}
+.mono{font-family:var(--font-mono);font-size:var(--fs-mono);color:var(--text-muted);}
+.person{display:flex;align-items:center;gap:10px;}
+.avatar{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:600;color:#fff;background:var(--accent);}
+
+/* icons grid */
+.icons{display:grid;grid-template-columns:repeat(8,1fr);gap:10px;}
+.ico{display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 6px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface);}
+.ico svg{width:20px;height:20px;color:var(--text);}
+.ico span{font-size:10px;color:var(--text-faint);font-family:var(--font-mono);}
+
+.specgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+.spec-item{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.spec-item:last-child{border-bottom:none;}
+.spec-item .k{color:var(--text-muted);}
+.spec-item .vv{font-family:var(--font-mono);font-size:12px;}
+
+@media (max-width:760px){.swatches{grid-template-columns:repeat(2,1fr);}.icons{grid-template-columns:repeat(4,1fr);}.specgrid{grid-template-columns:1fr;}.wrap{padding:24px;}.gtop{padding:16px 24px;}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+</head>
+<body>
+
+<header class="gtop">
+  <div class="mark"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+  <h1>Medical Suite — Style Guide</h1>
+  <span class="tag">Graphite Indigo</span>
+  <span class="v">v1.0 · tokens.css</span>
+</header>
+
+<div class="wrap">
+
+  <p class="sec-note" style="max-width:70ch;margin-bottom:40px;">
+    The base reference for every tool in the Suite and for the standalone Dispatch app.
+    All values live in <span class="mono">tokens.css</span> — define a color or size there once,
+    and reference it everywhere with <span class="mono">var(--token)</span>. Never hard-code a hex.
+  </p>
+
+  <!-- COLOR -->
+  <section>
+    <div class="eyebrow">Foundations</div>
+    <h2 class="sec-title">Color</h2>
+    <p class="sec-note">Neutral light grays carry the interface; indigo is reserved for actions and active state. Semantic colors are for status only — staff availability, stock levels, patient flags.</p>
+
+    <div class="eyebrow" style="margin-bottom:10px;">Neutrals</div>
+    <div class="grid swatches" style="margin-bottom:24px;">
+      <div class="sw"><div class="chip" style="background:#F4F4F6;border-bottom:1px solid var(--border)"></div><div class="meta"><div class="nm">Background</div><div class="tok">--bg</div><div class="hex">#F4F4F6</div></div></div>
+      <div class="sw"><div class="chip" style="background:#FFFFFF;border-bottom:1px solid var(--border)"></div><div class="meta"><div class="nm">Surface</div><div class="tok">--surface</div><div class="hex">#FFFFFF</div></div></div>
+      <div class="sw"><div class="chip" style="background:#F0F0F3"></div><div class="meta"><div class="nm">Sidebar</div><div class="tok">--sidebar</div><div class="hex">#F0F0F3</div></div></div>
+      <div class="sw"><div class="chip" style="background:#E4E4EA"></div><div class="meta"><div class="nm">Border</div><div class="tok">--border</div><div class="hex">#E4E4EA</div></div></div>
+    </div>
+
+    <div class="eyebrow" style="margin-bottom:10px;">Text</div>
+    <div class="grid swatches" style="margin-bottom:24px;">
+      <div class="sw"><div class="chip" style="background:#1B1B23"></div><div class="meta"><div class="nm">Primary</div><div class="tok">--text</div><div class="hex">#1B1B23</div></div></div>
+      <div class="sw"><div class="chip" style="background:#6B6B78"></div><div class="meta"><div class="nm">Muted</div><div class="tok">--text-muted</div><div class="hex">#6B6B78</div></div></div>
+      <div class="sw"><div class="chip" style="background:#9B9BA6"></div><div class="meta"><div class="nm">Faint</div><div class="tok">--text-faint</div><div class="hex">#9B9BA6</div></div></div>
+      <div class="sw"><div class="chip" style="background:#D2D2DA"></div><div class="meta"><div class="nm">Border strong</div><div class="tok">--border-strong</div><div class="hex">#D2D2DA</div></div></div>
+    </div>
+
+    <div class="eyebrow" style="margin-bottom:10px;">Accent — Indigo</div>
+    <div class="grid swatches" style="margin-bottom:24px;">
+      <div class="sw"><div class="chip" style="background:#4F46E5"></div><div class="meta"><div class="nm">Accent</div><div class="tok">--accent</div><div class="hex">#4F46E5</div></div></div>
+      <div class="sw"><div class="chip" style="background:#4338CA"></div><div class="meta"><div class="nm">Hover</div><div class="tok">--accent-hover</div><div class="hex">#4338CA</div></div></div>
+      <div class="sw"><div class="chip" style="background:#3730A3"></div><div class="meta"><div class="nm">Active</div><div class="tok">--accent-active</div><div class="hex">#3730A3</div></div></div>
+      <div class="sw"><div class="chip" style="background:#EEEDFD"></div><div class="meta"><div class="nm">Soft tint</div><div class="tok">--accent-soft</div><div class="hex">#EEEDFD</div></div></div>
+    </div>
+
+    <div class="eyebrow" style="margin-bottom:10px;">Semantic — status & alerts</div>
+    <div class="grid swatches">
+      <div class="sw"><div class="chip" style="background:#1E9E62"></div><div class="meta"><div class="nm">Success / on duty</div><div class="tok">--success</div><div class="hex">#1E9E62</div></div></div>
+      <div class="sw"><div class="chip" style="background:#C77A12"></div><div class="meta"><div class="nm">Warning / on leave</div><div class="tok">--warning</div><div class="hex">#C77A12</div></div></div>
+      <div class="sw"><div class="chip" style="background:#D14343"></div><div class="meta"><div class="nm">Danger / stock-out</div><div class="tok">--danger</div><div class="hex">#D14343</div></div></div>
+      <div class="sw"><div class="chip" style="background:#EEEDFD"></div><div class="meta"><div class="nm">Info (= accent)</div><div class="tok">--info</div><div class="hex">#4F46E5</div></div></div>
+    </div>
+  </section>
+
+  <!-- TYPE -->
+  <section>
+    <div class="eyebrow">Foundations</div>
+    <h2 class="sec-title">Typography</h2>
+    <p class="sec-note">Inter is the canonical UI face, falling back to the system sans so prototypes render instantly. A monospace face is reserved for IDs, codes, and log timestamps — anything machine-generated.</p>
+    <div class="card">
+      <div class="typerow"><span style="font-size:26px;font-weight:700;letter-spacing:-.5px;">19 staff on duty</span><span class="spec">stat · 26 / 700 · --fs-stat</span></div>
+      <div class="typerow"><span style="font-size:18px;font-weight:700;">Personnel</span><span class="spec">h1 · 18 / 700 · --fs-h1</span></div>
+      <div class="typerow"><span style="font-size:14.5px;font-weight:700;">Medical Personnel</span><span class="spec">h2 · 14.5 / 700 · --fs-h2</span></div>
+      <div class="typerow"><span style="font-size:13.5px;">Default body text for tables, descriptions and forms.</span><span class="spec">body · 13.5 / 400 · --fs-body</span></div>
+      <div class="typerow"><span style="font-size:12.5px;color:var(--text-muted);">Secondary text and helper copy.</span><span class="spec">small · 12.5 / 500 · --fs-sm</span></div>
+      <div class="typerow"><span style="font-size:10.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--text-faint);">Column Label</span><span class="spec">label · 10.5 / 600 · --fs-label</span></div>
+      <div class="typerow"><span class="mono" style="font-size:12px;">PR-1042 · 09:41</span><span class="spec">mono · 12 · --font-mono</span></div>
+    </div>
+  </section>
+
+  <!-- SPACING + RADIUS -->
+  <section>
+    <div class="eyebrow">Foundations</div>
+    <h2 class="sec-title">Spacing &amp; radius</h2>
+    <p class="sec-note">A 4px base scale keeps rhythm consistent across every tool. Radii: small for controls, medium for cards, large for the outer app frame.</p>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="spaces">
+        <div class="spc"><div class="bar" style="height:4px"></div><div class="lbl">4 · sp-1</div></div>
+        <div class="spc"><div class="bar" style="height:8px"></div><div class="lbl">8 · sp-2</div></div>
+        <div class="spc"><div class="bar" style="height:12px"></div><div class="lbl">12 · sp-3</div></div>
+        <div class="spc"><div class="bar" style="height:16px"></div><div class="lbl">16 · sp-4</div></div>
+        <div class="spc"><div class="bar" style="height:24px"></div><div class="lbl">24 · sp-5</div></div>
+        <div class="spc"><div class="bar" style="height:32px"></div><div class="lbl">32 · sp-6</div></div>
+        <div class="spc"><div class="bar" style="height:48px"></div><div class="lbl">48 · sp-7</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="radii">
+        <div class="rad"><div class="box" style="border-radius:6px"></div><div class="lbl">6 · r-sm</div></div>
+        <div class="rad"><div class="box" style="border-radius:10px"></div><div class="lbl">10 · r-md</div></div>
+        <div class="rad"><div class="box" style="border-radius:14px"></div><div class="lbl">14 · r-lg</div></div>
+        <div class="rad"><div class="box" style="border-radius:999px;width:74px"></div><div class="lbl">pill · r-pill</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPONENTS -->
+  <section>
+    <div class="eyebrow">Components</div>
+    <h2 class="sec-title">Buttons</h2>
+    <p class="sec-note">One primary action per view, in indigo. Everything else is ghost. Danger is reserved for destructive actions like deleting personnel.</p>
+    <div class="card">
+      <div class="row">
+        <button class="btn btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add personnel</button>
+        <button class="btn btn-ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M6 12h12M9 18h6"/></svg>Filter</button>
+        <button class="btn btn-danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/></svg>Delete</button>
+        <button class="btn btn-ghost btn-sm">Small</button>
+        <button class="btn btn-primary" disabled>Disabled</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Components</div>
+    <h2 class="sec-title">Status badges</h2>
+    <p class="sec-note">The shared vocabulary for state across every tool — staff availability, stock levels, patient flags. Same colors mean the same thing everywhere.</p>
+    <div class="card"><div class="row">
+      <span class="badge badge-success">On duty</span>
+      <span class="badge badge-warning">On leave</span>
+      <span class="badge badge-muted">Off duty</span>
+      <span class="badge badge-danger">Stock-out</span>
+      <span class="badge badge-warning">Low stock</span>
+      <span class="badge badge-success">In stock</span>
+    </div></div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Components</div>
+    <h2 class="sec-title">Forms &amp; alerts</h2>
+    <div class="card grid" style="grid-template-columns:1fr 1fr;gap:28px;">
+      <div>
+        <label class="field-label">Full name</label>
+        <input class="input" placeholder="e.g. Dr. Elena Mara" style="margin-bottom:16px;">
+        <label class="field-label">Staff ID</label>
+        <input class="input" value="PR-1042" style="font-family:var(--font-mono);">
+      </div>
+      <div class="grid" style="gap:12px;align-content:start;">
+        <div class="alert alert-warning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>Morphine 10mg is below reorder level (4 left).</div>
+        <div class="alert alert-danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>Saline 0.9% is out of stock.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Components</div>
+    <h2 class="sec-title">Data table</h2>
+    <p class="sec-note">The workhorse of the Suite. Light hairlines, hover row, avatar + name pattern, mono IDs, status badge in the last meaningful column.</p>
+    <div class="panel">
+      <table>
+        <thead><tr><th>Name</th><th>ID</th><th>Role</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><div class="person"><div class="avatar" style="background:#4F46E5">EM</div><span style="font-weight:600">Dr. Elena Mara</span></div></td><td class="mono">PR-1042</td><td style="color:var(--text-muted)">Physician</td><td><span class="badge badge-success">On duty</span></td></tr>
+          <tr><td><div class="person"><div class="avatar" style="background:#1E9E62">JV</div><span style="font-weight:600">Jonas Vance</span></div></td><td class="mono">PR-1043</td><td style="color:var(--text-muted)">Charge Nurse</td><td><span class="badge badge-success">On duty</span></td></tr>
+          <tr><td><div class="person"><div class="avatar" style="background:#C77A12">SK</div><span style="font-weight:600">Sofia Keller</span></div></td><td class="mono">PR-1051</td><td style="color:var(--text-muted)">Pharmacist</td><td><span class="badge badge-warning">On leave</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Foundations</div>
+    <h2 class="sec-title">Iconography</h2>
+    <p class="sec-note">Line icons only, single set (Lucide is the canonical choice). 24×24 viewBox, <span class="mono">stroke-width 1.8</span> for nav and <span class="mono">2</span> for small UI, round caps and joins, <span class="mono">currentColor</span> so icons inherit text color.</p>
+    <div class="card">
+      <div class="icons">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>personnel</span></div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8V21H3V8"/><rect x="1" y="3" width="22" height="5" rx="1"/><path d="M10 12h4"/></svg><span>inventory</span></div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg><span>archive</span></div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M7 14h3v3H7z"/></svg><span>roster</span></div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg><span>calendar</span></div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 0-2 1.5"/><path d="M9 7h6"/></svg><span>library</span></div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8z"/></svg><span>dispatch</span></div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg><span>activity</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Reference</div>
+    <h2 class="sec-title">Quick spec</h2>
+    <div class="card specgrid">
+      <div><div class="spec-item"><span class="k">Base unit</span><span class="vv">4px</span></div><div class="spec-item"><span class="k">Body size</span><span class="vv">13.5px</span></div><div class="spec-item"><span class="k">Hairline border</span><span class="vv">1px --border</span></div><div class="spec-item"><span class="k">Control radius</span><span class="vv">6px</span></div></div>
+      <div><div class="spec-item"><span class="k">Card radius</span><span class="vv">10px</span></div><div class="spec-item"><span class="k">Focus ring</span><span class="vv">3px --accent-soft</span></div><div class="spec-item"><span class="k">Transition</span><span class="vv">.12s ease</span></div><div class="spec-item"><span class="k">Icon set</span><span class="vv">Lucide · line</span></div></div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

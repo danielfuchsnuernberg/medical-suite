@@ -1,0 +1,161 @@
+/* ============================================================
+   MEDICAL SUITE — DESIGN TOKENS & PRIMITIVES
+   Direction: Graphite Indigo
+   ------------------------------------------------------------
+   Single source of truth for the entire Suite, every tool,
+   and the standalone Dispatch app. Define a value ONCE here;
+   never hard-code a hex/size in a tool.
+
+   Usage:  <link rel="stylesheet" href="tokens.css">
+   Then build with var(--token) and the .classes below.
+   ============================================================ */
+
+:root{
+
+  /* ---- COLOR · neutrals (the backbone) ------------------- */
+  --bg:            #F4F4F6;  /* app background                */
+  --surface:       #FFFFFF;  /* cards, panels, tables         */
+  --surface-2:     #FAFAFB;  /* alt rows, subtle raised areas */
+  --sidebar:       #F0F0F3;  /* navigation rail               */
+  --border:        #E4E4EA;  /* default hairline              */
+  --border-strong: #D2D2DA;  /* inputs, weightier dividers    */
+
+  /* ---- COLOR · text -------------------------------------- */
+  --text:          #1B1B23;  /* primary                       */
+  --text-muted:    #6B6B78;  /* secondary                     */
+  --text-faint:    #9B9BA6;  /* labels, placeholders, meta    */
+
+  /* ---- COLOR · accent (indigo) --------------------------- */
+  --accent:        #4F46E5;  /* primary actions, active state */
+  --accent-hover:  #4338CA;
+  --accent-active: #3730A3;  /* pressed                       */
+  --accent-soft:   #EEEDFD;  /* tints: active nav, icon chips */
+  --accent-border: #C9C6F7;  /* soft borders on accent items  */
+  --on-accent:     #FFFFFF;  /* text/icon ON accent fills     */
+
+  /* ---- COLOR · semantic (status / alerts) ---------------- */
+  /* used for: staff status, stock-low warnings, patient flags */
+  --success:#1E9E62; --success-soft:#E7F5EE;
+  --warning:#C77A12; --warning-soft:#F8EFDF;
+  --danger: #D14343; --danger-soft: #FAEAEA;
+  --info:   #4F46E5; --info-soft:   #EEEDFD;
+
+  /* ---- TYPOGRAPHY ---------------------------------------- */
+  /* Inter is the canonical UI face; degrades to the system   */
+  /* sans cleanly if not loaded (fine for prototyping).       */
+  --font-sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace; /* IDs, codes, logs */
+
+  --fs-h1:18px;   /* page title              */
+  --fs-h2:14.5px; /* panel / section title   */
+  --fs-body:13.5px;
+  --fs-sm:12.5px; /* secondary text          */
+  --fs-xs:11.5px; /* meta                    */
+  --fs-label:10.5px; /* column heads, eyebrows (uppercase) */
+  --fs-stat:26px; /* big stat numbers        */
+  --fs-mono:12px;
+
+  --fw-regular:400; --fw-medium:500; --fw-semibold:600; --fw-bold:700;
+  --lh-tight:1.2; --lh-normal:1.45;
+  --ls-label:.6px;
+
+  /* ---- SPACING (4px base scale) -------------------------- */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;
+  --sp-5:24px; --sp-6:32px; --sp-7:48px;
+
+  /* ---- RADIUS -------------------------------------------- */
+  --r-sm:6px; --r-md:10px; --r-lg:14px; --r-pill:999px;
+
+  /* ---- ELEVATION ----------------------------------------- */
+  --shadow-sm:0 1px 2px rgba(20,20,35,.06);
+  --shadow-md:0 6px 18px -8px rgba(20,20,35,.18);
+  --shadow-pop:0 14px 40px -12px rgba(20,20,35,.28);
+
+  /* ---- BORDERS · FOCUS · MOTION -------------------------- */
+  --bw:1px;
+  --focus-ring:0 0 0 3px var(--accent-soft);
+  --t-fast:.12s ease; --t-med:.2s ease;
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+*{box-sizing:border-box;}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:var(--font-sans);font-size:var(--fs-body);line-height:var(--lh-normal);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{margin:0;line-height:var(--lh-tight);}
+a{color:var(--accent);text-decoration:none;}
+
+/* visible keyboard focus on every interactive primitive */
+.btn:focus-visible,.input:focus-visible,.nav-item:focus-visible{
+  outline:none;box-shadow:var(--focus-ring);border-color:var(--accent);
+}
+
+/* ============================================================
+   PRIMITIVES — start every tool from these
+   ============================================================ */
+
+/* ---- buttons ---- */
+.btn{
+  font:var(--fw-semibold) var(--fs-body)/1 var(--font-sans);
+  display:inline-flex;align-items:center;gap:var(--sp-2);
+  padding:var(--sp-2) var(--sp-4);border-radius:var(--r-sm);
+  border:var(--bw) solid transparent;cursor:pointer;transition:var(--t-fast);
+}
+.btn svg{width:15px;height:15px;}
+.btn-primary{background:var(--accent);color:var(--on-accent);}
+.btn-primary:hover{background:var(--accent-hover);}
+.btn-primary:active{background:var(--accent-active);}
+.btn-ghost{background:var(--surface);color:var(--text);border-color:var(--border);}
+.btn-ghost:hover{background:var(--bg);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-danger:hover{filter:brightness(.94);}
+.btn-sm{padding:var(--sp-1) var(--sp-3);font-size:var(--fs-sm);}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ---- status badges / pills ---- */
+.badge{
+  font-size:var(--fs-xs);font-weight:var(--fw-semibold);
+  padding:3px 9px;border-radius:var(--r-pill);
+  display:inline-flex;align-items:center;gap:5px;
+}
+.badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
+.badge-success{background:var(--success-soft);color:var(--success);}
+.badge-warning{background:var(--warning-soft);color:var(--warning);}
+.badge-danger{background:var(--danger-soft);color:var(--danger);}
+.badge-muted{background:color-mix(in srgb,var(--text-muted) 12%,transparent);color:var(--text-muted);}
+
+/* ---- inputs ---- */
+.input{
+  font:var(--fw-regular) var(--fs-body)/1.2 var(--font-sans);
+  width:100%;padding:var(--sp-2) var(--sp-3);
+  background:var(--surface);color:var(--text);
+  border:var(--bw) solid var(--border-strong);border-radius:var(--r-sm);
+  transition:var(--t-fast);
+}
+.input::placeholder{color:var(--text-faint);}
+.field-label{font-size:var(--fs-sm);font-weight:var(--fw-semibold);color:var(--text-muted);display:block;margin-bottom:var(--sp-2);}
+
+/* ---- panel / card ---- */
+.panel{background:var(--surface);border:var(--bw) solid var(--border);border-radius:var(--r-md);overflow:hidden;}
+.panel-head{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-4) var(--sp-5);border-bottom:var(--bw) solid var(--border);}
+.panel-head h2{font-size:var(--fs-h2);font-weight:var(--fw-bold);}
+
+/* ---- eyebrow / column label ---- */
+.label{font-size:var(--fs-label);font-weight:var(--fw-semibold);letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--text-faint);}
+
+/* ---- mono (IDs, codes, log timestamps) ---- */
+.mono{font-family:var(--font-mono);font-size:var(--fs-mono);color:var(--text-muted);}
+
+/* ---- alert banner (e.g. stock-low) ---- */
+.alert{display:flex;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);border-radius:var(--r-md);font-size:var(--fs-sm);align-items:flex-start;}
+.alert-warning{background:var(--warning-soft);color:var(--warning);}
+.alert-danger{background:var(--danger-soft);color:var(--danger);}
+
+/* ---- avatar ---- */
+.avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:var(--fs-xs);font-weight:var(--fw-semibold);color:#fff;background:var(--accent);flex:none;}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;}}
