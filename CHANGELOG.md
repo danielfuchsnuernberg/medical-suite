@@ -1,5 +1,13 @@
 # CHANGELOG — REACH Inventory
 
+## 2026-11-26 — June prototype archived; new app to be built from scratch
+- Danny: nobody uses the June app; build one real app properly, server later, connected to the REACH family.
+- Bug hunt: 26 bugs (two independent passes, all reproduced) in `BUGS.md`; all become rules for the new app, no patches.
+- Newest real data found: the Downloads bag check list (counts to May 2026) is newer than what the June app contained (March).
+- Archived to iCloud › AI Projects › REACH Inventory: 26 files (source data + archive, README). Old folder and Dock app → Trash.
+- `index.html` (the June app with real data) removed from the repo. Git history left as is (Q1).
+- Danny's answers Q1–Q11 logged in `PLAN.md`.
+
 ## 2026-11-26 — Brought into Claude Code
 - Found the newest version on the Mac (see `PLAN.md` › "Which version was taken") and cloned the GitHub repo to `~/Documents/GitHub/medical-suite`.
 - Added the rule-book files, `CLAUDE.md` and `.gitignore` (keeps out real data, secrets and build output).

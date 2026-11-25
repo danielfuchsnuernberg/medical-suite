@@ -156,7 +156,8 @@ textarea{width:100%;min-height:64px;font:inherit;font-size:14px;padding:10px;bor
     </div>
     <nav class="tabs" aria-label="Sections">
       <a href="#map" id="tab-map">1 · Map</a>
-      <a href="#questions" id="tab-questions">2 · Questions</a>
+      <a href="#bugs" id="tab-bugs">2 · Bugs &amp; fixes</a>
+      <a href="#questions" id="tab-questions">3 · Questions</a>
     </nav>
   </header>
 
@@ -173,7 +174,7 @@ textarea{width:100%;min-height:64px;font:inherit;font-size:14px;padding:10px;bor
         <div class="num"><b>9</b><span>places: Store + 8 bags</span></div>
         <div class="num"><b>208</b><span>lines at zero</span></div>
         <div class="num"><b>201</b><span>lines expired by today</span></div>
-        <div class="num"><b>12</b><span>bugs written down (B1–B12)</span></div>
+        <div class="num"><b>26</b><span>bugs written down (B1–B26), see tab 2</span></div>
       </div>
     </section>
 
@@ -277,6 +278,96 @@ textarea{width:100%;min-height:64px;font:inherit;font-size:14px;padding:10px;bor
     </section>
   </div>
 
+  <!-- ===================== BUGS ===================== -->
+  <div id="view-bugs" class="wrap" style="max-width:none" hidden>
+    <section class="panel">
+      <h2>26 bugs, and where each one gets fixed</h2>
+      <p class="muted" style="max-width:75ch">Two independent passes (mine, plus a code review that didn't see my list), every finding reproduced in a test copy. Since the June app is the reference and the real app gets rebuilt, most bugs become rules for the rebuild. Only the ones that endanger <b>real</b> data today are worth a small patch, and only if the June app is in real use (question Q11).</p>
+      <div class="nums">
+        <div class="num"><b style="color:var(--bad)">7</b><span>patch now (if in real use)</span></div>
+        <div class="num"><b>24</b><span>rules for the rebuild</span></div>
+        <div class="num"><b style="color:var(--warn)">3</b><span>stock-list clean-ups for the medics</span></div>
+        <div class="num"><b>1</b><span>your decision first (Q1)</span></div>
+      </div>
+      <p class="muted" style="font-size:13px">Some bugs fall in two groups, so the numbers add up to more than 26.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Patch now: before → after, in the order I'd fix them</h2>
+      <div class="map" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
+        <div class="group"><h3><span>1 · B15 Import replaces everything</span><span class="pill p-bad">data loss</span></h3>
+          <div class="node n-bad"><b>Before</b><small>Pick a file → all data replaced, no question. An older backup with no inventory: <b>784 items → 0</b>. A backup with no people: every button gone.</small></div>
+          <div class="node n-ok"><b>After</b><small><span class="dlg" style="margin:6px 0;display:flex"><b style="font-size:12px">Replace all data?</b><span>This file: 0 items, 1 person. Your app: 784 items, 5 people.</span><span style="display:flex;gap:6px;justify-content:flex-end"><span class="chip">Cancel</span><span class="chip" style="background:var(--bad);color:#fff;border:none">Replace</span></span></span>Files without staff or stock are refused.</small></div>
+          <small class="muted">Why first: once the real data leaves the page (step 2), Import is how your stock gets in.</small></div>
+
+        <div class="group"><h3><span>2 · B9 Real data on a public page</span><span class="pill p-bad">privacy</span></h3>
+          <div class="node n-bad"><b>Before</b><small>Anyone opening the link sees 902 stock lines and 5 real staff names.</small></div>
+          <div class="node n-ok"><b>After</b><small>The page opens empty: "No stock on this device — Load stock file". Your data comes from a backup file kept off GitHub. Wiping the old copies from GitHub's history only with your separate OK (Q1).</small></div></div>
+
+        <div class="group"><h3><span>3 · B3 New version wipes data</span><span class="pill p-bad">data loss</span></h3>
+          <div class="node n-bad"><b>Before</b><small>A count of <b>4242</b> → after an update <b>1000</b> again; stock takes gone.</small></div>
+          <div class="node n-ok"><b>After</b><small>Updates keep your data and only add missing fields. Test: count 4242, update, still 4242.</small></div></div>
+
+        <div class="group"><h3><span>4 · B22 Silent save failure</span><span class="pill p-bad">data loss</span></h3>
+          <div class="node n-bad"><b>Before</b><small>Storage full (about 30 stock takes on an iPhone/iPad) → changes look saved, gone after reload.</small></div>
+          <div class="node n-ok"><b>After</b><small><span class="callout" style="background:var(--bad)">Couldn't save. Export a backup now.</span> stays on screen until a save works again.</small></div></div>
+
+        <div class="group"><h3><span>5 · B16 Counts lost / empty = 0</span><span class="pill p-bad">data loss</span></h3>
+          <div class="node n-bad"><b>Before</b><small>Type 777, touch the search box → back to 1. Empty box → saved as <b>0</b>, line "Out of stock".</small></div>
+          <div class="node n-ok"><b>After</b><small>Filters and search wait while counting. Leaving asks "Save 12 counts or discard?". An empty box means "not counted" and stays unchanged.</small></div></div>
+
+        <div class="group"><h3><span>6 · B14 Last Admin locked out</span><span class="pill p-warn">broken</span></h3>
+          <div class="node n-bad"><b>Before</b><small>Archive or demote the only Admin → Settings and Import gone for good.</small></div>
+          <div class="node n-ok"><b>After</b><small>"You're the last Admin. Make someone else Admin first." Button refuses.</small></div></div>
+
+        <div class="group" style="grid-column:1/-1"><h3><span>7 · B1 Full bag shows as short</span><span class="pill p-warn">wrong medical info</span></h3>
+          <div class="tablewrap"><table>
+            <thead><tr><th>Bag</th><th>Lines ok — before</th><th>Lines ok — after</th><th>Still short</th><th>Out</th><th>Expired</th></tr></thead>
+            <tbody>
+              <tr><td>MAMA's Bag</td><td>23</td><td><b>80</b></td><td>19</td><td>28</td><td>40</td></tr>
+              <tr><td>Trauma Bag</td><td>16</td><td><b>95</b></td><td>23</td><td>25</td><td>31</td></tr>
+              <tr><td>Oxygen Airway (Old)</td><td>2</td><td><b>18</b></td><td>4</td><td>12</td><td>4</td></tr>
+              <tr><td>Oxygen (New)</td><td>2</td><td><b>29</b></td><td>3</td><td>8</td><td>2</td></tr>
+              <tr><td>Mass Casualty Bag</td><td>14</td><td><b>38</b></td><td>5</td><td>3</td><td>8</td></tr>
+              <tr><td>P2-ICU &amp; Small Red Bag</td><td>22</td><td><b>88</b></td><td>13</td><td>7</td><td>31</td></tr>
+              <tr><td>Snake Bite Kit</td><td>0</td><td><b>17</b></td><td>1</td><td>0</td><td>11</td></tr>
+            </tbody></table></div>
+          <small class="muted">"At par" (holding exactly the required amount) counts as ok. Bags stay "Not ready" where items are out or expired; that part is real.</small></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Rules for the rebuild (not patched in the June app)</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th>ID</th><th>What goes wrong today</th><th>Rule for the new app</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">B13</td><td>Expiry a day early in Peru; flips at 10:00 in PNG; records get yesterday's date before 10:00</td><td>Dates are calendar days in the base's own time zone (a setting)</td></tr>
+          <tr><td class="mono">B4</td><td>Typed text runs as code; a quote breaks buttons</td><td>All text is shown as text, never as code</td></tr>
+          <tr><td class="mono">B5</td><td>Phone: stuck, no menu</td><td>Designed for phone, iPad and Mac from the start</td></tr>
+          <tr><td class="mono">B18 · B19</td><td>Permanent deletes and edited quantities leave no trace</td><td>Every change to stock is a recorded movement: who, when, old → new, why</td></tr>
+          <tr><td class="mono">B17</td><td>−5, 0 or empty becomes 1; 2.7 becomes 2</td><td>Bad numbers are refused with a message, never changed silently</td></tr>
+          <tr><td class="mono">B24</td><td>A line can't move from one bag to another</td><td>"Move to…" between Store and bags, recorded as a movement</td></tr>
+          <tr><td class="mono">B25 · B10</td><td>No required amount = "At par"; Store never "low"</td><td>No required amount shows "not set"; Store gets reorder levels</td></tr>
+          <tr><td class="mono">B20 · B26</td><td>Expired certificates can't be renewed; 31 Jan + 1 month = 3 Mar</td><td>Renew in one tap; correct month maths (if Personnel stays here, Q6)</td></tr>
+          <tr><td class="mono">B21 · B23</td><td>Deleted department re-files archived people; archived user keeps rights</td><td>Lists can't remove a value still used by any record; archived = no access</td></tr>
+          <tr><td class="mono">B11 · B12</td><td>EDP hook unsafe; anyone can be Admin</td><td>Real sign-in; EDP messages counted once, never silently below zero</td></tr>
+          <tr><td class="mono">B2 · B7 · B8</td><td>Import shows "undefined"; "today" goes stale; unstyled boxes</td><td>Covered by the new code and its tests</td></tr>
+        </tbody></table></div>
+    </section>
+
+    <section class="panel">
+      <h2>Stock-list clean-up (for the medics, B6)</h2>
+      <div class="map">
+        <div class="node n-bad"><b>3 nonsense expiry dates</b><small>Stomach Tube 14 (1905), Needle 20g ×2 (1900)</small></div>
+        <div class="node n-bad"><b>9 items listed twice in one place</b><small>e.g. Adrenaline 1:1000 in MAMA's Bag: 0 of 1 <i>and</i> 2 of 2</small></div>
+        <div class="node n-warn"><b>4 lot numbers that are dates</b><small>Dextrose 50%, Betadine, two trauma bandages</small></div>
+        <div class="node n-warn"><b>Ambiguous names</b><small>"Atropin 06mg/ml" vs "0.6mg/ml"; Asprin, Amoxcilin…</small></div>
+        <div class="node n-warn"><b>187 expired lines still in stock</b><small>of 201 expired lines</small></div>
+        <div class="node n-warn"><b>Controlled drugs</b><small>16 lines, only 5 with a lot number</small></div>
+      </div>
+    </section>
+  </div>
+
   <!-- ===================== QUESTIONS ===================== -->
   <div id="view-questions" class="wrap" style="max-width:none" hidden>
     <section class="panel">
@@ -298,11 +389,11 @@ textarea{width:100%;min-height:64px;font:inherit;font-size:14px;padding:10px;bor
 <script>
 /* ---------- tabs ---------- */
 function route(){
-  const q = location.hash === "#questions";
-  document.getElementById("view-map").hidden = q;
-  document.getElementById("view-questions").hidden = !q;
-  document.getElementById("tab-map").setAttribute("aria-current", q ? "false" : "page");
-  document.getElementById("tab-questions").setAttribute("aria-current", q ? "page" : "false");
+  const v = location.hash === "#questions" ? "questions" : location.hash === "#bugs" ? "bugs" : "map";
+  ["map","bugs","questions"].forEach(n=>{
+    document.getElementById("view-"+n).hidden = n!==v;
+    document.getElementById("tab-"+n).setAttribute("aria-current", n===v ? "page" : "false");
+  });
 }
 addEventListener("hashchange", route); route();
 
@@ -336,7 +427,7 @@ const avatars = (list)=>`<span style="display:inline-flex;padding-left:4px">${li
 /* ---------- the questions ---------- */
 const Q = [
 { id:"Q1", title:"Your real stock list is on a public web page. What do we do?",
-  what:"The app file has your whole stock list built in (784 items, 902 lines with lot numbers and expiry dates) and 5 real staff names with their roles. That file is your GitHub repo, which is public, and it is the page your Dock app opens. Anyone with the link can read it.",
+  what:"You confirmed it: the staff and the stock list are real. The app file has the whole stock list built in (784 items, 902 lines with lot numbers and expiry dates) and the 5 staff names with their roles. That file is your GitHub repo, which is public, and it is the page your Dock app opens. Anyone with the link can read it.",
   why:"Found in the stock-take (B9). It breaks your rule \"no real stock or patient data in Git\". For a medical store it also shows what drugs are held where. Removing it from new versions is easy. The old copies stay readable in the repo's history unless that history is rewritten, and rewriting it means a force-push, which needs your explicit OK.",
   proposed:"a", multi:false,
   opts:[
@@ -398,7 +489,7 @@ const Q = [
   }},
 { id:"Q5", title:"Should everyone see the same stock?",
   what:"When a medic takes 2 ampoules out of MAMA's Bag on their iPhone, should the iPad at the base show that straight away?",
-  why:"Today every device keeps its own separate copy (no server, no sync). Two people counting on two devices end up with two different truths, and the only bridge is exporting and importing files by hand. Shared stock needs a small server or cloud database, which is a big architecture choice.",
+  why:"You said the real app probably needs a server later, like other apps in the family. Today every device keeps its own separate copy (no server, no sync). Two people counting on two devices end up with two different truths, and the only bridge is exporting and importing files by hand. Shared stock needs a small server or cloud database, which is a big architecture choice.",
   proposed:"b", multi:false,
   opts:[
     {k:"a", t:"No: each device has its own stock", e:"No server. Fine for one person on one device."},
@@ -485,6 +576,19 @@ const Q = [
   mock(v){
     const brand = v==="b"?{name:"REACH Inventory",sub:"Medical"}:v==="c"?{name:"Inventory",sub:"Operator: from settings"}:{name:"Medical Suite",sub:"MAMA MedEvac"};
     return {cap:"Name in the corner of the app", html: app({brand, hlSide:true})};
+  }},
+{ id:"Q11", title:"Is the June app used for real counts right now?",
+  what:"Does anyone (you, the medics) count, dispense or restock real stock in the June app today: the Dock app, the web page or an iPad?",
+  why:"It decides how much gets patched before the rebuild. If real counts live in it, the four bugs that silently lose data (import, updates, full storage, counting) are dangerous today and get a small patch. If nobody uses it, only the real data comes off the public page and everything else waits for the new app. (Tab 2 shows each fix before → after.)",
+  proposed:"b", multi:false,
+  opts:[
+    {k:"a", t:"Yes, it holds real counts", e:"Patch all 7 \"patch now\" bugs, in the order on tab 2. First step for you: Settings › Export backup in the Dock app."},
+    {k:"b", t:"No, nobody relies on it", e:"Patch only B15 (safe import) and B9 (real data off the public page). The rest goes into the rebuild."},
+    {k:"c", t:"Sometimes / not sure", e:"Treat it as \"yes\" for safety."}],
+  mock(v){
+    const patch = v==="b" ? ["B15","B9"] : ["B15","B9","B3","B22","B16","B14","B1"];
+    const content = `<div style="display:flex;flex-direction:column;gap:5px">${["B15","B9","B3","B22","B16","B14","B1"].map(b=>`<div class="mrow"><span><b>${b}</b></span><span></span><span class="mbadge" style="${patch.includes(b)?'background:var(--bad-soft);color:var(--bad)':'background:var(--mock-bg);color:var(--muted)'}">${patch.includes(b)?'patch now':'rebuild'}</span></div>`).join("")}</div>`;
+    return {cap: v ? "What gets patched in the June app" : "Pick an answer to see what gets patched", html: app({content, title:"Fix plan"}).replace('class="ct"','class="ct hl"')};
   }}
 ];
 

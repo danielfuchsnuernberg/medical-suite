@@ -12,3 +12,11 @@
 - Live page = repo `index.html` = iCloud file: same md5 `b065284d73c5f392cbb3195fee655e42`.
 
 **Files changed in this session:** new only: `.gitignore`, `CLAUDE.md`, `PLAN.md`, `CHECKLIST.md`, `ARCHITECTURE.md`, `DECISIONS.md`, `BUGS.md`, `AUDIT.md`, `CHANGELOG.md`, `HANDOVER.md`, `docs/foundation/*` (4 files). `index.html` **not touched**.
+
+## 2026-11-26 — Archive of the June prototype
+
+- Danny's OK in chat. Dry run printed before any move.
+- 26 files moved into iCloud › AI Projects › REACH Inventory (2 source spreadsheets + 24 archive files). **0 failures; md5 of all 26 identical before and after.**
+- To Trash (recoverable): the emptied "Medical Suite" iCloud folder (only .DS_Store files and an empty sub-folder), and `~/Applications/Medical Suite.app`.
+- Repo: `index.html` removed (identical to the archived final app, md5 b065284d…). History not rewritten (Q1).
+- No real staff names in any tracked file (checked with grep before commit).
