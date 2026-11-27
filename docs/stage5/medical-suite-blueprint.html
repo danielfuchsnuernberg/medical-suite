@@ -1,0 +1,404 @@
+<title>Medical Suite Blueprint</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Stage 5: the look (June UI as a design system) and the structure of REACH Medical Suite. Outer page: Stage 4 colours with dark mode.
+   The component gallery uses the June tokens (light only, as in June), scoped to .june. Answers save to db collection "stage5". */
+:root{
+  --bg:#F4F4F6; --surface:#FFFFFF; --surface-2:#FAFAFB; --border:#E4E4EA; --border-strong:#D2D2DA;
+  --text:#1B1B23; --muted:#6B6B78; --faint:#9B9BA6;
+  --accent:#4F46E5; --accent-soft:#EEEDFD; --accent-border:#C9C6F7; --on-accent:#FFFFFF;
+  --ok:#1E9E62; --ok-soft:#E7F5EE; --warn:#C77A12; --warn-soft:#F8EFDF; --bad:#D14343; --bad-soft:#FAEAEA; --reach:#0F6E8C; --reach-soft:#E3F1F5;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A; --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C; --reach:#5BBAD6; --reach-soft:#14303A; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A; --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C; --reach:#5BBAD6; --reach-soft:#14303A; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:64px}
+.wrap{max-width:1060px;margin:0 auto}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:28px;font-weight:700;letter-spacing:-.4px} h2{font-size:21px;font-weight:700} h3{font-size:15px;font-weight:650}
+p{margin:0;max-width:72ch}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:13px} .mono{font-family:var(--mono);font-size:12.5px}
+header.top{padding-block:32px 8px;display:flex;flex-direction:column;gap:12px}
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;border-bottom:1px solid var(--border);display:flex;gap:6px;overflow-x:auto;margin-top:14px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+nav.toc a{flex:none;font-size:13px;color:var(--muted);text-decoration:none;padding:5px 10px;border-radius:8px}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--accent-soft);color:var(--accent);outline:none}
+section{padding-block:36px 6px;display:flex;flex-direction:column;gap:16px;scroll-margin-top:60px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px} .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:820px){.grid2,.grid3{grid-template-columns:1fr}}
+.k{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:640px){.steps{grid-template-columns:1fr}}
+.stp{padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;gap:3px;font-size:13.5px}
+.stp .n{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--faint)}
+.stp.here{border:2px solid var(--accent)} .stp.here .n{color:var(--accent)} .stp.done .n{color:var(--ok)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--faint);text-align:left;font-weight:600;padding:6px 8px;border-bottom:1px solid var(--border)}
+.tbl td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+.scroll{overflow-x:auto}
+.chip{font-size:11px;padding:1px 7px;border-radius:5px;white-space:nowrap;font-family:var(--mono)}
+.chip.b{background:var(--bad-soft);color:var(--bad)} .chip.r{background:var(--reach-soft);color:var(--reach)} .chip.f{background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text)}
+/* swatches */
+.sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.swc{border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:12px;background:var(--surface)}
+.swc i{display:block;height:42px}
+.swc div{padding:6px 8px} .swc b{display:block;font-size:12px} .swc span{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.type{display:flex;flex-direction:column;gap:6px;color-scheme:light;background:#fff;color:#1B1B23;border:1px solid #E4E4EA;border-radius:12px;padding:14px;font-family:"Inter",sans-serif}
+.type .row{display:flex;gap:12px;align-items:baseline;border-bottom:1px solid #F0F0F3;padding-bottom:6px}
+.type .row span:first-child{font-family:var(--mono);font-size:11px;color:#9B9BA6;width:110px;flex:none}
+.space{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.space div{background:var(--accent-soft);border:1px solid var(--accent-border);font-size:10.5px;font-family:var(--mono);color:var(--accent);display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px}
+/* gallery (June look) */
+.gal-ctrl{display:flex;gap:6px;flex-wrap:wrap}
+.gal-ctrl button{font:inherit;font-size:13px;padding:6px 11px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.gal-ctrl button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.june{--bg:#F4F4F6;--surface:#FFFFFF;--surface-2:#FAFAFB;--sidebar:#F0F0F3;--border:#E4E4EA;--border-strong:#D2D2DA;--text:#1B1B23;--text-muted:#6B6B78;--text-faint:#9B9BA6;--accent:#4F46E5;--accent-soft:#EEEDFD;--accent-border:#C9C6F7;
+  --success:#1E9E62;--success-soft:#E7F5EE;--warning:#C77A12;--warning-soft:#F8EFDF;--danger:#D14343;--danger-soft:#FAEAEA;--info:#2563EB;--info-soft:#E6EEFD;
+  color-scheme:light;background:var(--bg);color:var(--text);font-family:"Inter",sans-serif;font-size:13.5px;line-height:1.45;border:1px solid var(--border-strong);border-radius:12px;padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.june *{box-sizing:border-box}
+.june .cell{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.june .cap{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-faint);padding:7px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
+.june .cap code{font-family:"IBM Plex Mono",monospace;text-transform:none;letter-spacing:0;color:var(--accent);font-weight:500}
+.june .in{padding:12px;display:flex;flex-direction:column;gap:8px;min-height:80px}
+.june .btn{font:inherit;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:6px;border:1px solid transparent;cursor:default}
+.june .p{background:var(--accent);color:#fff} .june .g{background:#fff;border-color:var(--border);color:var(--text)} .june .d{background:var(--danger);color:#fff} .june .s{padding:4px 9px;font-size:12.5px}
+.june .btn[disabled]{opacity:.45}
+.june .badge{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px}
+.june .badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.june .bs{background:var(--success-soft);color:var(--success)} .june .bw{background:var(--warning-soft);color:var(--warning)} .june .bd{background:var(--danger-soft);color:var(--danger)} .june .bm{background:#EDEDF1;color:var(--text-muted)} .june .ba{background:var(--accent-soft);color:var(--accent)} .june .bi{background:var(--info-soft);color:var(--info)}
+.june .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.june .stat .k2{font-size:11.5px;color:var(--text-muted);font-weight:600} .june .stat .v{font-size:24px;font-weight:700}
+.june .att{display:flex;gap:8px;align-items:center;padding:9px 12px;border-radius:10px;font-size:12.5px;font-weight:500}
+.june .ad{background:var(--danger-soft);color:var(--danger)} .june .aw{background:var(--warning-soft);color:var(--warning)} .june .ao{background:var(--success-soft);color:var(--success)}
+.june .fld label{font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px}
+.june .fld input{font:inherit;font-size:13px;width:100%;padding:7px 10px;border:1px solid var(--border-strong);border-radius:6px;background:#fff;color:var(--text)}
+.june .fld input.bad{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-soft)}
+.june .fld .err{font-size:11.5px;color:var(--danger);margin-top:3px}
+.june .sync{display:inline-flex;gap:6px;align-items:center;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px}
+.june .sync i{width:8px;height:8px;border-radius:50%;background:currentColor}
+.june .so{background:var(--success-soft);color:var(--success)} .june .sf{background:var(--warning-soft);color:var(--warning)} .june .sb{background:var(--info-soft);color:var(--info)} .june .se{background:var(--danger-soft);color:var(--danger)}
+.june table{width:100%;border-collapse:collapse;font-size:12.5px}
+.june th{font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--text-faint);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)}
+.june td{padding:7px 8px;border-bottom:1px solid var(--border)}
+.june .empty{text-align:center;color:var(--text-faint);font-size:12.5px;padding:16px}
+.june .skel{height:12px;border-radius:6px;background:linear-gradient(90deg,#EDEDF1,#F7F7F9,#EDEDF1);background-size:200% 100%;animation:sk 1.2s infinite}
+@keyframes sk{from{background-position:200% 0}to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.june .skel{animation:none}}
+.june .banner{font-size:12px;padding:8px 10px;border-radius:8px}
+.june .bo{background:var(--warning-soft);color:#7a4a08} .june .be{background:var(--danger-soft);color:var(--danger)} .june .bn{background:var(--info-soft);color:#1d3f8a}
+.june .toast{background:#1B1B23;color:#fff;padding:8px 12px;border-radius:6px;font-size:12.5px;align-self:flex-start}
+.june .toast.e{background:var(--danger)} .june .toast.s{background:var(--success)}
+.june .modal{border:1px solid var(--border);border-radius:12px;box-shadow:0 14px 40px -12px rgba(20,20,35,.28);background:#fff}
+.june .modal .h{padding:9px 12px;border-bottom:1px solid var(--border);font-weight:700} .june .modal .b{padding:10px 12px} .june .modal .f{padding:8px 12px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:6px}
+.june .navi{display:flex;flex-direction:column;gap:2px;background:var(--sidebar);border-radius:8px;padding:8px}
+.june .navi span{padding:6px 9px;border-radius:6px;color:var(--text-muted);font-weight:500;font-size:13px;display:flex;justify-content:space-between}
+.june .navi span.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.june .navi em{font-style:normal;background:var(--danger);color:#fff;border-radius:9px;font-size:10.5px;padding:0 6px;font-weight:700}
+.june .ro{opacity:.6}
+.june .lock{font-size:12px;padding:8px 10px;border-radius:8px;background:#EDEDF1;color:var(--text-muted)}
+/* architecture */
+.layers{display:flex;flex-direction:column;gap:8px}
+.layer{border-radius:12px;padding:12px 14px;border:1px solid var(--border);background:var(--surface);display:grid;grid-template-columns:170px 1fr;gap:12px;align-items:start}
+@media (max-width:640px){.layer{grid-template-columns:1fr}}
+.layer .t{font-weight:700;font-size:14px} .layer .t small{display:block;font-weight:500;font-size:12px;color:var(--muted);font-family:var(--mono)}
+.layer.door{border:2px solid var(--accent)}
+.layer.local{background:var(--ok-soft);border-color:transparent} .layer.server{background:var(--surface-2);border-style:dashed}
+.down{text-align:center;color:var(--faint);font-size:13px;line-height:1}
+.tree{font-family:var(--mono);font-size:12.5px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;white-space:pre;overflow-x:auto;line-height:1.6}
+.tree b{color:var(--accent);font-weight:500} .tree i{color:var(--faint);font-style:normal}
+.recs{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.rec{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:12.5px}
+.rec .h{padding:8px 12px;background:var(--surface-2);border-bottom:1px solid var(--border);font-weight:700;font-size:13.5px;display:flex;justify-content:space-between;gap:6px;align-items:center}
+.rec .h span{font-family:var(--mono);font-size:10.5px;color:var(--muted);font-weight:500}
+.rec ul{margin:0;padding:8px 12px 10px 26px;display:flex;flex-direction:column;gap:2px}
+.rec li code{font-family:var(--mono);font-size:11.5px;color:var(--accent)}
+.stamp{background:var(--reach-soft);border:1px solid var(--reach);border-radius:12px;padding:10px 14px;font-size:13px}
+.stamp b{color:var(--reach)}
+.flow{display:flex;gap:0;align-items:stretch;overflow-x:auto;padding-bottom:4px}
+.fs{flex:1 0 165px;min-width:165px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:3px}
+.fs .w{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent)}
+.fs.later{border-style:dashed;opacity:.85}
+.to{flex:none;display:flex;align-items:center;padding:0 6px;color:var(--faint)}
+.dep{border-left:4px solid var(--warn);background:var(--surface);border-radius:0 12px 12px 0;padding:12px 14px;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.dep b.t{color:var(--warn)}
+.cov{display:flex;gap:10px;flex-wrap:wrap}
+.cov .c{font-weight:600;font-size:13px;padding:5px 12px;border-radius:999px;background:var(--ok-soft);color:var(--ok)}
+.cov .c.badc{background:var(--bad-soft);color:var(--bad)}
+.review{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--border-strong)}
+.review .q{font-size:13.5px;font-weight:600;flex:1 1 220px}
+.review .btns{display:flex;gap:6px}
+.review button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.review button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.review button[aria-pressed="true"].yes{background:var(--ok);border-color:var(--ok);color:var(--on-accent)}
+.review button[aria-pressed="true"].no{background:var(--warn);border-color:var(--warn);color:var(--on-accent)}
+.review textarea{flex:1 1 100%;min-height:54px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);resize:vertical}
+.review .state{font-size:12px;color:var(--faint);flex:1 1 100%}
+.final{border:2px solid var(--accent);background:var(--accent-soft)} .final .q{font-size:16px}
+footer{padding-top:28px;font-size:12.5px;color:var(--faint)}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Stage 5 · UI and architecture · REACH Medical Suite</div>
+  <h1>How it looks, and how it's built underneath</h1>
+  <p class="muted">The last step before any real code. Part 1 is the look: the June screens written down as rules (colours, type, spacing, building blocks and their states), so every screen is built the same way. Part 2 is the structure: where the code lives, how data is stored on each computer, how changes travel, and what the real program is made of. Nothing is built until you say GO.</p>
+  <div class="steps"><div class="stp done"><span class="n">done</span><b>Lined up with REACH</b><span class="muted small">your answers, earlier today</span></div><div class="stp here"><span class="n">now</span><b>Look and structure</b><span class="muted small">this page</span></div><div class="stp"><span class="n">then</span><b>Your GO → Stage 6</b><span class="muted small">building, feature by feature</span></div></div>
+</header>
+
+<nav class="toc" aria-label="Sections"><a href="#look">1 Look</a><a href="#blocks">Building blocks</a><a href="#layers">2 Structure</a><a href="#folders">Folders</a><a href="#data">Data</a><a href="#travel">How a change travels</a><a href="#program">The real program</a><a href="#deps-sec">Depends on</a><a href="#cover">Nothing missing</a><a href="#overall">GO</a></nav>
+
+<!-- LOOK -->
+<section id="look"><div class="eyebrow">1 · The look</div><h2>The June look, written down</h2>
+  <p class="muted">Nothing new: these are the exact values from the June Medical Suite (its <span class="mono">tokens.css</span>). Written down once in <span class="mono">apps/desktop/src/styles/tokens.css</span>, every screen uses them, so the program looks like June everywhere. Light only, as in June. The REACH-wide look comes later with EDP F53.</p>
+  <div class="panel"><span class="k">Colours</span><div class="sw" id="swatches"></div></div>
+  <div class="grid2">
+    <div class="panel"><span class="k">Type: Inter, as in June</span><div class="type">
+      <div class="row"><span>title 18 / 700</span><span style="font-size:18px;font-weight:700">Count Bag 1 (adult)</span></div>
+      <div class="row"><span>section 14.5 / 700</span><span style="font-size:14.5px;font-weight:700">Bag readiness</span></div>
+      <div class="row"><span>body 13.5 / 400</span><span style="font-size:13.5px">Type what you find.</span></div>
+      <div class="row"><span>small 12.5 / 500</span><span style="font-size:12.5px;color:#6B6B78">4 lines · 3 ok</span></div>
+      <div class="row"><span>label 10.5 / 600 caps</span><span style="font-size:10.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#9B9BA6">Inventory</span></div>
+      <div class="row" style="border:0"><span>figure 26 / 700</span><span style="font-size:26px;font-weight:700;letter-spacing:-.5px">151</span></div></div></div>
+    <div class="panel"><span class="k">Spacing and corners</span>
+      <div class="space">${[4,8,12,16,24,32,48].map(n=>`<div style="width:${Math.max(n,22)}px;height:${n+18}px">${n}</div>`).join("")}</div>
+      <p class="small muted">Spacing steps 4 · 8 · 12 · 16 · 24 · 32 · 48 px. Corners 6 (buttons, boxes) · 10 (panels, cards) · 14 (big cards, windows). Menu 220 px wide on a computer; below 720 px it becomes the ☰ drawer (B5).</p></div>
+  </div>
+</section>
+
+<section id="blocks"><div class="eyebrow">Building blocks</div><h2>Every piece a screen is made of, in every state</h2>
+  <p class="muted">Each block is built once and used everywhere. Switch the state to see how every block looks when it's empty, loading, offline, failed to save, read-only or archived. These states are part of the rules: no screen may leave one out.</p>
+  <div class="gal-ctrl" id="galctl" role="group" aria-label="State"></div>
+  <div class="june" id="gallery"></div>
+  <div class="review" data-part="look"></div>
+</section>
+
+<!-- STRUCTURE -->
+<section id="layers"><div class="eyebrow">2 · The structure</div><h2>Four layers, and one door</h2>
+  <p class="muted">Screens never touch the stored data. They ask the rules, and the rules go through one door: the <b>store door</b> (REACH rule R7). Today the door leads to storage on this computer. Later the same door also talks to the shared server, and only the door changes, not the screens.</p>
+  <div class="layers">
+    <div class="layer"><div class="t">Screens<small>apps/desktop</small></div><div>The June screens, in React: menu, Overview, Store and bags, item page, count, stock takes, register, staff, settings, activity. They only draw what the rules hand them, and show plain text only (B4).</div></div>
+    <div class="down">↓ ask ↑ answer</div>
+    <div class="layer"><div class="t">Rules<small>packages/core</small></div><div>Every rule from the Master Checklist, as small functions with a test each: readiness (B1, B25, B10), whole numbers (B17), counts (B16), the register (Q13–Q16), month-safe dates (B26), the 24-hour delete (Q38), import checks (B15, B6). No screen code, so EDP and later phone apps can reuse them.</div></div>
+    <div class="down">↓ save · read ↑</div>
+    <div class="layer door"><div class="t">Store door<small>packages/store</small></div><div>The only way in or out. Every change becomes a <b>message</b> with its own ID, the person, the time and the app (R8, R9). It writes the message, updates the stored records, adds the log entry, and shows a red light if the save fails (B22). It carries data across new versions; it never replaces data (B3).</div></div>
+    <div class="down">↓</div>
+    <div class="grid2">
+      <div class="layer local"><div class="t">This computer<small>IndexedDB</small></div><div>Every computer keeps its own full copy, so the program opens and works with no internet (F3, Q9). Changes made offline wait in an <b>outbox</b>.</div></div>
+      <div class="layer server"><div class="t">Shared server<small>later · REACH SD2</small></div><div>One copy for everyone: the doctor's Mac and the nurses' Windows PCs see the same stock (Q5). Where it runs is a REACH decision (EDP Q44), not made yet. See “Depends on”.</div></div>
+    </div>
+  </div>
+  <div class="review" data-part="layers"></div>
+</section>
+
+<section id="folders"><div class="eyebrow">Folders</div><h2>Where everything lives in the project</h2>
+  <p class="muted">The same set-up as EDP (npm workspaces: shared rules in TypeScript, screens in React), so the two can share code and so any chat that knows EDP finds its way here. Your eight project files stay at the top.</p>
+  <div class="tree" id="tree"></div>
+  <div class="review" data-part="folders"></div>
+</section>
+
+<section id="data"><div class="eyebrow">Data</div><h2>What is stored, and in what shape</h2>
+  <div class="stamp"><b>Every record carries the REACH Core stamps (R4):</b> a hidden random <span class="mono">id</span> · <span class="mono">createdAt / createdBy</span> · <span class="mono">changedAt / changedBy</span> · <span class="mono">country</span> · <span class="mono">state</span> (Active or Archived). Moments are stored in UTC; calendar dates (expiry, course done) as plain dates (R6, B13). Records point to each other by ID, never by copying a name (R5); a frozen stock take keeps names as they were on the day.</div>
+  <div class="recs" id="recs"></div>
+  <div class="review" data-part="data"></div>
+</section>
+
+<section id="travel"><div class="eyebrow">How a change travels</div><h2>From Anna's click to every computer</h2>
+  <div class="flow">
+    <div class="fs"><span class="w">Anna's screen</span>Dispenses 1 gauze from Bag 1</div><span class="to">→</span>
+    <div class="fs"><span class="w">Rules</span>Checks it: whole number, enough there, allowed at her level</div><span class="to">→</span>
+    <div class="fs"><span class="w">Store door</span>Message <span class="mono">m-7f3…</span>: line, −1, Anna, 03:42 UTC, MD</div><span class="to">→</span>
+    <div class="fs"><span class="w">This computer</span>Saved, logged, light green; offline: waits in the outbox, light amber</div><span class="to">→</span>
+    <div class="fs later"><span class="w">Server (later)</span>Takes each message once, even if it arrives twice; passes it to every other computer</div>
+  </div>
+  <div class="panel"><span class="k">When two computers change the same thing</span>
+    <div class="scroll"><table class="tbl"><thead><tr><th>Kind of change</th><th>Rule</th><th>From</th></tr></thead><tbody>
+      <tr><td>Restock, dispense, move</td><td>Both count: they're added up (−1 and +2 = +1)</td><td>F3.4</td></tr>
+      <tr><td>A count</td><td>The later count is used, both are kept, it's flagged for checking</td><td>F3.5</td></tr>
+      <tr><td>Controlled-drug register</td><td>Lines are only ever added, never changed, so nothing can clash; the balance is worked out from the lines</td><td>F12.8</td></tr>
+      <tr><td>An edit to the same field (e.g. a required amount)</td><td>The later edit is used, the earlier one stays in the log with old → new</td><td>F4.2</td></tr>
+    </tbody></table></div></div>
+  <div class="review" data-part="travel"></div>
+</section>
+
+<section id="program"><div class="eyebrow">The real program</div><h2>An installed program on Mac and Windows</h2>
+  <div class="grid3">
+    <div class="panel" style="border:2px solid var(--ok)"><span class="k" style="color:var(--ok)">Proposed: Electron</span><p class="small">The screens run inside the program's own built-in browser engine (Chromium), the same on Mac and on Windows. What I test is exactly what the nurses get. Installs like any program and opens with no internet. Used by Slack, VS Code, Teams.</p></div>
+    <div class="panel"><span class="k" style="color:var(--muted)">Not chosen: Tauri</span><p class="small">Smaller files, but it draws with Safari's engine on a Mac and Edge's on Windows, so the same screen can look and behave differently on the doctor's Mac and the nurses' PCs. It also needs the Rust toolchain on this Mac.</p></div>
+    <div class="panel"><span class="k" style="color:var(--muted)">Not chosen: an installable web page</span><p class="small">You asked for “a real app, not a web page” (Q4), and REACH rule SD8 says no web apps.</p></div>
+  </div>
+  <div class="panel"><span class="k">What's yours to do, later (Stage 9, not now)</span>
+    <ul class="small" style="margin:0;padding-left:18px"><li><b>Mac:</b> so the Mac opens it without a warning, it's signed with an Apple “Developer ID Application” certificate (Apple developer portal › Certificates). It's different from the App Store certificate. I'll give you the exact clicks when we get there.</li>
+    <li><b>Windows:</b> without a paid code-signing certificate, Windows shows a one-time “unknown publisher” warning. Fine for testing; decided before the nurses get it.</li>
+    <li>The same choice should go to EDP's real program (EDP P4), so I'd raise it in the REACH chat.</li></ul></div>
+  <div class="panel"><span class="k">Tools and versions (pinned to EDP's, so code can be shared)</span><div class="scroll"><table class="tbl" id="deps"></table></div></div>
+  <div class="review" data-part="program"></div>
+</section>
+
+<section id="deps-sec"><div class="eyebrow">Depends on</div><h2>Three things this project doesn't decide</h2>
+  <div class="dep"><b class="t">1 · Where the shared server runs (REACH SD2, EDP Q44)</b><p>Everything can be built and tested on one computer through the store door. But release 1 can't go to the nurses until there's a server: the doctor's Mac and the nurses' PCs must see the same stock (your Q5). REACH planned to decide it when EDP needs shared data. <b>This app may need it first.</b> I'd bring it to the REACH chat before Stage 6 ends.</p></div>
+  <div class="dep"><b class="t">2 · Sharing the REACH Core code between apps</b><p>Every REACH app needs the same IDs, stamps, message and backup shapes. For now I'd write them here, in <span class="mono">packages/core/src/reachCore/</span>, kept separate so they can move into one shared package later. Where that package lives is a REACH decision (R13).</p></div>
+  <div class="dep"><b class="t">3 · Sign-in accounts (REACH SD1, EDP F61)</b><p>Real accounts need the server too. Until then, the program uses this app's own people list with a password per person on each computer, built behind the same door so it can be switched to the REACH accounts later.</p></div>
+  <div class="review" data-part="depends"></div>
+</section>
+
+<section id="cover"><div class="eyebrow">Nothing missing</div><h2>Every checklist line and every REACH rule has a place</h2>
+  <div class="cov" id="covcounts"></div>
+  <div class="grid2">
+    <div class="panel"><span class="k">Master Checklist → module</span><div class="scroll"><table class="tbl" id="covmap"></table></div></div>
+    <div class="panel"><span class="k">REACH Core rule → where</span><div class="scroll"><table class="tbl" id="rmap"></table></div></div>
+  </div>
+</section>
+
+<section id="overall"><div class="eyebrow">Your answer</div><h2>GO for Stage 6?</h2>
+  <p class="muted">If yes, Stage 5 is signed off and building starts, feature by feature (F1 → F15), each one tested against its checklist lines before the next. If anything here is wrong, say where.</p>
+  <div class="review final" data-part="overall" data-final="1"></div></section>
+<footer>REACH Medical Suite · Stage 5 · UI and architecture · 27 Nov 2026 · source <span class="mono">docs/stage5/medical-suite-blueprint.html</span></footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const IDS = ["ALL.1","ALL.2","ALL.3","ALL.4","ALL.5","ALL.6","ALL.7","ALL.8","ALL.9","F1.1","F1.2","F1.3","F1.4","F1.5","F2.1","F2.2","F2.3","F2.4","F2.5","F2.6","F2.7","F2.8","F3.1","F3.2","F3.3","F3.4","F3.5","F3.6","F3.7","F4.1","F4.2","F4.3","F4.4","F5.1","F5.2","F5.3","F5.4","F5.5","F5.6","F5.7","F6.1","F6.2","F6.3","F6.4","F7.1","F7.2","F7.3","F8.1","F8.2","F8.3","F8.4","F8.5","F9.1","F9.2","F9.3","F9.4","F10.1","F10.2","F10.3","F10.4","F11.1","F11.2","F11.3","F11.4","F12.1","F12.2","F12.3","F12.4","F12.5","F12.6","F12.7","F12.8","F12.9","F12.10","F13.1","F13.2","F13.3","F13.4","F13.5","F13.6","F13.7","F13.8","F14.1","F14.2","F14.3","F14.4","F14.5","F15.1","F15.2","F15.3","F15.4","F15.5","F15.6","F16.1","F16.2","F16.3","F16.4","F17.1","F17.2","F18.1","F19.1","F20.1","F21.1"];
+// spacing row uses a template in markup: render it
+document.querySelectorAll(".space").forEach(el=>{ el.innerHTML=[4,8,12,16,24,32,48].map(n=>`<div style="width:${Math.max(n,22)}px;height:${n+18}px">${n}</div>`).join(""); });
+
+// ---------- swatches (June tokens.css) ----------
+const SW = [["Background","#F4F4F6","--bg"],["Surface","#FFFFFF","--surface"],["Menu","#F0F0F3","--sidebar"],["Line","#E4E4EA","--border"],["Text","#1B1B23","--text"],["Muted text","#6B6B78","--text-muted"],["Accent (indigo)","#4F46E5","--accent"],["Accent soft","#EEEDFD","--accent-soft"],["OK","#1E9E62","--success"],["Warning","#C77A12","--warning"],["Danger","#D14343","--danger"],["Info (sync)","#2563EB","--info"]];
+document.getElementById("swatches").innerHTML = SW.map(([n,h,v])=>`<div class="swc"><i style="background:${h}"></i><div><b>${esc(n)}</b><span>${h} · ${v}</span></div></div>`).join("");
+
+// ---------- gallery ----------
+const STATES = [["normal","Normal"],["empty","Empty"],["loading","Loading"],["offline","No internet"],["failed","Not saved"],["readonly","View only"],["archived","Archived"]];
+let gs = "normal";
+const cap = (name, file) => `<div class="cap"><span>${esc(name)}</span><code>${esc(file)}</code></div>`;
+function gallery(){
+  const s = gs;
+  const B = [];
+  const syncPill = s==="offline" ? `<span class="sync sf"><i></i>Offline · 3 waiting</span>` : s==="failed" ? `<span class="sync se"><i></i>Not saved</span>` : s==="loading" ? `<span class="sync sb"><i></i>Sending…</span>` : `<span class="sync so"><i></i>Up to date</span>`;
+  B.push(`<div class="cell">${cap("Menu","Sidebar.jsx")}<div class="in"><div class="navi"><span class="on">Overview</span><span>Store and bags</span><span>Controlled drugs ${s==="normal"?"<em>1</em>":""}</span><span>Roster <small style="font-size:9.5px;border:1px solid #D2D2DA;border-radius:4px;padding:0 4px">LATER</small></span></div></div></div>`);
+  B.push(`<div class="cell">${cap("Sync light","SyncLight.jsx")}<div class="in"><div class="row">${syncPill}</div><div style="font-size:12px;color:#6B6B78">${s==="offline"?"Changes wait on this computer and go by themselves.":s==="failed"?"Couldn't write to this computer. Nothing pretends to be saved (B22).":"Click it to see the last sync and what's waiting."}</div></div></div>`);
+  B.push(`<div class="cell">${cap("Buttons","Button.jsx")}<div class="in"><div class="row"><button class="btn p" ${s==="readonly"||s==="archived"?"disabled":""}>Save counts</button><button class="btn g">Cancel</button><button class="btn d s" ${s==="archived"?"":"disabled"}>Delete</button></div><div style="font-size:11.5px;color:#9B9BA6">${s==="readonly"?"View level: changing buttons are off.":s==="archived"?"Delete only within 24 h of creating (Q38).":"Primary · ghost · danger · small."}</div></div></div>`);
+  B.push(`<div class="cell">${cap("Badges","Badge.jsx")}<div class="in"><div class="row"><span class="badge bs">Ready</span><span class="badge bw">Below required</span><span class="badge bd">Expired</span><span class="badge bi">Not set up</span><span class="badge bm">No expiry</span><span class="badge ba">Manage</span></div></div></div>`);
+  B.push(`<div class="cell">${cap("Figure card","StatCard.jsx")}<div class="in"><div class="stat"><div class="k2">Out of stock</div>${s==="loading"?'<div class="skel" style="width:40px;height:22px;margin-top:6px"></div>':`<div class="v">${s==="empty"?0:2}</div>`}</div></div></div>`);
+  B.push(`<div class="cell">${cap("Warning strip","AttentionStrip.jsx")}<div class="in">${s==="empty"?'<div class="att ao">✓ Everything stocked and in date</div>':s==="loading"?'<div class="skel" style="height:34px"></div>':'<div class="att ad">2 out of stock, everywhere</div><div class="att aw">1 below the required amount</div>'}</div></div>`);
+  B.push(`<div class="cell">${cap("Table","DataTable.jsx")}<div class="in" style="padding:0">${s==="empty"?'<div class="empty">No items match these filters.</div>':s==="loading"?'<div style="padding:12px;display:flex;flex-direction:column;gap:8px"><div class="skel"></div><div class="skel"></div><div class="skel" style="width:70%"></div></div>':`<table><thead><tr><th>Item</th><th>On hand</th><th>Stock</th></tr></thead><tbody><tr class="${s==="archived"?"ro":""}"><td><b>Gauze 10×10 cm</b>${s==="archived"?" · archived":""}</td><td>12</td><td><span class="badge bs">At or above</span></td></tr><tr><td><b>IV cannula 18G</b></td><td>0</td><td><span class="badge bd">Out of stock</span></td></tr></tbody></table>`}</div></div>`);
+  B.push(`<div class="cell">${cap("Number box","NumberField.jsx")}<div class="in"><div class="fld"><label>How many to take out</label><input value="${s==="failed"?"2.7":"1"}" class="${s==="failed"?"bad":""}" ${s==="readonly"?"disabled":""}>${s==="failed"?'<div class="err">Whole numbers only. Nothing was changed (B17).</div>':""}</div></div></div>`);
+  B.push(`<div class="cell">${cap("Dialog","Dialog.jsx")}<div class="in"><div class="modal"><div class="h">Dispense: Gauze 10×10 cm</div><div class="b" style="font-size:12.5px;color:#6B6B78">Bag 1 (adult) · currently <b style="color:#1B1B23">12</b></div><div class="f"><button class="btn g s">Cancel</button><button class="btn p s" ${s==="readonly"?"disabled":""}>Dispense</button></div></div></div></div>`);
+  B.push(`<div class="cell">${cap("Banner and toast","Banner.jsx · Toast.jsx")}<div class="in">${s==="offline"?'<div class="banner bo">Opened without internet. Showing the stock from the last sync at 13:42.</div>':s==="failed"?'<div class="banner be">A save failed. Free up space, then try again.</div>':'<div class="banner bn">Updated to version 1.1. Your data was carried over.</div>'}<span class="toast ${s==="failed"?"e":"s"}">${s==="failed"?"Not saved. Nothing was changed.":"Dispensed 1 · Gauze now 11"}</span></div></div>`);
+  B.push(`<div class="cell">${cap("Locked notice","Locked.jsx")}<div class="in"><div class="lock">🔒 ${s==="readonly"?"You can look. Changing needs Work or Manage level.":"Only a doctor can change this list. Manage level doesn't change that."}</div></div></div>`);
+  B.push(`<div class="cell">${cap("Empty screen","EmptyState.jsx")}<div class="in"><div class="empty">${s==="loading"?'<div class="skel" style="width:60%;margin:0 auto"></div>':"No stock takes yet. Freeze one to start a history."}</div></div></div>`);
+  document.getElementById("gallery").innerHTML = B.join("");
+  document.querySelectorAll("#galctl button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.s===gs?"true":"false"));
+}
+document.getElementById("galctl").innerHTML = STATES.map(([k,l])=>`<button type="button" data-s="${k}" aria-pressed="false">${l}</button>`).join("");
+document.querySelectorAll("#galctl button").forEach(b=>b.onclick=()=>{ gs=b.dataset.s; gallery(); });
+gallery();
+
+// ---------- folder tree ----------
+document.getElementById("tree").innerHTML = [
+"<b>medical-suite/</b>",
+"├── PLAN.md  CHECKLIST.md  ARCHITECTURE.md  DECISIONS.md      <i>your project files</i>",
+"├── BUGS.md  AUDIT.md  CHANGELOG.md  HANDOVER.md  CLAUDE.md",
+"├── package.json                          <i>npm workspaces, like EDP</i>",
+"├── <b>packages/core/</b>                        <i>the rules · TypeScript · no screens</i>",
+"│   └── src/",
+"│       ├── reachCore/   ids, stamps, change message, dates (moment / calendar date), backup shape",
+"│       ├── access/      levels View / Work / Manage, doctor rights, 24-hour delete",
+"│       ├── inventory/   items, lines, restock / dispense / move, readiness, filters, CSV",
+"│       ├── counts/      drafts, save summary, two-count rule",
+"│       ├── stockTakes/  freeze, then vs now",
+"│       ├── register/    balance, take out, approve, emergency, correction",
+"│       ├── people/      people list (Core shape), training, month-safe expiry",
+"│       ├── settings/    country settings, in-use checks",
+"│       ├── log/         activity log entries (REACH shape)",
+"│       └── importExport/ backup refuse rules, Excel check",
+"├── <b>packages/store/</b>                       <i>the store door</i>",
+"│   └── src/  door, localDb (IndexedDB), outbox, migrate, sync (server, later)",
+"├── <b>apps/desktop/</b>                         <i>the program</i>",
+"│   ├── electron/  main.js, preload.js    <i>the window, the installer</i>",
+"│   └── src/",
+"│       ├── styles/tokens.css             <i>the June colours, written once</i>",
+"│       ├── components/                   <i>the building blocks above</i>",
+"│       └── screens/                      <i>Home, Overview, Store and bags, Item, Count,</i>",
+"│                                         <i>Stock takes, Register, Staff, Settings, Activity</i>",
+"├── <b>tests/</b>",
+"│   ├── unit/      <i>one file per rule module (Vitest)</i>",
+"│   └── app/       <i>one test per Master Checklist line (Playwright, in the real program)</i>",
+"├── docs/          <i>stage pages: stock-take, Stage 3, Stage 4 demos, this page</i>",
+"└── data/          <i>real data on this Mac only · git-ignored · never on GitHub</i>"
+].join("\n");
+
+// ---------- data records ----------
+const RECS = [
+  ["Item","MD1",["<code>itemNo</code> readable number","<code>name</code>, <code>category</code>, <code>unit</code>","<code>controlled</code> yes / no","keeper of the REACH medical item catalogue (R2)"]],
+  ["Location","MD1",["<code>name</code> (Store, Bag 1 …)","<code>kind</code> store or bag"]],
+  ["Stock line","MD1",["<code>itemId</code>, <code>locationId</code>","<code>qty</code> whole number","<code>required</code> or reorder level, or empty","<code>lot</code>, <code>expiry</code> (calendar date)"]],
+  ["Movement","MD1",["<code>lineId</code>, <code>kind</code>: restock, dispense, move, edit","<code>change</code> (+/−) or old → new","<code>at</code> (moment), <code>by</code>, <code>messageId</code>"]],
+  ["Count","MD1",["<code>lineId</code>, <code>counted</code>, <code>was</code>","<code>at</code>, <code>by</code>","flag when two counts disagree"]],
+  ["Stock take","MD1",["<code>label</code>, <code>at</code>, <code>by</code>","lines: lineId + names frozen on the day + qty","never changed"]],
+  ["Register line","MD1",["<code>itemId</code>, <code>kind</code>: in, out, correction","<code>qty</code>, <code>reason</code>, <code>by</code>, <code>witnessId</code>","<code>doctorId</code>, <code>how</code>: PIN, own device, self, afterwards","<code>status</code>: waiting, booked, emergency, refused · <code>corrects</code>"]],
+  ["Approval right","MD1",["<code>personId</code>","<code>givenBy</code> (a doctor, never themselves)","<code>removedBy</code> · last doctor stays"]],
+  ["Person","Core shape",["<code>staffNo</code>, <code>name</code>, <code>job</code>, <code>email</code>","<code>office</code> (one of REACH's six)","<code>level</code>: View, Work, Manage","<code>department</code>"]],
+  ["Course and training","",["Course: <code>name</code>, <code>validMonths</code>","Training: <code>personId</code>, <code>courseId</code>","<code>status</code>, <code>done</code>, <code>expires</code> (calendar dates)"]],
+  ["Settings","",["<code>baseName</code>, <code>country</code>, <code>timeZone</code>","<code>dateStyle</code>, <code>shiftTimes</code>","departments, categories"]],
+  ["Log entry","REACH R9",["<code>who</code>, <code>recordType</code>, <code>recordId</code>","<code>what</code>, <code>from</code> → <code>to</code>","<code>at</code>, <code>app</code> = MD · never deleted"]]
+];
+document.getElementById("recs").innerHTML = RECS.map(([n,t,f])=>`<div class="rec"><div class="h">${esc(n)}<span>${esc(t)}</span></div><ul>${f.map(x=>`<li>${x}</li>`).join("")}</ul></div>`).join("");
+
+// ---------- deps ----------
+const DEPS = [["React","18.3.1","screens","same as EDP"],["Vite","5.4.21","builds the screens","same as EDP"],["@vitejs/plugin-react","4.7.0","React in Vite","same as EDP"],["TypeScript","5.9.3","the rules","same as EDP"],["Vitest","3.2.4","rule tests","same as EDP"],["Playwright","1.65","tests in the real program","same as EDP; it can drive Electron"],["Electron","45.5.0","the program window","new; newest on 27 Nov, pinned when installed"],["electron-builder","26.18.0","Mac and Windows installers","new"],["idb","8.0.4","tidy access to IndexedDB","new, tiny, no other parts"]];
+document.getElementById("deps").innerHTML = `<thead><tr><th>Tool</th><th>Version</th><th>For</th><th>Note</th></tr></thead><tbody>${DEPS.map(d=>`<tr><td><b>${esc(d[0])}</b></td><td class="mono">${esc(d[1])}</td><td>${esc(d[2])}</td><td class="muted">${esc(d[3])}</td></tr>`).join("")}</tbody>`;
+
+// ---------- coverage ----------
+const MOD = {ALL:"all layers", F1:"apps/desktop · screens, components", F2:"core/access · store (sign-in)", F3:"store · door, outbox, migrate", F4:"core/log", F5:"core/settings", F6:"core/inventory (readiness)", F7:"core/inventory (filters, CSV)", F8:"core/inventory (lines, move)", F9:"core/inventory (movements)", F10:"core/counts", F11:"core/stockTakes", F12:"core/register · core/access", F13:"core/importExport · store (backup)", F14:"core/people", F15:"core/people (training)", F16:"later: core/roster", F17:"later: core/caseLink", F18:"later: patient archive", F19:"later: calendar", F20:"later: library", F21:"later: SOPs"};
+const groups = {}; IDS.forEach(id=>{ const f=id.split(".")[0]; (groups[f]=groups[f]||[]).push(id); });
+const mapped = IDS.filter(id=>MOD[id.split(".")[0]]).length;
+document.getElementById("covmap").innerHTML = `<thead><tr><th>Lines</th><th>Built in</th></tr></thead><tbody>${Object.keys(groups).map(f=>`<tr><td><span class="chip f">${esc(f)}</span> ${groups[f].length}</td><td>${esc(MOD[f]||"MISSING")}</td></tr>`).join("")}</tbody>`;
+const RMAP = [["R1–R2","Core lists; this app keeps the item catalogue","core/inventory (items)"],["R3","One account, levels View / Work / Manage","core/access"],["R4","Hidden ID + readable number, stamps, archive, 24-h delete","core/reachCore · core/access"],["R5","Point by ID; frozen names on finished records","all records · stock takes"],["R6","Moments in UTC, shown local","core/reachCore (dates)"],["R7","One store door","packages/store"],["R8","Offline; messages with their own ID, counted once","store (outbox, sync)"],["R9","One log shape","core/log"],["R10","One backup shape","core/importExport"],["R11","No real data in Git; demo data marked","data/ git-ignored · demo seed"],["R12","Country settings","core/settings"]];
+document.getElementById("rmap").innerHTML = `<thead><tr><th>Rule</th><th>What</th><th>Where</th></tr></thead><tbody>${RMAP.map(r=>`<tr><td><span class="chip r">${esc(r[0])}</span></td><td>${esc(r[1])}</td><td class="mono" style="font-size:11.5px">${esc(r[2])}</td></tr>`).join("")}</tbody>`;
+document.getElementById("covcounts").innerHTML = `<span class="c ${mapped===IDS.length?"":"badc"}">${mapped} of ${IDS.length} checklist lines have a module</span><span class="c">12 of 12 REACH rules R1–R12 have a place</span>`;
+
+// ---------- review strips (db collection "stage5") ----------
+const LABEL = {look:"Is the look right (June colours, type, building blocks, states)?", layers:"Are the four layers and the store door right?", folders:"Is the folder layout right?", data:"Is the data shape right?", travel:"Are the rules for changes travelling right?", program:"Electron for the real program, and these tools?", depends:"Agree to raise the server choice in the REACH chat?"};
+const state = {}; let db = null;
+document.querySelectorAll(".review").forEach(el=>{
+  const part = el.dataset.part, fin = !!el.dataset.final;
+  el.innerHTML = `<span class="q">${esc(fin?"GO: start building (Stage 6)?":LABEL[part])}</span><span class="btns"><button type="button" class="yes" aria-pressed="false">${fin?"GO":"Right"}</button><button type="button" class="no" aria-pressed="false">${fin?"Not yet":"Not right"}</button></span>
+    <textarea placeholder="${fin?"Anything to change first? (optional)":"What's wrong or missing? (optional)"}"></textarea><span class="state">Not answered yet.</span>`;
+  el.querySelector(".yes").onclick=()=>pick(part,"right"); el.querySelector(".no").onclick=()=>pick(part,"not");
+  let t; el.querySelector("textarea").addEventListener("input",e=>{ state[part]=Object.assign({},state[part],{note:e.target.value}); clearTimeout(t); t=setTimeout(()=>save(part),800); });
+});
+function el(part){ return document.querySelector(`.review[data-part="${part}"]`); }
+function paint(part){ const e=el(part); if(!e) return; const s=state[part]||{};
+  e.querySelector(".yes").setAttribute("aria-pressed", s.verdict==="right"?"true":"false"); e.querySelector(".no").setAttribute("aria-pressed", s.verdict==="not"?"true":"false");
+  const ta=e.querySelector("textarea"); if (document.activeElement!==ta && typeof s.note==="string") ta.value=s.note;
+  if (s.at) e.querySelector(".state").textContent="Saved for Claude · "+new Date(s.at).toLocaleString(); }
+function pick(part,v){ state[part]=Object.assign({},state[part],{verdict:v}); paint(part); save(part); }
+async function save(part){
+  const s=state[part]||{}; const rec={part, verdict:s.verdict||null, note:s.note||"", at:new Date().toISOString()};
+  const e=el(part);
+  if (!db){ state[part]=Object.assign({},rec,{at:null}); if(e) e.querySelector(".state").textContent="Shown here, but can't be saved in this view. Open the page from its link, or tell Claude in chat."; return; }
+  state[part]=rec;
+  try{ await db.collection("stage5").doc(part).set(rec); if(e) e.querySelector(".state").textContent="Saved for Claude · "+new Date(rec.at).toLocaleTimeString(); }
+  catch(x){ if(e) e.querySelector(".state").textContent="Not saved ("+(x&&x.code||"error")+"). Tell Claude in chat instead."; }
+}
+(async function(){
+  try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : null); }catch(e){ db=null; }
+  if (!db) return;
+  db.collection("stage5").onSnapshot(snap=>{ (snap.docs||[]).forEach(d=>{ const r=typeof d.data==="function"?d.data():d.data; if(r&&r.part){ state[r.part]=r; paint(r.part); } }); }, ()=>{});
+})();
+})();
+</script>

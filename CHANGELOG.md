@@ -1,4 +1,24 @@
-# CHANGELOG — REACH Inventory
+# CHANGELOG — REACH Medical Suite
+
+## 2026-11-27 — Stage 5 signed off
+- Danny on the Stage 5 page: look Right, overall GO. `ARCHITECTURE.md` target and the six Stage 5 rows in `DECISIONS.md` are now APPROVED.
+- Next: Stage 6, feature by feature from F1; the server location goes to the REACH chat before release 1.
+
+## 2026-11-27 — Stage 5: look and structure proposed
+- Page https://claude.ai/artifact/CDkrByh9ypq4YXu4sN7vBj (`docs/stage5/medical-suite-blueprint.html`): the June tokens, type and spacing; 12 building blocks in 7 states; four layers with one store door; folders; data shapes with the REACH stamps; how changes travel and the two-computer rules; Electron for the program; tools pinned to EDP's versions; three outside dependencies (server, shared REACH code, accounts).
+- `ARCHITECTURE.md` now starts with the target design (PROPOSED); the June description stays below as reference. `DECISIONS.md`: six PROPOSED rows.
+- Checked on the page: 103 of 103 checklist lines and 12 of 12 REACH rules have a place.
+
+## 2026-11-27 — Lined up with REACH Core (Stage 5)
+- Danny's answers on the alignment page: all five points yes; Q20 = A (View / Work / Manage); Q21 = A (the program is “REACH Medical Suite”, Inventory = MD1).
+- Master Checklist changed to match (now 22 blocks, 103 lines): ALL.4 (moments in UTC, calendar dates plain), ALL.8 (name), new ALL.9 (follow REACH Core), F2 levels and the 24-hour delete rule, log and backup shapes, own people list in the Core shape, new later parts F19 Calendar, F20 Medical Library, F21 SOPs. Page version 3: https://claude.ai/artifact/Pfif45D4mRjcwXffz4XsT7.
+- `CLAUDE.md`: new name, and the REACH section asked for by REACH Q12. `DECISIONS.md`: six rows.
+- My slip while editing, caught by the count check and fixed: the shell swallowed a file path in ALL.9 and the F18 status line was dropped; repaired with a script file.
+
+## 2026-11-27 — Stage 5 started: lining up with REACH Core
+- Public GitHub Pages site checked: now 404 (the June copy with real stock is gone).
+- Read EDP's architecture and the REACH project's Core data rules (agreed 27 Nov). Five differences from Stage 4 found and shown on https://claude.ai/artifact/S65PV6inHY3UG8h87fo3sz (`docs/stage5/reach-core-alignment.html`), with Q20 (levels) and Q21 (name and parts). Nothing changed yet in the feature list or checklist.
+- Noted: an `imports/` folder from the REACH chat (medics' checklist, roster style guide, SOP PDFs) sits uncommitted in this repo; left untouched.
 
 ## 2026-11-27 — Stage 4 signed off
 - Danny in chat: “Yes, sign off Stage 4.” Approved: feature list F1–F18, demo batches 1–4, Master Checklist (99 lines; roster under “later”).

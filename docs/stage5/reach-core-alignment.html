@@ -1,0 +1,306 @@
+<title>Lining Up With REACH</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Stage 5 opener: where Stage 4 and the REACH Core rules (agreed 27 Nov 2026) differ, plus questions Q20–Q21. Stage 4 colours, dark mode. Answers save to db collection "align". */
+:root{
+  --bg:#F4F4F6; --surface:#FFFFFF; --surface-2:#FAFAFB; --border:#E4E4EA; --border-strong:#D2D2DA;
+  --text:#1B1B23; --muted:#6B6B78; --faint:#9B9BA6;
+  --accent:#4F46E5; --accent-soft:#EEEDFD; --accent-border:#C9C6F7; --on-accent:#FFFFFF;
+  --ok:#1E9E62; --ok-soft:#E7F5EE; --warn:#C77A12; --warn-soft:#F8EFDF; --bad:#D14343; --bad-soft:#FAEAEA; --reach:#0F6E8C; --reach-soft:#E3F1F5;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A; --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C; --reach:#5BBAD6; --reach-soft:#14303A; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A; --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C; --reach:#5BBAD6; --reach-soft:#14303A; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:64px}
+.wrap{max-width:1000px;margin:0 auto}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:28px;font-weight:700;letter-spacing:-.4px} h2{font-size:20px;font-weight:700} h3{font-size:14.5px;font-weight:650}
+p{margin:0;max-width:70ch}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:13px} .mono{font-family:var(--mono);font-size:12.5px}
+header.top{padding-block:32px 8px;display:flex;flex-direction:column;gap:12px}
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:760px){.why{grid-template-columns:1fr}}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.k{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.box.reach{border-color:var(--reach);background:var(--reach-soft)} .box.reach .k{color:var(--reach)}
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;border-bottom:1px solid var(--border);display:flex;gap:6px;overflow-x:auto;margin-top:14px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+nav.toc a{flex:none;font-size:13px;color:var(--muted);text-decoration:none;padding:5px 10px;border-radius:8px}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--accent-soft);color:var(--accent);outline:none}
+section{padding-block:32px 6px;display:flex;flex-direction:column;gap:14px;scroll-margin-top:60px}
+.vs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media (max-width:820px){.vs{grid-template-columns:1fr}}
+.vs .box.was{border-style:dashed}
+.vs .box.was .k{color:var(--warn)} .vs .box.now .k{color:var(--ok)} .vs .box.now{border-color:var(--ok)}
+.tag{font-family:var(--mono);font-size:11.5px;padding:1px 6px;border-radius:5px;background:var(--surface-2);border:1px solid var(--border-strong)}
+.tl{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:4px}
+.tl .seg{flex:1 0 150px;min-width:150px;padding:10px 12px;font-size:13px;border:1px solid var(--border);display:flex;flex-direction:column;gap:3px}
+.tl .seg:first-child{border-radius:10px 0 0 10px} .tl .seg:last-child{border-radius:0 10px 10px 0}
+.tl .seg b{font-size:11px;letter-spacing:.5px;text-transform:uppercase}
+.tl .g{background:var(--ok-soft)} .tl .g b{color:var(--ok)} .tl .a{background:var(--warn-soft)} .tl .a b{color:var(--warn)} .tl .r{background:var(--bad-soft)} .tl .r b{color:var(--bad)}
+.ex{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:640px){.ex{grid-template-columns:1fr}}
+.code{font-family:var(--mono);font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.qwrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.qwrap{grid-template-columns:1fr}}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:12px;border:1px solid var(--border-strong);background:var(--surface)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt[aria-pressed="true"]{border:2px solid var(--accent);background:var(--accent-soft);padding:11px 13px}
+.opt .l{font-weight:600;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.opt .d{font-size:13px;color:var(--muted)}
+.prop{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--ok);color:#fff}
+.mx{width:100%;border-collapse:collapse;font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.mx th,.mx td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:center}
+.mx th:first-child,.mx td:first-child{text-align:left}
+.mx th{font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--faint);background:var(--surface-2)}
+.mx .y{color:var(--ok);font-weight:700} .mx .n{color:var(--faint)}
+/* June-look window mock for Q21 */
+.m{color-scheme:light;background:#F4F4F6;color:#1B1B23;border:1px solid #D2D2DA;border-radius:12px;overflow:hidden;font-size:12.5px}
+.m .bar{display:flex;gap:6px;align-items:center;padding:7px 10px;background:#F0F0F3;border-bottom:1px solid #E4E4EA;color:#6B6B78}
+.m .bar i{width:9px;height:9px;border-radius:50%;background:#D2D2DA;display:inline-block}
+.m .bar b{color:#1B1B23;margin-left:6px}
+.m .body{display:grid;grid-template-columns:150px 1fr;min-height:220px}
+@media (max-width:480px){.m .body{grid-template-columns:1fr}}
+.m .side{background:#F0F0F3;border-right:1px solid #E4E4EA;padding:10px 8px;display:flex;flex-direction:column;gap:3px}
+.m .logo{display:flex;gap:7px;align-items:center;padding-bottom:8px}
+.m .mark{width:22px;height:22px;border-radius:6px;background:#4F46E5;color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
+.m .logo b{font-size:12.5px;display:block} .m .logo small{font-size:10px;color:#6B6B78}
+.m .grp{font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#9B9BA6;padding:6px 4px 2px}
+.m .it{padding:4px 6px;border-radius:6px;font-size:12px;display:flex;justify-content:space-between;gap:4px}
+.m .it.on{background:#EEEDFD;color:#4F46E5;font-weight:600}
+.m .it span{font-size:9px;color:#9B9BA6;border:1px solid #D2D2DA;border-radius:4px;padding:0 4px}
+.m .main{padding:12px;display:flex;flex-direction:column;gap:8px}
+.m .hero{background:linear-gradient(180deg,#EEEDFD,#fff);border:1px solid #E4E4EA;border-radius:10px;padding:14px;text-align:center}
+.m .hero small{font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:#4F46E5;font-weight:700}
+.m .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.m .card{background:#fff;border:1px solid #E4E4EA;border-radius:8px;padding:7px;font-size:11px}
+.m .card.later{opacity:.5;border-style:dashed}
+.review{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--border-strong)}
+.review .q{font-size:13.5px;font-weight:600;flex:1 1 220px}
+.review .btns{display:flex;gap:6px;flex-wrap:wrap}
+.review button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.review button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.review button[aria-pressed="true"].yes{background:var(--ok);border-color:var(--ok);color:var(--on-accent)}
+.review button[aria-pressed="true"].no{background:var(--warn);border-color:var(--warn);color:var(--on-accent)}
+.review textarea{flex:1 1 100%;min-height:54px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);resize:vertical}
+.review .state{font-size:12px;color:var(--faint);flex:1 1 100%}
+.final{border:2px solid var(--accent);background:var(--accent-soft)} .final .q{font-size:16px}
+footer{padding-top:28px;font-size:12.5px;color:var(--faint)}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Stage 5 · before the look and structure · lining up with REACH</div>
+  <h1>Five places where Stage 4 and the REACH rules differ</h1>
+  <p class="muted">While Stage 4 ran here, the REACH project (your chat “2.0 REACH”) agreed the <b>REACH Core data rules</b> today, 27 Nov, with your GO. Every REACH app has to follow them, and by its rule R13 they can only be changed in the REACH chat. Before I design the structure of this app, here is where the two don't match yet, and what I propose.</p>
+  <div class="why">
+    <div class="box"><span class="k">What it's about</span><p>Rules you approved twice, in two chats, on the same day, that say slightly different things.</p></div>
+    <div class="box"><span class="k">Why it matters</span><p>Stage 5 fixes how data is stored. Built on the wrong rule, it would have to be rebuilt the day this app joins EDP and the others on the shared server.</p></div>
+    <div class="box reach"><span class="k">My proposal throughout</span><p>Follow REACH, and change this app's wording to match. If you'd rather change a REACH rule, that happens in the REACH chat, not here.</p></div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Sections"><a href="#c1">1 Deleting</a><a href="#c2">2 Levels (Q20)</a><a href="#c3">3 People list</a><a href="#c4">4 Dates and times</a><a href="#c5">5 Name and parts (Q21)</a><a href="#c6">REACH line</a><a href="#overall">Your answer</a></nav>
+
+<!-- C1 -->
+<section id="c1"><div class="eyebrow">1 · Deleting</div><h2>When can something be deleted for good?</h2>
+  <div class="vs">
+    <div class="box was"><span class="k">Stage 4 said (Q17 = B)</span><p>Everyone archives stock. A Manager or Admin can delete stock <b>for good, at any time</b>. Admins can delete people for good.</p></div>
+    <div class="box reach"><span class="k">REACH Core says (R4, Q38)</span><p>Archive, don't delete. Deleting is only for <b>a mistake, within 24 hours of creating it</b>, by Manage level, and logged. Patient files and the change log are <b>never</b> deleted.</p></div>
+    <div class="box now"><span class="k">What changes here</span><p>Archive stays for everyone. “Delete for good” only appears for 24 hours after something was created, for Manage level. After that, only Archive.</p></div>
+  </div>
+  <div class="tl" aria-label="Timeline of one stock line">
+    <div class="seg g"><b>Created</b>Anna adds a line by mistake</div>
+    <div class="seg a"><b>First 24 hours</b>A Manage-level person may delete it for good (logged)</div>
+    <div class="seg r"><b>After 24 hours</b>Archive only; it can be brought back</div>
+  </div>
+  <div class="review" data-part="c1" data-q="Follow REACH on deleting?"></div>
+</section>
+
+<!-- C2 / Q20 -->
+<section id="c2"><div class="eyebrow">2 · Question Q20</div><h2>Staff / Manager / Admin, or View / Work / Manage?</h2>
+  <div class="vs">
+    <div class="box was"><span class="k">Stage 4 said</span><p>Three roles inside this app: <b>Staff, Manager, Admin</b> (as in June). Several answers use them: Q17 (delete), Q19 (roster), B14 (last Admin).</p></div>
+    <div class="box reach"><span class="k">REACH Core says (R3)</span><p>One account per person. Access to an app comes from their <b>office</b>. Inside each app a person has one of three levels: <b>View, Work, Manage</b>. REACH's own note for this app: “Staff/Manager/Admin is not the shape to copy.”</p></div>
+    <div class="box now"><span class="k">What needs deciding</span><p>How today's three roles map onto View / Work / Manage. The table shows what each answer means for who can do what.</p></div>
+  </div>
+  <div class="qwrap">
+    <div id="q20mx"></div>
+    <div style="display:flex;flex-direction:column;gap:10px"><div class="opts" id="q20opts"></div>
+      <div class="review" data-part="q20" data-choice="1"></div></div>
+  </div>
+</section>
+
+<!-- C3 -->
+<section id="c3"><div class="eyebrow">3 · People list</div><h2>Whose list of people is it, for now?</h2>
+  <div class="vs">
+    <div class="box was"><span class="k">Stage 4 said (F2.1, F14.1)</span><p>People come from <b>the one REACH people list, shared with EDP</b>.</p></div>
+    <div class="box reach"><span class="k">REACH says (Q37, Q18)</span><p>There's no shared list yet. <b>Each app keeps its own list in the same “Core shape”</b> (hidden ID, name, office, stamps). <b>Ops Management</b> becomes the keeper later and merges them. Your words: “Ops Management is, in my head, where People lists are stored.”</p></div>
+    <div class="box now"><span class="k">What changes here</span><p>Staff keeps its own list now, in the Core shape, so it can be merged without retyping. The screens stay as in batch 4. When Ops Management exists, this app reads the list from there.</p></div>
+  </div>
+  <div class="review" data-part="c3" data-q="Own list now, Ops Management later: right?"></div>
+</section>
+
+<!-- C4 -->
+<section id="c4"><div class="eyebrow">4 · Dates and times</div><h2>Two kinds of time, two rules</h2>
+  <div class="vs">
+    <div class="box was"><span class="k">Stage 4 said (ALL.4)</span><p>“No date is ever written or read in world time (UTC).” Written against June bug B13.</p></div>
+    <div class="box reach"><span class="k">REACH Core says (R6)</span><p>“Times are stored in UTC and shown in local time.” Standard in aviation, and needed so EDP and this app agree on <i>when</i> something happened.</p></div>
+    <div class="box now"><span class="k">Both are right, for different things</span><p>A <b>moment</b> (when Anna dispensed) is stored in UTC and shown in base time. A <b>calendar date</b> (an expiry, a course done) is stored as a plain date with no time, so it can never slip a day. I'd reword ALL.4 to say exactly this.</p></div>
+  </div>
+  <div class="ex">
+    <div class="box"><span class="k">A moment</span><div class="code">stored:  2026-11-27 03:42 UTC
+shown:   27 Nov 2026, 13:42 (Port Moresby)
+         26 Nov 2026, 22:42 (Lima)</div></div>
+    <div class="box"><span class="k">A calendar date</span><div class="code">stored:  2027-03-31   (no time at all)
+shown:   31 Mar 2027 — in every country
+June bug B13: stored as a moment → “Expired” a day early</div></div>
+  </div>
+  <div class="review" data-part="c4" data-q="Reword ALL.4 like this?"></div>
+</section>
+
+<!-- C5 / Q21 -->
+<section id="c5"><div class="eyebrow">5 · Question Q21</div><h2>What is the program called, and what goes in it?</h2>
+  <div class="vs">
+    <div class="box was"><span class="k">This project said</span><p>Q10: the name is <b>“REACH Inventory”</b>. Calendar and Library were listed as <b>not in this app</b> (“shared tools, to decide”).</p></div>
+    <div class="box reach"><span class="k">REACH said (D4, Q3, Q22, Q24)</span><p>The desktop program is the <b>Medical Suite (code MD)</b>. Its parts: <b>MD1 Inventory</b>, MD2 Patient Archive (with the Patient Files), MD3 Roster, MD4 Calendar, MD5 Medical Library (with the medics' checklists), MD6 SOPs.</p></div>
+    <div class="box now"><span class="k">What needs deciding</span><p>The name on the window and on the Dock, and whether Calendar, Library and SOPs join this program's “later” list. Pick an answer and the window changes.</p></div>
+  </div>
+  <div class="qwrap">
+    <div id="q21mock"></div>
+    <div style="display:flex;flex-direction:column;gap:10px"><div class="opts" id="q21opts"></div>
+      <div class="review" data-part="q21" data-choice="1"></div></div>
+  </div>
+</section>
+
+<!-- C6 -->
+<section id="c6"><div class="eyebrow">One line for this project's CLAUDE.md</div><h2>So every future chat here follows REACH</h2>
+  <p class="muted">REACH Q12: every REACH app's <span class="mono">CLAUDE.md</span> gets a short REACH section, added by the app's own chat with your OK. Every new chat in this folder reads that file automatically. This is the line REACH asks for:</p>
+  <div class="code">## REACH
+Before storing any data, follow ../reach/CORE-DATA.md (REACH Core data rules, agreed 27 Nov 2026). Core rules are changed only in the REACH chat.</div>
+  <div class="review" data-part="c6" data-q="OK to add this line?"></div>
+</section>
+
+<section id="overall"><div class="eyebrow">Your answer</div><h2>Line this app up with REACH?</h2>
+  <p class="muted">If yes, I update the feature list, the Master Checklist and CLAUDE.md to match. Then Stage 5 goes on to the look and the structure, built on the REACH rules.</p>
+  <div class="review final" data-part="overall" data-final="1"></div></section>
+<footer>REACH Inventory · Stage 5 · lining up with REACH Core · 27 Nov 2026 · source <span class="mono">docs/stage5/reach-core-alignment.html</span></footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+// ---------- Q20 ----------
+const Q20 = {
+  A:{l:"Staff → Work, Manager and Admin → Manage", d:"Two working levels inside the app, plus View for people who may only look (e.g. Management, as REACH's access table says “Limited”). Who gets which level is set by Management, as REACH Q11 says.", prop:true},
+  B:{l:"Staff → Work, Manager → Manage, and keep “Admin” as a fourth level", d:"Keeps today's three roles, but needs a change to REACH rule R3, made in the REACH chat."},
+  C:{l:"Staff → View, Manager → Work, Admin → Manage", d:"Nurses could only look at stock; every count or dispense would need a Manager."}
+};
+const ACTS = [
+  ["Look at stock and staff", {A:["View","Work","Manage"], B:["View","Work","Manage","Admin"], C:["View","Work","Manage"]}],
+  ["Count, restock, dispense, move", {A:["Work","Manage"], B:["Work","Manage","Admin"], C:["Work","Manage"]}],
+  ["Archive stock", {A:["Work","Manage"], B:["Work","Manage","Admin"], C:["Work","Manage"]}],
+  ["Delete a mistake (first 24 h)", {A:["Manage"], B:["Manage","Admin"], C:["Manage"]}],
+  ["Training, roster, archive people", {A:["Manage"], B:["Manage","Admin"], C:["Manage"]}],
+  ["Settings, import and restore", {A:["Manage"], B:["Admin"], C:["Manage"]}],
+  ["Approve controlled drugs", {A:["doctor"], B:["doctor"], C:["doctor"]}]
+];
+const WHO = {A:{"Nurse (was Staff)":"Work","Doctor in charge (was Manager)":"Manage","Base manager (was Admin)":"Manage"},
+             B:{"Nurse (was Staff)":"Work","Doctor in charge (was Manager)":"Manage","Base manager (was Admin)":"Admin"},
+             C:{"Nurse (was Staff)":"View","Doctor in charge (was Manager)":"Work","Base manager (was Admin)":"Manage"}};
+let q20 = "A", q21 = "A";
+function paintQ20(){
+  const cols = Object.keys(WHO[q20]);
+  document.getElementById("q20mx").innerHTML = `<table class="mx"><thead><tr><th>With answer ${q20}</th>${cols.map(c=>`<th>${esc(c)}<br><span style="text-transform:none;letter-spacing:0;color:var(--accent)">${esc(WHO[q20][c])}</span></th>`).join("")}</tr></thead><tbody>
+    ${ACTS.map(([l,m])=>`<tr><td>${esc(l)}</td>${cols.map(c=>{ const lv=WHO[q20][c]; const ok = m[q20].includes(lv) || (m[q20][0]==="doctor" && c.startsWith("Doctor")); return `<td class="${ok?"y":"n"}">${m[q20][0]==="doctor"?(c.startsWith("Doctor")?"✓ (as a doctor)":"—"):(ok?"✓":"—")}</td>`; }).join("")}</tr>`).join("")}</tbody></table>
+    <p class="small muted" style="margin-top:6px">Controlled drugs stay separate in every answer: only doctors approve (your rule, Q16).</p>`;
+  document.querySelectorAll("#q20opts .opt").forEach(b=>b.setAttribute("aria-pressed", b.dataset.o===(ans.q20&&ans.q20.choice)?"true":"false"));
+}
+document.getElementById("q20opts").innerHTML = Object.keys(Q20).map(k=>`<button type="button" class="opt" data-o="${k}" aria-pressed="false"><span class="l">${k} · ${esc(Q20[k].l)}${Q20[k].prop?' <span class="prop">Proposed</span>':""}</span><span class="d">${esc(Q20[k].d)}</span></button>`).join("");
+// ---------- Q21 ----------
+const Q21 = {
+  A:{l:"“Medical Suite”, with Inventory as its first part", d:"Window and Dock say “REACH Medical Suite”. Menu: Inventory now; Patient Archive, Roster, Calendar, Medical Library and SOPs as later parts (new F19–F21 for Calendar, Library, SOPs). Matches REACH D4.", prop:true},
+  B:{l:"Keep “REACH Inventory”, add the later parts", d:"Same parts as A, but the program keeps the name from Q10. The name then differs from the REACH map (MD = Medical Suite)."},
+  C:{l:"Keep “REACH Inventory”, no Calendar, Library or SOPs", d:"As this project had it. REACH D4 and Q24 (SOPs into the Medical Suite) would need changing in the REACH chat."}
+};
+function paintQ21(){
+  const name = q21==="A" ? "REACH Medical Suite" : "REACH Inventory";
+  const sub = q21==="A" ? "MD · PNG base" : "PNG base · medical";
+  const extra = q21!=="C";
+  const it = (t,on,tag)=>`<div class="it ${on?"on":""}">${esc(t)}${tag?`<span>${esc(tag)}</span>`:""}</div>`;
+  document.getElementById("q21mock").innerHTML = `<div class="m"><div class="bar"><i></i><i></i><i></i><b>${esc(name)}</b></div><div class="body">
+    <div class="side"><div class="logo"><span class="mark">+</span><span><b>${esc(name.replace("REACH ",""))}</b><small>${esc(sub)}</small></span></div>
+      ${it("Home",false)}<div class="grp">Inventory${q21==="A"?" · MD1":""}</div>${it("Overview",true)}${it("Store and bags")}${it("Controlled drugs")}
+      <div class="grp">Team</div>${it("Staff and training")}${it("Roster",false,q21==="A"?"MD3":"R2")}
+      <div class="grp">Later</div>${it("Patient Archive",false,q21==="A"?"MD2":"later")}${extra?it("Calendar",false,q21==="A"?"MD4":"later")+it("Medical Library",false,q21==="A"?"MD5":"later")+it("SOPs",false,q21==="A"?"MD6":"later"):""}</div>
+    <div class="main"><div class="hero"><small>${esc(q21==="A"?"REACH · Medical Suite":"REACH · Inventory")}</small><div style="font-size:17px;font-weight:700">Welcome, Anna</div></div>
+      <div class="cards"><div class="card">Inventory</div><div class="card">Controlled drugs</div><div class="card">Staff</div><div class="card later">Patient Archive</div>${extra?'<div class="card later">Medical Library</div><div class="card later">SOPs</div>':""}</div></div></div></div>
+    <p class="small muted" style="margin-top:6px">${q21==="C"?"Calendar, Library and SOPs: not in this program.":"Dashed = later, each with its own stages."} Made-up names.</p>`;
+  document.querySelectorAll("#q21opts .opt").forEach(b=>b.setAttribute("aria-pressed", b.dataset.o===(ans.q21&&ans.q21.choice)?"true":"false"));
+}
+document.getElementById("q21opts").innerHTML = Object.keys(Q21).map(k=>`<button type="button" class="opt" data-o="${k}" aria-pressed="false"><span class="l">${k} · ${esc(Q21[k].l)}${Q21[k].prop?' <span class="prop">Proposed</span>':""}</span><span class="d">${esc(Q21[k].d)}</span></button>`).join("");
+
+// ---------- answers (db collection "align") ----------
+const ans = {}; let db = null;
+document.querySelectorAll(".review").forEach(el=>{
+  const part = el.dataset.part, fin = !!el.dataset.final, isQ = !!el.dataset.choice;
+  if (isQ){
+    el.innerHTML = `<span class="q">Your answer to ${part.toUpperCase()}: <span data-cur>not picked yet (showing the proposed one)</span></span>
+      <span class="btns"><button type="button" class="no" data-unsure aria-pressed="false">Not sure</button></span>
+      <textarea placeholder="Anything to add? (optional)"></textarea><span class="state">Not answered yet.</span>`;
+    el.querySelector("[data-unsure]").onclick = ()=>{ ans[part]=Object.assign({},ans[part],{choice:"unsure"}); paint(part); save(part); };
+  } else {
+    el.innerHTML = `<span class="q">${esc(fin?"Line this app up with REACH, as shown?":el.dataset.q)}</span>
+      <span class="btns"><button type="button" class="yes" aria-pressed="false">${fin?"Yes, line it up":"Yes"}</button><button type="button" class="no" aria-pressed="false">${fin?"Not yet":"No"}</button></span>
+      <textarea placeholder="Anything to add? (optional)"></textarea><span class="state">Not answered yet.</span>`;
+    el.querySelector(".yes").onclick = ()=>{ ans[part]=Object.assign({},ans[part],{verdict:"yes"}); paint(part); save(part); };
+    el.querySelector(".no").onclick = ()=>{ ans[part]=Object.assign({},ans[part],{verdict:"no"}); paint(part); save(part); };
+  }
+  let t; el.querySelector("textarea").addEventListener("input",e=>{ ans[part]=Object.assign({},ans[part],{note:e.target.value}); clearTimeout(t); t=setTimeout(()=>save(part),800); });
+});
+document.querySelectorAll("#q20opts .opt").forEach(b=>b.onclick=()=>{ q20=b.dataset.o; ans.q20=Object.assign({},ans.q20,{choice:q20}); paint("q20"); save("q20"); });
+document.querySelectorAll("#q21opts .opt").forEach(b=>b.onclick=()=>{ q21=b.dataset.o; ans.q21=Object.assign({},ans.q21,{choice:q21}); paint("q21"); save("q21"); });
+function strip(part){ return document.querySelector(`.review[data-part="${part}"]`); }
+function paint(part){
+  const el = strip(part), a = ans[part] || {};
+  if (part==="q20"){ if (a.choice && Q20[a.choice]) q20=a.choice; paintQ20(); }
+  if (part==="q21"){ if (a.choice && Q21[a.choice]) q21=a.choice; paintQ21(); }
+  if (!el) return;
+  const cur = el.querySelector("[data-cur]");
+  if (cur){ const Q = part==="q20"?Q20:Q21; cur.textContent = a.choice ? (a.choice==="unsure"?"Not sure":a.choice+" · "+Q[a.choice].l) : "not picked yet (showing the proposed one)"; el.querySelector("[data-unsure]").setAttribute("aria-pressed", a.choice==="unsure"?"true":"false"); }
+  const y = el.querySelector(".yes"), n = el.querySelector(".no:not([data-unsure])");
+  if (y) y.setAttribute("aria-pressed", a.verdict==="yes"?"true":"false");
+  if (n) n.setAttribute("aria-pressed", a.verdict==="no"?"true":"false");
+  const ta = el.querySelector("textarea"); if (document.activeElement!==ta && typeof a.note==="string") ta.value = a.note;
+  if (a.at) el.querySelector(".state").textContent = "Saved for Claude · "+new Date(a.at).toLocaleString();
+}
+async function save(part){
+  const a = ans[part] || {}; const rec = {part, choice:a.choice||null, verdict:a.verdict||null, note:a.note||"", at:new Date().toISOString()};
+  const el = strip(part);
+  if (!db){ if (el) el.querySelector(".state").textContent = "Shown here, but can't be saved in this view. Open the page from its link, or tell Claude in chat."; return; }
+  ans[part] = rec;
+  try{ await db.collection("align").doc(part).set(rec); if (el) el.querySelector(".state").textContent = "Saved for Claude · "+new Date(rec.at).toLocaleTimeString(); }
+  catch(e){ if (el) el.querySelector(".state").textContent = "Not saved ("+(e&&e.code||"error")+"). Tell Claude in chat instead."; }
+}
+paintQ20(); paintQ21();
+(async function(){
+  try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : null); }catch(e){ db = null; }
+  if (!db) return;
+  db.collection("align").onSnapshot(snap=>{ (snap.docs||[]).forEach(d=>{ const r = typeof d.data==="function"?d.data():d.data; if (r && r.part){ ans[r.part]=r; paint(r.part); } }); }, ()=>{});
+})();
+})();
+</script>

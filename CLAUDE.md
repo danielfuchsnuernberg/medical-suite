@@ -1,11 +1,11 @@
-# REACH Inventory (repo: medical-suite) — project facts
+# REACH Medical Suite (repo: medical-suite) — project facts
 
 Danny's rule book (`~/.claude/HOW-I-WORK.md`) applies in full. This file adds this app's facts only.
 
 ## What this is
 - The stock app for REACH's **medical side**: medication and medical supplies, in the Store and in the MedEvac bags.
 - REACH = "Reach the most remote through Aviation". PNG first; Peru and others may follow. **Anything country-specific is a setting, never hard-coded.**
-- **The new app gets built from scratch here, properly, in Claude Code** (Danny, 26 Nov 2026): one real app, with a server later, connected to EDP and the other REACH apps. Name: "REACH Inventory" (Q10).
+- **The new app gets built from scratch here, properly, in Claude Code** (Danny, 26 Nov 2026): one real app, with a server later, connected to EDP and the other REACH apps. Name: **"REACH Medical Suite"** (REACH code MD; Q21 = A, 27 Nov 2026, replaces Q10's "REACH Inventory"). Inventory is its first part (MD1); Patient Archive (MD2), Roster (MD3), Calendar (MD4), Medical Library (MD5) and SOPs (MD6) come later.
 - The June **"Medical Suite"** prototype (one `index.html`, built in claude.ai chats) is **archived** and no longer in this repo. It is a reference only: its 26 bugs in `BUGS.md` are rules the new app must not break. Don't build on it.
 - Family: aviation side = EDP (`~/Documents/GitHub/edp`, dispatch Command Center), NM Plotter, etc. Medical side = this app only (plus the separate Checklist Builder in iCloud › AI Projects › 7 Checklist Template - Medics).
 
@@ -27,3 +27,6 @@ Danny's rule book (`~/.claude/HOW-I-WORK.md`) applies in full. This file adds th
 - The Xcode licence is not accepted yet, so `/usr/bin/git` and `python3` refuse to run. Use `DEVELOPER_DIR=/Library/Developer/CommandLineTools git …`, or ask Danny to run `sudo xcodebuild -license`.
 - The preview server can't read `~/Documents`. Run the app from a copy in the scratchpad with a small Node server, then open `http://localhost:<port>/`. The browser pane refuses `127.0.0.1`.
 - The Dock app's saved data (Safari web-app container) is protected by macOS; it can't be read from the command line.
+
+## REACH
+Before storing any data, follow ../reach/CORE-DATA.md (REACH Core data rules, agreed 27 Nov 2026). Core rules are changed only in the REACH chat.

@@ -1,4 +1,4 @@
-# PLAN — REACH Inventory (medical-suite)
+# PLAN — REACH Medical Suite (medical-suite; called REACH Inventory until Q21, 27 Nov 2026)
 
 ## Original brief (verbatim, 26 Nov 2026)
 
@@ -68,6 +68,8 @@ Asked on the illustrated questions page (26 Nov 2026). Answers read back from th
 | Q17 | (Stage 4 batch 4) Who may archive and delete? | **B:** everyone archives stock; deleting stock for good needs a Manager or Admin; people: only Admins archive and delete. A: as June (stock: everyone; people: Admins). C: only Admins, everything. | **B** (27 Nov): everyone archives stock; deleting stock for good needs a Manager or Admin; people: only Admins |
 | Q18 | What does one roster entry look like? | **A:** Day / Night / On call / Off, shift times set in Settings. B: on duty / off, whole days. C: start and end times per person. | **Parked** (27 Nov, "Not sure"): “I didn't start the Roster Feature / App yet, since that has to follow a set of other rules.” Decided when F16 gets its own run through the stages, with those rules, before release 2 |
 | Q19 | Who may change the roster? | **A:** Managers and Admins. B: everyone, each change logged. C: only Admins. | **A** (27 Nov): Managers and Admins |
+| Q20 | (Stage 5, REACH Core R3) How do Staff / Manager / Admin map onto REACH's View / Work / Manage? | **A:** Staff → Work; Manager and Admin → Manage; View for look-only access; levels set by Management (REACH Q11). B: keep Admin as a fourth level (needs a REACH rule change). C: Staff → View, Manager → Work, Admin → Manage. | **A** (27 Nov): Staff → Work, Manager and Admin → Manage; View for look-only; levels set by Management |
+| Q21 | (Stage 5, REACH D4) Program name and parts | **A:** “REACH Medical Suite” (code MD), Inventory = MD1; Patient Archive, Roster, Calendar, Medical Library, SOPs as later parts (new F19–F21). B: keep “REACH Inventory”, add the parts. C: keep “REACH Inventory”, no Calendar/Library/SOPs. | **A** (27 Nov): “REACH Medical Suite” (MD), Inventory = MD1; MD2–MD6 later (F18, F16, F19–F21) |
 
 ## Stage 3 answers (Danny, on the Stage 3 page, 26 Nov 2026)
 Page: https://claude.ai/artifact/LcTfsHesU2Jap8q6ajrB6E (collection `stage3`). Read 26 Nov 2026: 11 parts. **Right** on 10; "No internet" had a note but no tick. **Overall: Right, "sounds good."**
@@ -131,10 +133,13 @@ Page: https://claude.ai/artifact/AKdfUCwrTn4bZ56tqzQA5F (source `docs/stage4/rea
 | **People** | | | | | |
 | F14 | Staff (from the shared REACH people list) | J2 | — | 4 | 1 |
 | F15 | Training and certificates (expired ones renewable) | J3 | B20, B26 | 4 | 1 |
-| F16 | Duty roster (who is on duty when; EDP reads it) | J14 placeholder | — | 4 | later (planned release 2; own stages first) |
+| F16 | Duty roster, MD3 (who is on duty when; EDP reads it) | J14 placeholder | — | 4 | later (planned release 2; own stages first) |
 | **Later (own stages, no demo now)** | | | | | |
 | F17 | "Used on a case" from EDP (EDP F79): counts once, flags overuse | J13 | B11 | — | later |
-| F18 | Patient File and Patient Archive | J14 placeholder | — | — | later |
+| F18 | Patient File and Patient Archive, MD2 | J14 placeholder | — | — | later |
+| F19 | Calendar, MD4 | J14 placeholder | — | — | later |
+| F20 | Medical Library, MD5 (with the medics' checklists) | J14 placeholder | — | — | later |
+| F21 | SOPs, MD6 | — | — | — | later |
 
 **Stage 4 signed off by Danny, 27 Nov 2026:** feature list, all four demo batches and the Master Checklist (`CHECKLIST.md`) approved.
 **Demo batch 1 (F1–F3): approved by Danny, 27 Nov 2026** (all Right, no notes).
@@ -142,7 +147,7 @@ Page: https://claude.ai/artifact/AKdfUCwrTn4bZ56tqzQA5F (source `docs/stage4/rea
 **Demo batch 3 (F10–F13): approved by Danny, 27 Nov 2026** (all four and overall Right; he set off all 23 checks). F12 note: “how do you remove a person from ‘Who may approve controlled drugs’? under doctor maybe a simple ‘X’ out” → added (version 2 of the page): a doctor removes the right with ✕, logged and all doctors told; the last doctor can't be removed. Not commented on, so standing as shown: the later of two disagreeing counts is used (both kept, flagged); receiving a controlled drug needs a witness, no doctor.
 **Demo batch 4 (F14, F15, F16, F5, F4): approved by Danny, 27 Nov 2026** (F14, F16, F4 and overall Right; F15 and F5 not ticked separately; 14 of 15 checks seen by him, not the EDP time view). F16 is approved as the idea (who is on duty when, EDP reads it); its details wait for Danny's roster rules (Q18 parked).
 
-Not in this app: Dispatch (→ EDP), Calendar and Library (→ shared REACH tools, to decide). See "Belongs elsewhere".
+Not in this app: Dispatch (→ EDP). Calendar, Medical Library and SOPs became later parts of this program (Q21 = A, REACH D4, 27 Nov). See "Belongs elsewhere".
 
 ## EDP link — what it would need (EDP F79 / Q41, not built)
 
@@ -226,3 +231,14 @@ What it means here:
 > Roster I would tackle later.
 
 What it means here: F16 moves to the "later" group with F17 and F18 in the Master Checklist. It keeps what is already decided (who is on duty when, EDP reads it, Q19 = Managers and Admins change it). Everything else waits for its own run through the stages, starting with Danny's roster rules (Q18 parked). Tiny change (§0.9): checklist and page only.
+
+**27 Nov 2026 (Stage 5 start), found by Claude, not a Danny note:**
+The REACH project (`../reach`, chat "2.0 REACH") agreed the **REACH Core data rules** (`../reach/CORE-DATA.md`, R1–R13) with Danny's GO on 27 Nov 2026, the same day Stage 4 ran here. They bind every REACH app; by R13 they change only in the REACH chat. Five places differ from what Stage 4 approved here:
+1. **Deleting:** Q17 = B (Manager/Admin delete stock for good at any time) vs R4/Q38 (archive; delete only a mistake within 24 h, Manage level, logged).
+2. **Roles:** Staff / Manager / Admin vs R3 levels View / Work / Manage → Q20.
+3. **People list:** F2.1/F14.1 "the one shared REACH list" vs REACH Q37/Q18 (each app keeps its own list in the Core shape; Ops Management keeper later).
+4. **Times:** ALL.4 "never UTC" vs R6 "stored in UTC, shown local" → proposed wording: moments in UTC, calendar dates as plain dates.
+5. **Name and parts:** Q10 "REACH Inventory" vs REACH D4 (Medical Suite MD, Inventory MD1, plus MD2–MD6) → Q21.
+Also: REACH Q12 asks for a REACH section in this CLAUDE.md (needs Danny's OK). Shown on https://claude.ai/artifact/S65PV6inHY3UG8h87fo3sz. Nothing changed in the feature list or Master Checklist until Danny answers. Classified "anything else" (§5): handled at the start of Stage 5, before the architecture.
+
+**27 Nov 2026 (Stage 5), Danny's answers on the alignment page** (https://claude.ai/artifact/S65PV6inHY3UG8h87fo3sz): all five points **yes**, **Q20 = A**, **Q21 = A**, the REACH line for CLAUDE.md **yes**, overall **yes**. Applied the same day: the Master Checklist (ALL.4, ALL.8, new ALL.9, F2, F4.1, F5.7, F8.4, F12.2, F12.6, F13.2, F13.8, F14.1, F14.4, F15.6, F16.3, new F19–F21), the feature list, `CLAUDE.md` (name and REACH section), `DECISIONS.md`.

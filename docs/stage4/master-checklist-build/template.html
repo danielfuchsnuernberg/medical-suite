@@ -102,7 +102,7 @@ footer{padding-top:28px;font-size:12.5px;color:var(--faint)}
 <section id="g-overall"><div class="eyebrow">Your answer</div><h2>Is this the Master Checklist?</h2>
   <p class="muted">If yes, Stage 4 is signed off and Stage 5 (look and structure) comes next, after your GO. Anything marked “Not right” gets fixed here first.</p>
   <div class="review final" data-part="overall" data-final="1"></div></section>
-<footer>REACH Inventory · Stage 4 · Master Checklist draft, 27 Nov 2026 · built from <span style="font-family:var(--mono)">CHECKLIST.md</span> › Master Feature Checklist · source <span style="font-family:var(--mono)">docs/stage4/master-checklist.html</span></footer>
+<footer>REACH Inventory · Stage 4 · Master Checklist, approved 27 Nov 2026, lined up with REACH Core the same day · built from <span style="font-family:var(--mono)">CHECKLIST.md</span> › Master Feature Checklist · source <span style="font-family:var(--mono)">docs/stage4/master-checklist.html</span></footer>
 </div>
 
 <script>
@@ -116,7 +116,7 @@ const GROUPS = [
   {id:"g-found", part:"found", t:"Foundation", ids:["F1","F2","F3","F4","F5"]},
   {id:"g-inv", part:"inv", t:"Inventory", ids:["F6","F7","F8","F9","F10","F11","F12","F13"]},
   {id:"g-ppl", part:"ppl", t:"People", ids:["F14","F15"]},
-  {id:"g-later", part:"later", t:"Later (own stages)", ids:["F16","F17","F18"]}
+  {id:"g-later", part:"later", t:"Later (own stages)", ids:["F16","F17","F18","F19","F20","F21"]}
 ];
 function chips(src){
   if (!src) return "";
@@ -129,13 +129,13 @@ function chips(src){
 const all = B.flatMap(b=>b.items);
 const txt = all.map(i=>i.text+" "+i.src).join(" ");
 const bugs = Array.from({length:26},(_,k)=>"B"+(k+1)).filter(b=>new RegExp("\\b"+b+"\\b").test(txt)).length;
-const feats = B.filter(b=>/^F\d+$/.test(b.id)).length;
-const ans = ["Q3","Q4","Q5","Q6","Q7","Q8","Q9","Q10","Q13","Q14","Q15","Q16","Q17","Q18","Q19"].filter(q=>new RegExp("\\b"+q+"\\b").test(txt)).length;
+const feats = B.filter(b=>/^F\d+$/.test(b.id)).length; const FN = 21;
+const ans = ["Q3","Q4","Q5","Q6","Q7","Q8","Q9","Q13","Q14","Q15","Q16","Q17","Q18","Q19","Q20","Q21"].filter(q=>new RegExp("\\b"+q+"\\b").test(txt)).length;
 document.getElementById("stats").innerHTML = `
   <div class="stat"><div class="v">${all.length}</div><div class="k">lines to prove</div></div>
-  <div class="stat ${feats===18?"good":""}"><div class="v">${feats} / 18</div><div class="k">features with a block</div></div>
+  <div class="stat ${feats===FN?"good":""}"><div class="v">${feats} / ${FN}</div><div class="k">features with a block</div></div>
   <div class="stat ${bugs===26?"good":""}"><div class="v">${bugs} / 26</div><div class="k">June mistakes turned into tests</div></div>
-  <div class="stat ${ans===15?"good":""}"><div class="v">${ans} / 15</div><div class="k">answers that shape the app (Q3–Q19)</div></div>`;
+  <div class="stat ${ans===16?"good":""}"><div class="v">${ans} / 16</div><div class="k">answers that shape the app (Q3–Q21)</div></div>`;
 document.getElementById("groups").innerHTML = GROUPS.map(g=>`<section id="${g.id}"><div class="eyebrow">${esc(g.t)}</div>
   ${g.ids.map(id=>{ const b=B.find(x=>x.id===id); if(!b) return "";
     const rel = b.meta.find(m=>/release|later/i.test(m))||"";

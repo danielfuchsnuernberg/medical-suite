@@ -1,5 +1,5 @@
-# CHECKLIST — REACH Inventory
-**Now:** Stage 5 — UI / Architecture · waiting for Danny: GO to start Stage 5 (look and structure of the real program); switch off GitHub Pages again when GitHub works (Settings › Pages)
+# CHECKLIST — REACH Medical Suite
+**Now:** Stage 6 — Execution · waiting for Danny: GO to start building with F1 (window, menu, search); server location to raise in the REACH chat before release 1
 
 ### ARCHIVE — clear away the June prototype (26 Nov 2026)
 **Goal:** only the new app is left in sight; nothing is lost.
@@ -103,7 +103,20 @@ Danny: nobody uses the June app, so no patches. All 26 bugs are rules for the ne
 **Open questions:** none (Q18 parked with F16, later)
 
 ### STAGE 5 — UI / Architecture
-**Status:** 🔴 OPEN
+**Goal:** the look (June UI as a component list with states) and the structure (folders, modules, data model, store door, server and desktop path) are shown, written into ARCHITECTURE.md and DECISIONS.md, and approved.
+**Checklist:**
+- [x] Read EDP's architecture and the REACH project's agreed Core rules (27 Nov)
+- [x] Line up with REACH Core: deleting, levels (Q20), people list, times, name and parts (Q21), REACH line in CLAUDE.md (27 Nov: all yes, Q20 A, Q21 A) — page https://claude.ai/artifact/S65PV6inHY3UG8h87fo3sz
+- [x] Feature list, Master Checklist and CLAUDE.md updated to the answers (27 Nov)
+- [x] UI: tokens, type, spacing, layout, component list, empty / loading / error states — shown visually (https://claude.ai/artifact/CDkrByh9ypq4YXu4sN7vBj, 12 building blocks × 7 states)
+- [x] Architecture: folders, modules, data model (Core shape), store door, offline queue, change log, dependencies with versions; real alternatives named — shown visually (same page)
+- [x] ARCHITECTURE.md and DECISIONS.md written (marked PROPOSED until GO)
+- [x] Danny approves UI and architecture (GO) — 27 Nov 2026, on the page: look Right, overall GO; other parts not ticked separately
+**Tests for this stage:**
+- [x] Every Master Checklist line maps to a module in the architecture (page count: 103 of 103)
+- [x] Every REACH Core rule R1–R12 maps to a place in the architecture (12 of 12)
+**Status:** 🟢 SIGNED OFF (27 Nov 2026)
+**Open questions:** none here; server location goes to the REACH chat (SD2 / EDP Q44)
 
 ### STAGE 6 — Execution
 **Status:** 🔴 OPEN
@@ -118,18 +131,19 @@ Danny: nobody uses the June app, so no patches. All 26 bugs are rules for the ne
 **Status:** 🔴 OPEN
 
 ## Master Feature Checklist
-**Approved by Danny, 27 Nov 2026 (Stage 4 signed off).** This is the hard reference for Stages 6–8. A feature is done only when every line in its block is ✅, each proven by a test that can fail. In brackets after each line is where it comes from: a June bug (B…), an answer (Q…), Danny's own words, or the approved demo.
+**Approved by Danny, 27 Nov 2026 (Stage 4 signed off).** Changed the same day to line up with the REACH Core rules, on Danny's answers (Stage 5 alignment page: five points yes, Q20 = A, Q21 = A). This is the hard reference for Stages 6–8. A feature is done only when every line in its block is ✅, each proven by a test that can fail. In brackets after each line is where it comes from: a June bug (B…), an answer (Q…), Danny's own words, or the approved demo.
 Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feature list: `PLAN.md` › Target feature list.
 
 ### ALL — rules for every feature
 - [ ] ALL.1 No real stock, staff or patient data in the code or in Git. Real data only comes in through import (F13). (CLAUDE.md, B9)
 - [ ] ALL.2 Everything country-specific is a setting (F5), never written into the code. (brief, Stage 3)
 - [ ] ALL.3 The June screens and look stay; no restyle before EDP F53. (Danny, Stage 3: "The UI is good")
-- [ ] ALL.4 Dates are local dates of the base. No date is ever written or read in world time (UTC). (B13)
+- [ ] ALL.4 A **moment** (when something happened) is stored in UTC and shown in the base's local time; a **calendar date** (expiry, course done) is stored as a plain date with no time, so it can never slip a day. (R6, B13, alignment 27 Nov)
 - [ ] ALL.5 Every change is logged with who, when and old → new (F4). (B18, B19)
 - [ ] ALL.6 Everything typed is shown as plain text, everywhere. (B4)
 - [ ] ALL.7 Works on Mac and Windows as an installed program, phone and tablet sizes included. (Q3, Q4)
-- [ ] ALL.8 The program is called “REACH Inventory”; the name is a setting until the common REACH look (EDP F53). (Q10)
+- [ ] ALL.8 The program is called “REACH Medical Suite” (REACH code MD); Inventory is its first part (MD1). The name is a setting until the common REACH look (EDP F53). (Q21 = A, REACH D4)
+- [ ] ALL.9 Follows the REACH Core data rules (`../reach/CORE-DATA.md`): one store door, hidden random IDs plus readable numbers, the same stamps on every record (created / changed by and when, country), Active or Archived, changes sent as messages with their own ID. (REACH R4, R7, R8)
 **Status:** 🔴 not built
 
 ### F1 — Program window, menu and search · release 1 · June J1 · demo batch 1
@@ -141,13 +155,13 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 **Status:** 🔴 not built
 
 ### F2 — Sign-in and roles · release 1 · June J1 "Acting as" · demo batch 1
-- [ ] F2.1 Everyone signs in with their own REACH account, the same as in EDP. There is no "Acting as". (B12, Q6)
-- [ ] F2.2 Roles Staff, Manager, Admin come with the account; only an Admin changes roles. (demo 1)
-- [ ] F2.3 A Staff member can't open Settings or change any role. (B12)
-- [ ] F2.4 The last Admin can't be demoted or archived; the message says why. (B14)
+- [ ] F2.1 Everyone signs in with their own REACH account: one account per person, the same as in EDP. There is no "Acting as". (B12, Q6, REACH R3)
+- [ ] F2.2 Inside this app a person has one of three levels: View, Work or Manage. Nurses work at Work level; doctors in charge and base managers at Manage. Levels are set by Management. (Q20 = A, REACH R3, Q11)
+- [ ] F2.3 A Work-level person can't open Settings or change anyone's level. (B12)
+- [ ] F2.4 The last Manage-level person can't be lowered or archived; the message says why. (B14)
 - [ ] F2.5 Nobody can archive themselves. (B23)
 - [ ] F2.6 "Stay signed in on this computer" lets the program open offline; a first sign-in on a new computer needs internet once, and says so. (Stage 3, demo 1)
-- [ ] F2.7 Archive and delete rights: everyone archives stock; deleting stock for good needs a Manager or Admin; archiving and deleting people is Admin-only. (Q17 = B)
+- [ ] F2.7 Archive stock: Work and Manage. Archive people: Manage. Delete for good: only a mistake, within 24 hours of creating it, by Manage level, logged; after that, archive only. Patient files and the change log are never deleted. (Q17, REACH R4 / Q38, alignment 27 Nov)
 - [ ] F2.8 Controlled-drug rights don't follow these roles: see F12. (Danny, batch 2 note)
 **Status:** 🔴 not built
 
@@ -162,7 +176,7 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 **Status:** 🔴 not built
 
 ### F4 — Activity log · release 1 · June J12 · demo batch 4
-- [ ] F4.1 One log for all REACH apps (Inventory, People, Settings, EDP), newest first, filter by app. (Q7, demo 4)
+- [ ] F4.1 One log for all REACH apps (Inventory, People, Settings, EDP), newest first, filter by app; every entry in the REACH shape: who, which record, what changed, when, from which app. (Q7, REACH R9, demo 4)
 - [ ] F4.2 Every change shows old → new; renaming an item keeps its history (history follows the ID, not the name). (B19)
 - [ ] F4.3 Every delete for good is logged with who, when and what was there. (B18)
 - [ ] F4.4 Nobody can edit or delete a log entry, Admins included. (demo 4)
@@ -175,7 +189,7 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 - [ ] F5.4 A department or category in use, even only by archived records, can't be deleted; the message says who uses it. (B21)
 - [ ] F5.5 Renaming only the capitals is allowed (icu → ICU); a real duplicate is refused. (B24 part)
 - [ ] F5.6 Departments, inventory categories, courses and bags are managed here. (June J10)
-- [ ] F5.7 Only Admins change settings; everyone else can look. (demo 4)
+- [ ] F5.7 Only Manage level changes settings; everyone else can look. (Q20, demo 4)
 **Status:** 🔴 not built
 
 ### F6 — Inventory overview · release 1 · June J4 · demo batch 2
@@ -195,7 +209,7 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 - [ ] F8.1 Stock per location with lot, expiry and status, and the item's movements. (June J6)
 - [ ] F8.2 Move all or part of a line to another bag or the Store. It joins a matching line (same lot and expiry), or starts a new one without a required amount. Logged. (B24)
 - [ ] F8.3 Edit a line: the location can't be edited there (use Move); every change is logged old → new; amounts are whole numbers. (demo 2)
-- [ ] F8.4 Add a location; add an item (a duplicate name is refused); archive and reactivate; delete for good only from archived, after a confirm, logged. Rights per F2.7. (demo 2, Q17)
+- [ ] F8.4 Add a location; add an item (a duplicate name is refused); archive and reactivate; delete for good only a mistake within 24 hours, after a confirm, logged. Rights per F2.7. (demo 2, Q17, REACH Q38)
 - [ ] F8.5 A "Used on EDP cases" panel waits for F17. (demo 2)
 **Status:** 🔴 not built
 
@@ -222,11 +236,11 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 
 ### F12 — Controlled-drug register · release 1 · new · demo batch 3
 - [ ] F12.1 Each controlled drug has a running balance. Every line has: when, in / out / correction, amount, balance, who, which doctor and how they approved, witness, reason or case. (Q8)
-- [ ] F12.2 Only a doctor takes a controlled drug out or approves it being taken out. Being Admin gives no right. (Danny, batch 2 note)
+- [ ] F12.2 Only a doctor takes a controlled drug out or approves it being taken out. Manage level gives no right here. (Danny, batch 2 note)
 - [ ] F12.3 A nurse takes one out with a doctor's approval, either in the room (the doctor types their own PIN on the nurse's screen) or by request to the doctor's own phone or Mac (Approve / Ask / Refuse, red badge until answered). Nothing comes off the balance until it's approved; a refused request stays visible, crossed out. (Q13 = A)
 - [ ] F12.4 Emergency, no doctor reachable: reason and witness required; booked at once; red "waiting for doctor" on Home and in the register until a doctor approves or queries it. (Q14 = A)
 - [ ] F12.5 Every line has a witness: a second person who was there. Never yourself, and never the approving doctor. (Q15 = A, Q8)
-- [ ] F12.6 Only a doctor gives another person the right to approve, never themselves; the first doctor is set once at setup with Danny; Admins can't change the list. (Q16 = B)
+- [ ] F12.6 Only a doctor gives another person the right to approve, never themselves; the first doctor is set once at setup with Danny; Manage level can't change the list. (Q16 = B)
 - [ ] F12.7 A doctor removes someone's right with ✕; it's logged and every doctor is told; the last doctor can't be removed. (Danny, batch 3 note)
 - [ ] F12.8 Lines are never edited or deleted. A doctor adds a correction line that names the original, with a witness and a reason; the balance can't go below 0. (Q8, demo 3)
 - [ ] F12.9 Receiving needs a witness, no doctor. (demo 3, approved without comment)
@@ -235,20 +249,20 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 
 ### F13 — Backup, export and import · release 1 · June J11 · demo batch 3
 - [ ] F13.1 The server keeps the data and makes a backup every night; the last 30 are kept. (Q5, demo 3)
-- [ ] F13.2 Export a backup file to your own computer. (June J11)
+- [ ] F13.2 Export a backup file to your own computer, in the REACH backup shape: app code MD, data version, when exported, the data. (June J11, REACH R10)
 - [ ] F13.3 An import with no stock, or with no people, is refused with the reason; nothing changes. (B15)
 - [ ] F13.4 A restore shows what changes (now vs after), needs a tick to confirm, and saves a backup of today first. (B15)
 - [ ] F13.5 After a restore every screen shows the restored data at once, with no reload. (B2)
 - [ ] F13.6 Importing the Excel lists shows problems first: impossible dates (e.g. 1900), the same item twice in one place, double spaces, missing units, lot fields that look like dates. Blocking rows must be fixed in the spreadsheet; the list can be copied for the medics. (B6)
 - [ ] F13.7 The real stock and staff lists come only from Danny's files through import; never built in, never in Git. (B9)
-- [ ] F13.8 Only Admins import or restore. (demo 3)
+- [ ] F13.8 Only Manage level imports or restores. (Q20, demo 3)
 **Status:** 🔴 not built
 
 ### F14 — Staff · release 1 · June J2 · demo batch 4
-- [ ] F14.1 People come from the one REACH people list, shared with EDP; "Add person" adds there; an email already in the list is refused. (Q6 = C)
+- [ ] F14.1 This app keeps its own people list in the REACH Core shape (hidden ID, name, office, stamps), so it can be merged later; Ops Management becomes the keeper of the one list. An email already in the list is refused. (Q6 = C, REACH Q37, Q18, alignment 27 Nov)
 - [ ] F14.2 The directory shows department, role and training status; "Show archived" shows archived people faded. (June J2)
 - [ ] F14.3 Counts never include archived people, even when they're shown. (B26)
-- [ ] F14.4 Archive keeps the history and can be undone; delete for good only from archived, logged. Admin-only. (Q17 = B, B18)
+- [ ] F14.4 Archive (Manage level) keeps the history and can be undone; delete for good only a mistake within 24 hours, logged. (Q17, REACH Q38, B18)
 - [ ] F14.5 A profile shows training, details and this week's duties. (demo 4)
 **Status:** 🔴 not built
 
@@ -258,13 +272,13 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 - [ ] F15.3 Expiry is worked out month-safe: 31 Jan + 1 month = end of February. (B26)
 - [ ] F15.4 Archived people are offered no courses. (B26)
 - [ ] F15.5 A completion date can't be in the future; every change logged old → new. (demo 4)
-- [ ] F15.6 Managers and Admins assign and complete courses. (June J3)
+- [ ] F15.6 Manage level assigns and completes courses. (June J3, Q20)
 **Status:** 🔴 not built
 
-### F16 — Duty roster · later (planned for release 2) · June J14 placeholder · demo batch 4 (idea only)
+### F16 — Duty roster (MD3) · later (planned for release 2) · June J14 placeholder · demo batch 4 (idea only)
 - [ ] F16.1 Shows which nurse or doctor is on duty when. (Danny, Stage 3)
 - [ ] F16.2 EDP reads it, so the dispatcher only assigns someone on duty at that time; EDP can't change it. (Danny, Stage 3)
-- [ ] F16.3 Managers and Admins change it; every change is logged. (Q19 = A)
+- [ ] F16.3 Manage level changes it; every change is logged. (Q19 = A, Q20)
 - [ ] F16.4 What one entry looks like, and the rules it must follow, come from Danny's roster rules in F16's own stages before release 2. (Q18 parked)
 **Status:** ⚪ later. Danny, 27 Nov: “Roster I would tackle later.” Gets its own stages, starting from his roster rules.
 
@@ -273,6 +287,18 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 - [ ] F17.2 Never below zero without a word: overuse is flagged. (B11)
 **Status:** ⚪ later
 
-### F18 — Patient File and Patient Archive · later · June J14 placeholder · no demo
+### F18 — Patient File and Patient Archive (MD2) · later · June J14 placeholder · no demo
 - [ ] F18.1 Its own run through the stages: one file per patient (from EDP or added by hand), growing over the years, kept in the Patient Archive, with stricter access. (Danny, Stage 3)
+**Status:** ⚪ later
+
+### F19 — Calendar (MD4) · later · no demo
+- [ ] F19.1 Its own run through the stages, as a part of the Medical Suite. (Q21 = A, REACH D4)
+**Status:** ⚪ later
+
+### F20 — Medical Library (MD5) · later · no demo
+- [ ] F20.1 Its own run through the stages: documents and course material, with the medics' checklists. (Q21 = A, REACH D4, Q22, Q24)
+**Status:** ⚪ later
+
+### F21 — SOPs (MD6) · later · no demo
+- [ ] F21.1 Its own run through the stages: the medical side's standard operating procedures. (Q21 = A, REACH D4, Q24)
 **Status:** ⚪ later
