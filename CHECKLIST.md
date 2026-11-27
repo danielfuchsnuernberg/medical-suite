@@ -1,5 +1,5 @@
 # CHECKLIST — REACH Medical Suite
-**Now:** Stage 6 — Execution · F1–F11 built and tested (F11 not committed) · waiting for Danny: try F11 (stock takes), commit, then Q25 and F12
+**Now:** Stage 6 — Execution · F1–F11 built, tested and committed · waiting for Danny: commit, then F12 (controlled-drug register)
 
 ### ARCHIVE — clear away the June prototype (26 Nov 2026)
 **Goal:** only the new app is left in sight; nothing is lost.
@@ -116,7 +116,7 @@ Danny: nobody uses the June app, so no patches. All 26 bugs are rules for the ne
 - [x] Every Master Checklist line maps to a module in the architecture (page count: 103 of 103)
 - [x] Every REACH Core rule R1–R12 maps to a place in the architecture (12 of 12)
 **Status:** 🟢 SIGNED OFF (27 Nov 2026)
-**Open questions:** none (Q24 answered: C); server location goes to the REACH chat (SD2 / EDP Q44)
+**Open questions:** none (Q25 answered: A); server location goes to the REACH chat (SD2 / EDP Q44)
 
 ### STAGE 6 — Execution
 **Goal:** build F1 → F15 in the order of the Master Checklist; each feature is built, then every one of its lines is proven by a test that can fail, then Danny tries it.
@@ -131,7 +131,7 @@ Danny: nobody uses the June app, so no patches. All 26 bugs are rules for the ne
 - [x] F7 Store and bags: built, 3 of 3 lines tested in the real program (28 Nov); a row opens a stand-in item page until F8 fills it in
 - [x] F8 item page: built, 5 of 5 lines tested in the real program (28 Nov); Q24 = C applied
 - [x] F9 restock and dispense: built, 4 of 4 lines tested in the real program (28 Nov); controlled drugs: + and − both lead to the register (Q8, F12.9), and their amount can't be edited or moved outside it (gap left in F8, closed)
-- [ ] (F12, before building) Q25: does moving a controlled drug between places need its own register line?
+- [x] (F12, before building) Q25: does moving a controlled drug between places need its own register line? ✅ 28 Nov: A (a “Moved” line with a witness, no doctor)
 - [x] F10 count a bag: built, 4 of 4 lines tested in the real program (28 Nov); controlled drugs are shown but counted in the register (F12)
 - [x] F11 stock takes: built, 4 of 4 lines tested in the real program (28 Nov); the server part proven with the stand-in server until REACH SD2 · [ ] F12 register · [ ] F13 backup and import · [ ] F14 staff · [ ] F15 training
 **Tests for this stage:**
@@ -255,7 +255,7 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 **Status:** 🟢 built and tested (28 Nov 2026).
 
 ### F12 — Controlled-drug register · release 1 · new · demo batch 3
-- [ ] F12.1 Each controlled drug has a running balance. Every line has: when, in / out / correction, amount, balance, who, which doctor and how they approved, witness, reason or case. (Q8)
+- [ ] F12.1 Each controlled drug has a running balance. Every line has: when, in / out / moved / correction, amount, balance, who, which doctor and how they approved, witness, reason or case. (Q8)
 - [ ] F12.2 Only a doctor takes a controlled drug out or approves it being taken out. Manage level gives no right here. (Danny, batch 2 note)
 - [ ] F12.3 A nurse takes one out with a doctor's approval, either in the room (the doctor types their own PIN on the nurse's screen) or by request to the doctor's own phone or Mac (Approve / Ask / Refuse, red badge until answered). Nothing comes off the balance until it's approved; a refused request stays visible, crossed out. (Q13 = A)
 - [ ] F12.4 Emergency, no doctor reachable: reason and witness required; booked at once; red "waiting for doctor" on Home and in the register until a doctor approves or queries it. (Q14 = A)
@@ -265,6 +265,7 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 - [ ] F12.8 Lines are never edited or deleted. A doctor adds a correction line that names the original, with a witness and a reason; the balance can't go below 0. (Q8, demo 3)
 - [ ] F12.9 Receiving needs a witness, no doctor. (demo 3, approved without comment)
 - [ ] F12.10 Taking out more than the balance is refused. (demo 3)
+- [ ] F12.11 Moving a controlled drug between the Store and a bag is a “Moved” register line: amount, from, to, who, witness (never yourself), no doctor; the balance doesn't change; the item page shows where it is. (Q25 = A)
 **Status:** 🔴 not built
 
 ### F13 — Backup, export and import · release 1 · June J11 · demo batch 3

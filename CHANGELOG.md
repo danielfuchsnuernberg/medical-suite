@@ -1,5 +1,12 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — Q25 answered: A
+- Danny typed the answer in chat (the page didn't save it). Moving a controlled drug between the Store and a bag will be a “Moved” line in the register, with a witness and no doctor; the balance doesn't change. F12.1 now lists the line type “moved”; new checklist line F12.11. Until F12 is built, a controlled drug still can't be moved.
+
+## 2026-11-28 — F11 committed; question Q25 before F12
+- F11 committed and pushed (4aee299).
+- Q25 on https://claude.ai/artifact/STUm8975FUBe7zamEputZ5 (source `docs/stage6/cd-move-question.html`, answer in its `q25` collection): when a controlled drug moves from the Store into a bag, does the register record it, and who confirms it? Proposed A: a “Moved” line with a witness, no doctor, balance unchanged. Found while drawing it: the approved register demo gave each drug only one place. Checked before publishing: each of the four answers changes the register mock (2, 2, 3 and 1 lines), no sideways scroll at 375 px, no console errors.
+
 ## 2026-11-28 — F11 built: stock takes
 - F10 committed and pushed first (3dbb539).
 - Stock takes (menu › Stock takes): Freeze stock take now copies every line in use in the Store and bags with the date (base time), who and a label (proposed: “Stock take, Nov 2026”). It warns if counts are typed but not saved. It can never be changed or deleted: even a change message from another computer is ignored, and Activity shows it was.

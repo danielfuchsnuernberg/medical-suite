@@ -1,0 +1,172 @@
+<title>Controlled Drug Move</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Question Q25 (F12 register, moving a controlled drug). Stage 4 colours, dark mode; mock screens in the June look (light). Answer saves to db collection "q25". */
+:root{--bg:#F4F4F6;--surface:#FFFFFF;--surface-2:#FAFAFB;--border:#E4E4EA;--border-strong:#D2D2DA;--text:#1B1B23;--muted:#6B6B78;--faint:#9B9BA6;--accent:#4F46E5;--accent-soft:#EEEDFD;--accent-border:#C9C6F7;--on-accent:#FFFFFF;--ok:#1E9E62;--ok-soft:#E7F5EE;--warn:#C77A12;--warn-soft:#F8EFDF;--bad:#D14343;--bad-soft:#FAEAEA;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121218;--surface:#1B1B23;--surface-2:#20202A;--border:#2C2C38;--border-strong:#3A3A48;--text:#ECECF2;--muted:#A3A3B2;--faint:#76768A;--accent:#8B85F5;--accent-soft:#25234A;--accent-border:#3F3B7A;--on-accent:#121218;--ok:#4CC48A;--ok-soft:#173326;--warn:#E0A247;--warn-soft:#352812;--bad:#EE7474;--bad-soft:#3A1C1C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121218;--surface:#1B1B23;--surface-2:#20202A;--border:#2C2C38;--border-strong:#3A3A48;--text:#ECECF2;--muted:#A3A3B2;--faint:#76768A;--accent:#8B85F5;--accent-soft:#25234A;--accent-border:#3F3B7A;--on-accent:#121218;--ok:#4CC48A;--ok-soft:#173326;--warn:#E0A247;--warn-soft:#352812;--bad:#EE7474;--bad-soft:#3A1C1C;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;margin:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:64px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0} h1{font-size:27px;font-weight:700;letter-spacing:-.4px} h2{font-size:19px;font-weight:700}
+p{margin:0;max-width:72ch}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:13px}
+header{padding-top:32px;display:flex;flex-direction:column;gap:10px}
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:780px){.why{grid-template-columns:1fr}}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:5px;font-size:14px;min-width:0}
+.k{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.risk{border-color:var(--bad);background:var(--bad-soft)} .risk .k{color:var(--bad)}
+.flow{display:flex;gap:0;align-items:stretch;overflow-x:auto;padding-bottom:4px}
+.fs{flex:1 0 170px;min-width:170px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:3px}
+.fs .w{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent)}
+.fs.bad{border-color:var(--bad)} .fs.bad .w{color:var(--bad)} .fs.good{border-color:var(--ok)} .fs.good .w{color:var(--ok)}
+.to{flex:none;display:flex;align-items:center;padding:0 6px;color:var(--faint)}
+.qgrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.qgrid{grid-template-columns:1fr}}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:12px;border:1px solid var(--border-strong);background:var(--surface)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt[aria-pressed="true"]{border:2px solid var(--accent);background:var(--accent-soft);padding:11px 13px}
+.opt .l{font-weight:600;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.opt .d{font-size:13px;color:var(--muted)}
+.opt .cons{font-size:12.5px;display:flex;flex-direction:column;gap:2px;margin-top:3px}
+.opt .cons span::before{content:"+ ";color:var(--ok);font-weight:700} .opt .cons span.minus::before{content:"− ";color:var(--bad)}
+.prop{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--ok);color:#fff}
+.ans{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--border-strong)}
+.ans .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13.5px}
+.ans button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.ans button[aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:#fff}
+.ans textarea{min-height:54px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);resize:vertical}
+.ans .state{font-size:12px;color:var(--faint)}
+.note{font-size:13px;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--border)}
+/* mock screens (June look) */
+.mocks{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.mocks{grid-template-columns:1fr}}
+.m{color-scheme:light;background:#F4F4F6;color:#1B1B23;border:1px solid #D2D2DA;border-radius:12px;overflow:hidden;font-size:12px;line-height:1.4}
+.m .cap{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#9B9BA6;padding:6px 10px;background:#F0F0F3;border-bottom:1px solid #E4E4EA}
+.m .body{padding:10px;display:flex;flex-direction:column;gap:7px}
+.m .card{background:#fff;border:1px solid #E4E4EA;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.m .t{font-weight:700;font-size:13px}
+.m .f{display:flex;flex-direction:column;gap:2px} .m .f span{font-size:10.5px;font-weight:600;color:#6B6B78} .m .f i{font-style:normal;border:1px solid #D2D2DA;border-radius:6px;padding:4px 7px;background:#fff;color:#6B6B78}
+.m .btn{align-self:flex-start;font-weight:600;font-size:11.5px;padding:5px 10px;border-radius:6px;background:#4F46E5;color:#fff}
+.m .ghost{background:#fff;color:#1B1B23;border:1px solid #E4E4EA}
+.m .warn{background:#FAEAEA;color:#D14343;border-radius:7px;padding:6px 8px;font-size:11px}
+.m .okm{background:#E7F5EE;color:#14663f;border-radius:7px;padding:6px 8px;font-size:11px}
+.m .pick{display:flex;flex-direction:column;gap:4px}
+.m .pick b{font-weight:600;border:1px solid #E4E4EA;border-radius:7px;padding:5px 8px;background:#FAFAFB}
+footer{padding-top:18px;font-size:12.5px;color:var(--faint)}
+</style>
+<style>
+.m table{width:100%;border-collapse:collapse;font-size:11px}
+.m th{font-size:9.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#9B9BA6;text-align:left;padding:4px 5px;border-bottom:1px solid #E4E4EA}
+.m td{padding:5px;border-bottom:1px solid #EEEEF2;vertical-align:top}
+.m td.n,.m th.n{text-align:right;font-variant-numeric:tabular-nums}
+.m tr.new td{background:#EEEDFD}
+.m .tagm{font-size:9.5px;font-weight:700;letter-spacing:.3px;border-radius:4px;padding:1px 5px;background:#EEEDFD;color:#4F46E5}
+.m .places{display:flex;flex-direction:column;gap:4px}
+.m .pl{display:flex;justify-content:space-between;gap:6px;font-size:11.5px;background:#fff;border:1px solid #E4E4EA;border-radius:7px;padding:6px 8px}
+.m .none{color:#9B9BA6;font-style:italic;font-size:11px;padding:4px 0}
+.m .hole{background:#FAEAEA;color:#D14343;border-radius:7px;padding:6px 8px;font-size:11px}
+.m .okm{background:#E7F5EE;color:#14663f;border-radius:7px;padding:6px 8px;font-size:11px}
+.story{display:flex;gap:0;align-items:stretch;overflow-x:auto;padding-bottom:4px}
+.story .fs{flex:1 0 190px}
+.chg b{font-family:var(--mono);font-weight:500;font-size:12px;color:var(--accent)}
+</style>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Stage 6 · before F12 (controlled-drug register) · question Q25</div>
+  <h1>When morphine moves from the Store into a bag, does the register record it?</h1>
+  <p class="muted">You decided every movement of a controlled drug goes in the register, with a witness (Q8). The register demo you approved gave each drug only one place, so it never showed a drug split between the Store and a bag. Until you answer, a controlled drug can't be moved at all.</p>
+</header>
+<div class="story">
+  <div class="fs"><span class="w">Before</span><span>The Store holds <b>5 ampoules</b> of Morphine. Bag 1 (adult) holds none. Register balance: <b>5</b>.</span></div>
+  <span class="to">→</span>
+  <div class="fs"><span class="w">Anna stocks Bag 1</span><span>…moving <b>2 ampoules</b> from the Store into Bag 1 before a MedEvac flight.</span></div>
+  <span class="to">→</span>
+  <div class="fs bad"><span class="w">The question</span><span>The total is still 5, so the balance doesn't change. But 2 are now in a bag that leaves the base. Does the register show that, and who has to confirm it?</span></div>
+</div>
+<div class="why">
+  <div class="box"><span class="k">What it's about</span><p>The register is the legal record of each controlled drug: every ampoule in, out or corrected, with who, a witness and the running balance. A <b>move</b> is different: nothing comes in or goes out, but the drug changes <b>where it is</b>.</p></div>
+  <div class="box risk"><span class="k">Why it matters</span><p>If an ampoule goes missing from a bag, the register is where you look. If moves aren't in it, the register says “5, in the Store” while 2 are on a plane. If every move needs a doctor, stocking a bag before a flight waits for one.</p></div>
+  <div class="box"><span class="k">What each answer changes</span><p>Pick one: the register and the item page on the left change with it. In every answer the move is also in Activity, and the balance stays 5.</p></div>
+</div>
+<div class="qgrid">
+  <div class="mocks" id="mocks"></div>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div class="opts" id="opts"></div>
+    <div class="ans"><div class="row"><b>Your answer:</b> <span id="cur">not picked yet (showing the proposed one)</span></div>
+      <div class="row"><button type="button" id="unsure" aria-pressed="false">Not sure</button></div>
+      <textarea id="note" placeholder="Anything to add? (optional)"></textarea><span class="state" id="st">Not answered yet.</span></div>
+    <div class="note chg" id="chg"></div>
+  </div>
+</div>
+<footer>REACH Medical Suite · Stage 6 · question Q25 · 28 Nov 2026 · source <code>docs/stage6/cd-move-question.html</code></footer>
+</div>
+<script>
+(function(){
+"use strict";
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const O = {
+  A:{l:"A “Moved” line with a witness, no doctor", d:"The register gets one line: Moved 2 · Store → Bag 1 · by Anna · witness Ben. The balance stays 5. Like receiving (F12.9): a witness, no doctor.", prop:true,
+     pro:["The register always says where every ampoule is","A second person confirms it, as for every other line (Q8)","No waiting for a doctor before a flight"], con:["Stocking a bag needs two people present"],
+     rows:[["In","+5","5","Ben","—","Dina","Delivery"],["Moved","2","5","Anna","not needed","Ben","Store → Bag 1 (adult)"]], newRow:1, places:"split", note:"ok",
+     lines:["F12.1: line types become in / out / moved / correction.","New F12 line: “Moving a controlled drug between places is a register line with a witness, no doctor; the balance doesn't change.”"]},
+  B:{l:"A “Moved” line, no witness", d:"The register gets one line with who and where, but no second person.",
+     pro:["The register still says where every ampoule is","One person can stock a bag"], con:["The only register line without a witness: an ampoule could vanish between Store and bag with only one name on it (against Q8)"],
+     rows:[["In","+5","5","Ben","—","Dina","Delivery"],["Moved","2","5","Anna","not needed","— none —","Store → Bag 1 (adult)"]], newRow:1, places:"split", note:"weak",
+     lines:["F12.1: line types become in / out / moved / correction; a moved line has no witness."]},
+  C:{l:"Out of the Store and in to the bag, each a full register line", d:"Two lines: an Out from the Store (with a doctor's approval, as any take-out) and an In to the bag (with a witness).",
+     pro:["Nothing new: uses only the line types already planned"], con:["A doctor has to approve every time a bag is stocked","The register shows 2 going out and 2 coming in for what is one move"],
+     rows:[["In","+5","5","Ben","—","Dina","Delivery"],["Out","2","3","Anna","Dr Ben (PIN)","Cara","To Bag 1 (adult)"],["In","+2","5","Anna","not needed","Cara","From the Store"]], newRow:1, places:"split", note:"ok",
+     lines:["F12 line: “A move is booked as an Out (with a doctor) from one place and an In (with a witness) to the other.”"]},
+  D:{l:"Not in the register; only in Activity", d:"The register keeps one balance per drug and doesn't care where the ampoules are. The move shows only in Activity.",
+     pro:["Simplest; the register stays as in the demo"], con:["The register doesn't say 2 are in a bag on a plane","Moves get no witness (against Q8)"],
+     rows:[["In","+5","5","Ben","—","Dina","Delivery"]], newRow:-1, places:"split", note:"hole",
+     lines:["F12 line: “The register shows one balance per drug; where it is shows only on the item page and in Activity.”"]}
+};
+const PROP = "A"; let pick = null, note = "", at = null, db = null;
+const shown = () => pick && O[pick] ? pick : PROP;
+function mocks(o){
+  const k = O[o];
+  const rows = k.rows.map((r,i)=>`<tr class="${i>=k.newRow && k.newRow>=0 ? "new":""}"><td>${r[0]==="Moved"?'<span class="tagm">MOVED</span>':esc(r[0])}</td><td class="n">${esc(r[1])}</td><td class="n">${esc(r[2])}</td><td>${esc(r[3])}</td><td>${esc(r[4])}</td><td>${esc(r[5])}</td><td>${esc(r[6])}</td></tr>`).join("");
+  const foot = k.note==="hole" ? `<div class="hole">The register says 5 and nothing about the bag. Where are the 2 now? Only Activity knows.</div>`
+    : k.note==="weak" ? `<div class="hole">The move has only one name on it. Every other register line has a witness.</div>`
+    : `<div class="okm">The register shows the move${o==="C"?" as an Out and an In":""}, with a witness. Balance: 5.</div>`;
+  return `<div class="m"><div class="cap">Register: Morphine 10 mg/ml (demo) · balance 5 amp</div><div class="body" style="overflow-x:auto">
+      <table><thead><tr><th>Line</th><th class="n">Qty</th><th class="n">Bal.</th><th>By</th><th>Doctor</th><th>Witness</th><th>Reason</th></tr></thead><tbody>${rows}</tbody></table>${foot}</div></div>
+    <div class="m"><div class="cap">Item page: where the Morphine is now</div><div class="body"><div class="places">
+      <div class="pl"><span>Store (main)</span><b>3 amp</b></div><div class="pl"><span>Bag 1 (adult)</span><b>2 amp</b></div></div>
+      <span class="none">Same in every answer: the item page always knows where it is. The question is whether the register does too.</span></div></div>`;
+}
+function paint(){
+  const o = shown();
+  document.getElementById("mocks").innerHTML = mocks(o);
+  document.getElementById("chg").innerHTML = `<span><b>${esc(o)}</b> changes the checklist like this:</span>` + O[o].lines.map(l=>`<span>· ${esc(l)}</span>`).join("");
+  document.querySelectorAll(".opt").forEach(b=>b.setAttribute("aria-pressed", b.dataset.o===pick?"true":"false"));
+  document.getElementById("cur").textContent = pick ? (pick==="unsure"?"Not sure":pick+" · "+O[pick].l) : "not picked yet (showing the proposed one)";
+  document.getElementById("unsure").setAttribute("aria-pressed", pick==="unsure"?"true":"false");
+  const ta = document.getElementById("note"); if (document.activeElement!==ta) ta.value = note;
+  if (at) document.getElementById("st").textContent = "Saved for Claude · "+new Date(at).toLocaleString();
+}
+document.getElementById("opts").innerHTML = Object.keys(O).map(k=>`<button type="button" class="opt" data-o="${k}" aria-pressed="false"><span class="l">${k} · ${esc(O[k].l)}${O[k].prop?' <span class="prop">Proposed</span>':""}</span><span class="d">${esc(O[k].d)}</span><span class="cons">${O[k].pro.map(p=>`<span>${esc(p)}</span>`).join("")}${O[k].con.map(p=>`<span class="minus">${esc(p)}</span>`).join("")}</span></button>`).join("");
+document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{ pick=b.dataset.o; paint(); save(); });
+document.getElementById("unsure").onclick=()=>{ pick="unsure"; paint(); save(); };
+let t; document.getElementById("note").oninput=e=>{ note=e.target.value; clearTimeout(t); t=setTimeout(save,800); };
+async function save(){
+  const rec = {q:"q25", choice:pick, note, at:new Date().toISOString()};
+  if (!db){ document.getElementById("st").textContent = "Shown here, but can't be saved in this view. Open the page from its link, or tell Claude in chat."; return; }
+  try{ await db.collection("q25").doc("q25").set(rec); at = rec.at; paint(); }catch(e){ document.getElementById("st").textContent = "Not saved ("+(e&&e.code||"error")+"). Tell Claude in chat instead."; }
+}
+paint();
+(async function(){
+  try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : null); }catch(e){ db=null; }
+  if (!db) return;
+  db.collection("q25").onSnapshot(s=>{ (s.docs||[]).forEach(d=>{ const r=typeof d.data==="function"?d.data():d.data; if(r&&r.q==="q25"){ pick=r.choice; note=r.note||""; at=r.at; paint(); } }); }, ()=>{});
+})();
+})();
+</script>
