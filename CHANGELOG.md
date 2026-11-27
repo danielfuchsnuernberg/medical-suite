@@ -1,5 +1,20 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — F2 built: sign-in and levels (Q22 = A)
+- Q22 answered A on the page: the first Management person sets up a computer; a Manage-level person gives one-time passwords, changed at first sign-in.
+- The program now opens on a sign-in screen (name from the list, password, “Stay signed in on this computer”). A new, empty computer opens on “Set up this computer”. After a one-time password: “Choose your own password” (at least 8 characters, typed twice).
+- Settings › People and access (Manage level only): levels View / Work / Manage, add a person, one-time password (shown once), archive / restore, delete a mistake within 24 hours. Messages say why something is refused (last Manage-level person, archiving yourself, 24 hours passed).
+- Who is signed in shows at the top, with Sign out. Every save carries that person. View level can't change anything.
+- Passwords: only a salted check value, only on this computer, never sent. DEMO people: password “demo”, shown on the sign-in screen while DEMO data is there.
+- Rules in `packages/core/src/access`, accounts behind the store door in `packages/store/src/accounts.ts`; the door got a local-only area and a “delete” message.
+- Tests: 21 new unit tests, 8 program tests (one per F2 line); the F1 and F3 tests now sign in first. 46 of 46 and 20 of 20 pass.
+- Found and fixed while building: B27 (two quick level changes could leave nobody at Manage level); Sign out now takes effect at once (it waited for the save first); the signed-in name now also shows on a phone. Found while checking the files: HANDOVER's “What exists / How to run / How to test” had not been updated since before F1 (an F3 edit silently missed it); rewritten.
+- New question Q23 (Settings: locked or look-only below Manage), for F5.
+
+## 2026-11-27 — F3 committed; question Q22 before F2
+- F3 committed and pushed (b8d8807).
+- Before building F2: how a person gets a password on a computer before the server exists, and who makes the first account, isn't decided. It decides whether anyone can sign in as the doctor. Asked as Q22 on https://claude.ai/artifact/BS1taSqMbr8BzgSFfsX7oK (`docs/stage6/signin-question.html`).
+
 ## 2026-11-27 — F3 built: the store door (works without internet)
 - Built before F2 (sign-in needs to store through the door; Danny: "keep building").
 - `packages/store`: the door (every change a message with its own ID, records worked out from the messages, failed save changes nothing and shows red, old data carried into new versions, DEMO data only into an empty store), IndexedDB on the computer (idb 8.0.4), outbox, sync with each message counted once, a stand-in server for tests.

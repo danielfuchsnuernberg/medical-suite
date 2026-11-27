@@ -5,6 +5,7 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
+import { signIn } from "./sign-in.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 let app, page, dir;
@@ -16,6 +17,7 @@ async function launch({ test: t = true, offline = false, fresh = true } = {}) {
   if (offline) env.MD_TEST_OFFLINE = "1"; else delete env.MD_TEST_OFFLINE;
   app = await electron.launch({ args: [path.join(ROOT, "apps/desktop")], env });
   page = await app.firstWindow();
+  await signIn(page);
   await page.waitForSelector(".shell");
 }
 async function close() { if (app) await app.close(); app = null; }

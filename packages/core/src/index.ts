@@ -5,3 +5,5 @@ export * from "./reachCore/stamps";
 export * from "./shell/menu";
 export * from "./search/search";
 export * from "./demo/seed";
+export * from "./access/levels";
+export * from "./access/password";

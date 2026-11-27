@@ -66,3 +66,9 @@ If Q11 = "nobody uses it for real": only 1 and 2, so the real data comes off the
 **Data**: the B6 list goes to the medics for a clean-up before the stock is loaded into the new app.
 
 **Update 26 Nov 2026:** Danny answered Q11: nobody uses the June app. **No patches to the June app.** Every bug above is a rule for the new app; B9 is handled by archiving the old app and taking it off GitHub (see `CHECKLIST.md`).
+
+## Found while building the new app
+
+| ID | What you'd see | Cause | Files | Status |
+|---|---|---|---|---|
+| B27 | (28 Nov, F2) Lowering Dr Ben and then Cara to Work quickly, one after the other, left **nobody** at Manage level, so nobody could change settings or levels any more | each change was checked before the one before it had finished saving, and against the person as the screen last saw them | `packages/store/src/accounts.ts` | **closed 28 Nov**: changes to people and access now run one after the other, each checked against the stored result of the one before and against the person's current level. Unit tests fail without the fix and pass with it. Not fixed for two computers changing levels at the same time **offline**: that needs the server (noted in HANDOVER) |

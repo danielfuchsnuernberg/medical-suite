@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Door, IdbBackend, MemoryBackend, FakeServer } from "@md/store";
+import { Door, IdbBackend, MemoryBackend, FakeServer, Accounts } from "@md/store";
 import { demoSeedChanges } from "@md/core";
 
 // Opens the store door once. In everyday use there is no server yet (REACH SD2), so the door works on
@@ -9,31 +9,33 @@ let opening = null;
 async function openDoor() {
   const test = !!(window.md && window.md.test);
   const backend = new IdbBackend();
-  if (!test) return { door: await Door.open({ backend, seed: demoSeedChanges, device: "this-computer" }) };
+  if (!test) { const door = await Door.open({ backend, seed: demoSeedChanges, device: "this-computer" }); return { door, accounts: new Accounts(door) }; }
+  const seed = window.md.testEmpty ? null : demoSeedChanges;          // a computer with no data and no people (Q22 first start)
   const server = new FakeServer();
-  server.receive(demoSeedChanges());
+  if (seed) server.receive(seed());
   const here = server.connect();
   const there = server.connect();
   if (window.md.testOffline) here.setOnline(false);   // start with no internet (F3.1)
-  const door = await Door.open({ backend, transport: here, seed: demoSeedChanges, device: "test-mac" });
+  const door = await Door.open({ backend, transport: here, seed, device: "test-mac" });
   const other = await Door.open({ backend: new MemoryBackend(), transport: there, device: "test-pc" });
   await door.sync(); await other.sync();
+  const accounts = new Accounts(door);
   window.__mdTest = {
-    door, other, server,
+    door, other, server, accounts,
     setOnline(v) { here.setOnline(v); return door.sync(); },
     failNextWrite(n = 1) { backend.failNext = n; },
     async otherApplies(p) { await other.apply(p); await other.sync(); },
   };
-  return { door };
+  return { door, accounts };
 }
 
 export default function useDoor() {
-  const [state, setState] = useState({ door: null, error: null, tick: 0 });
+  const [state, setState] = useState({ door: null, accounts: null, error: null, tick: 0 });
   useEffect(() => {
     let off = () => {}, timer;
     opening = opening || openDoor();
-    opening.then(({ door }) => {
-      setState(s => ({ ...s, door }));
+    opening.then(({ door, accounts }) => {
+      setState(s => ({ ...s, door, accounts }));
       off = door.subscribe(() => setState(s => ({ ...s, tick: s.tick + 1 })));
       const sync = () => door.sync();
       timer = setInterval(sync, 15000);

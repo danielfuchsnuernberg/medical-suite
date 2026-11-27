@@ -1,5 +1,5 @@
 # CHECKLIST — REACH Medical Suite
-**Now:** Stage 6 — Execution · F1 and F3 built and tested · waiting for Danny: commit F3, then F2 (sign-in and levels)
+**Now:** Stage 6 — Execution · F1, F3, F2 built and tested · waiting for Danny: try F2 (sign-in), commit, then F4
 
 ### ARCHIVE — clear away the June prototype (26 Nov 2026)
 **Goal:** only the new app is left in sight; nothing is lost.
@@ -124,15 +124,15 @@ Danny: nobody uses the June app, so no patches. All 26 bugs are rules for the ne
 - [x] Workspace set up as approved in Stage 5: npm workspaces, `packages/core` (TypeScript), `packages/store` (stub until F3), `apps/desktop` (React 18.3.1, Vite 5.4.21, Electron 45.5.0), Vitest 3.2.4, Playwright 1.65.1 (27 Nov)
 - [x] F1 window, menu and search: built, 5 of 5 lines tested in the real program (27 Nov)
 - [x] F3 works without internet (the store door): built, 7 of 7 lines tested in the real program; built before F2 (Danny, 27 Nov) — the server parts are proven against a stand-in server until REACH decides the real one
-- [ ] F2 sign-in and levels
+- [x] F2 sign-in and levels: built, 8 of 8 lines tested in the real program (28 Nov); Q22 = A. The parts that need the server (one REACH account shared with EDP; “first sign-in needs internet”) wait for REACH SD2
 - [ ] F4 activity log · [ ] F5 settings · [ ] F6 overview · [ ] F7 Store and bags · [ ] F8 item page · [ ] F9 restock and dispense
 - [ ] F10 count · [ ] F11 stock takes · [ ] F12 register · [ ] F13 backup and import · [ ] F14 staff · [ ] F15 training
 **Tests for this stage:**
-- [x] Unit tests: `npx vitest run` → 25 of 25 pass (27 Nov, after F3)
-- [x] Program tests: `npx playwright test` → 12 of 12 pass (F1 5, F3 7) (27 Nov)
-- [x] Each program test can fail: F1.5 (date tick broken), F3.6 (a failed save pretended to work: the June B22), F3.7 (a new version threw old data away: the June B3), unit F3.4/F3.5 (movements overwritten instead of added) — each failed when broken, then restored
+- [x] Unit tests: `npx vitest run` → 46 of 46 pass (28 Nov, after F2)
+- [x] Program tests: `npx playwright test` → 20 of 20 pass (F1 5, F2 8, F3 7), twice in a row (28 Nov)
+- [x] Each program test can fail: F1.5 (date tick broken), F3.6 (a failed save pretended to work: the June B22), F3.7 (a new version threw old data away: the June B3), unit F3.4/F3.5 (movements overwritten instead of added); F2: 7 rules broken one at a time (last Manage person, archive yourself, wrong password accepted, stay signed in ignored, Settings unlocked, 24-hour delete rule, one-time password by Work level) and the new same-moment test (B27) — each failed when broken, then restored
 **Status:** 🟡 IN PROGRESS
-**Open questions:** none (order: F3 before F2, Danny 27 Nov)
+**Open questions:** Q23 (Settings: locked or look-only below Manage), needed before F5
 
 ### STAGE 7 — Testing
 **Status:** 🔴 OPEN
@@ -168,15 +168,15 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 **Status:** 🟢 built and tested (27 Nov 2026). Uses DEMO data until F3 brings the store door; search results open their section until F7/F8/F14 bring the item and person screens.
 
 ### F2 — Sign-in and roles · release 1 · June J1 "Acting as" · demo batch 1
-- [ ] F2.1 Everyone signs in with their own REACH account: one account per person, the same as in EDP. There is no "Acting as". (B12, Q6, REACH R3)
-- [ ] F2.2 Inside this app a person has one of three levels: View, Work or Manage. Nurses work at Work level; doctors in charge and base managers at Manage. Levels are set by Management. (Q20 = A, REACH R3, Q11)
-- [ ] F2.3 A Work-level person can't open Settings or change anyone's level. (B12)
-- [ ] F2.4 The last Manage-level person can't be lowered or archived; the message says why. (B14)
-- [ ] F2.5 Nobody can archive themselves. (B23)
-- [ ] F2.6 "Stay signed in on this computer" lets the program open offline; a first sign-in on a new computer needs internet once, and says so. (Stage 3, demo 1)
-- [ ] F2.7 Archive stock: Work and Manage. Archive people: Manage. Delete for good: only a mistake, within 24 hours of creating it, by Manage level, logged; after that, archive only. Patient files and the change log are never deleted. (Q17, REACH R4 / Q38, alignment 27 Nov)
-- [ ] F2.8 Controlled-drug rights don't follow these roles: see F12. (Danny, batch 2 note)
-**Status:** 🔴 not built
+- [x] F2.1 Everyone signs in with their own REACH account: one account per person, the same as in EDP. There is no "Acting as". (B12, Q6, REACH R3) ✅ 28 Nov: tests/app/f2-signin.spec.mjs › F2.1 (wrong password refused, no “Acting as”, saves carry the person) and › F2.1 (Q22 = A) (new computer set up by Management, one-time password, own password, never sent anywhere). One REACH account shared with EDP: comes with the server (SD2)
+- [x] F2.2 Inside this app a person has one of three levels: View, Work or Manage. Nurses work at Work level; doctors in charge and base managers at Manage. Levels are set by Management. (Q20 = A, REACH R3, Q11) ✅ 28 Nov: › F2.2 (three levels, set by Cara, takes effect at once; View can't change stock)
+- [x] F2.3 A Work-level person can't open Settings or change anyone's level. (B12) ✅ 28 Nov: › F2.3 (Settings locked for Anna; the rule is checked again behind the screen; no one-time passwords from Work level)
+- [x] F2.4 The last Manage-level person can't be lowered or archived; the message says why. (B14) ✅ 28 Nov: › F2.4 (Cara can't lower herself as the last one; message says why) + unit test for two changes at the same moment (B27)
+- [x] F2.5 Nobody can archive themselves. (B23) ✅ 28 Nov: › F2.5 (Cara can't archive herself; Dina archived, off the sign-in list, restored)
+- [x] F2.6 "Stay signed in on this computer" lets the program open offline; a first sign-in on a new computer needs internet once, and says so. (Stage 3, demo 1) ✅ 28 Nov: › F2.6 (ticked: reopens offline signed in; not ticked or signed out: sign-in screen). “A first sign-in on a new computer needs internet”: until the server, a new computer is set up by Management instead (Q22 = A); the internet part comes with SD2
+- [x] F2.7 Archive stock: Work and Manage. Archive people: Manage. Delete for good: only a mistake, within 24 hours of creating it, by Manage level, logged; after that, archive only. Patient files and the change log are never deleted. (Q17, REACH R4 / Q38, alignment 27 Nov) ✅ 28 Nov: › F2.7 (a mistake deleted within 24 h by Manage, both messages kept in the log; Anna, added weeks ago, can't be deleted; Work can't archive people) + unit tests (archive stock: Work and Manage; patient files and log never deleted). Stock archiving on screen comes with F7/F8
+- [x] F2.8 Controlled-drug rights don't follow these roles: see F12. (Danny, batch 2 note) ✅ 28 Nov: unit test (Manage level gives no controlled-drug right; the doctors' list does, at any level); the list itself comes with F12
+**Status:** 🟢 built and tested (28 Nov 2026). Until the server exists (REACH SD2): a password per person on each computer (Q22 = A). F2.1's shared REACH account and F2.6's “needs internet once” get tested again with the server.
 
 ### F3 — Works without internet · release 1 · new · demo batch 1
 - [x] F3.1 The program opens with no internet, showing the data of the last sync and the time of that sync. (Danny, Stage 3: "App also needs to Open without Internet") ✅ 27 Nov: tests/app/f3-offline.spec.mjs › F3.1 (closed, reopened with no internet: banner with last sync time, saved change still there)

@@ -12,7 +12,8 @@ export type ChangeOp =
   | "delta"    // data: { field, by } — added up, so two computers' movements both count (F3.4)
   | "count"    // data: { qty, basedOn } — a count; the later one is used, both kept, flagged if they disagree (F3.5)
   | "archive"  // data: {}
-  | "restore"; // data: {}
+  | "restore"  // data: {}
+  | "delete";  // data: { reason } — a mistake removed for good (F2.7); the message itself stays in the log
 
 export interface Change {
   messageId: string;

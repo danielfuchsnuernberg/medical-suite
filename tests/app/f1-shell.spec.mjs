@@ -4,6 +4,7 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
+import { signIn } from "./sign-in.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 let app, page;
@@ -13,6 +14,7 @@ async function launch() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "md-test-"));
   app = await electron.launch({ args: [path.join(ROOT, "apps/desktop")], env: { ...process.env, TZ: "Pacific/Port_Moresby", MD_TEST: "1", MD_USER_DATA: dir } });
   page = await app.firstWindow();
+  await signIn(page);
   await page.waitForSelector(".shell");
 }
 
@@ -34,11 +36,13 @@ test("F1.1 menu as in the June app, Home cards, Settings at the bottom", async (
   await expect(page.locator(".side .bottom button")).toHaveText("Settings");
   expect(await page.locator(".home-grid .appcard").count()).toBe(6);
   // every menu entry opens: Home, or a screen that says which feature brings it
-  for (const id of ["overview", "cd", "staff", "roster", "settings"]) {
+  for (const id of ["overview", "cd", "staff", "roster"]) {
     await page.click(`.side [data-view="${id}"]`);
     await expect(page.locator(`.side [data-view="${id}"]`)).toHaveAttribute("aria-current", "page");
     await expect(page.getByTestId("placeholder")).toContainText(/Comes (with F\d+|later)/);
   }
+  await page.click('.side [data-view="settings"]');                       // since F2: Settings › People and access
+  await expect(page.getByTestId("people-access")).toBeVisible();
   await page.click(".logo");
   await expect(page.getByTestId("today")).toBeVisible();
 });
@@ -97,6 +101,7 @@ test("F1.5 'today' moves on while the program stays open: badges change after mi
   const ctxClock = async () => {
     await page.clock.install({ time: new Date(Date.UTC(2026, 10, 27, 13, 58)) });
     await page.reload();
+    await signIn(page);
     await page.waitForSelector(".shell");
   };
   await launch();

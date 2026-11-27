@@ -70,6 +70,16 @@ export class Door {
   messages(): Change[] { return [...this.changes.values()]; }
   waiting(): Change[] { return [...this.outbox].map(id => this.changes.get(id)!).filter(Boolean); }
 
+  // Things that belong to this computer only (passwords' check values, "stay signed in"). Never sent to a server.
+  local<T = unknown>(key: string): T | undefined { const v = this.meta["local:" + key]; return v == null ? undefined : (v as T); }
+  async setLocal(key: string, value: unknown): Promise<void> {
+    try { await this.o.backend.setMeta({ ["local:" + key]: value ?? null }); }
+    catch { throw new DoorError("Not saved. This computer couldn't store it, so nothing was changed."); }
+    this.meta["local:" + key] = value ?? null;
+    this.emit();
+  }
+  now(): Moment { return this.o.now ? this.o.now() : Date.now(); }
+
   /** Saves one change. Throws DoorError if this computer couldn't store it; then nothing changed. */
   async apply(p: { recordType: string; recordId?: string; op: ChangeOp; data?: Record<string, unknown>; by: string }): Promise<Change> {
     const c = makeChange({ ...p, at: this.o.now ? this.o.now() : Date.now(), device: this.o.device });

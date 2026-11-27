@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { demoSettings, findEntry, MENU } from "@md/core";
+import { demoSettings, findEntry, MENU, can } from "@md/core";
 import Sidebar from "./components/Sidebar.jsx";
 import SearchBox from "./components/SearchBox.jsx";
 import SyncLight from "./components/SyncLight.jsx";
@@ -8,6 +8,8 @@ import Toasts from "./components/Toasts.jsx";
 import Icon from "./components/Icon.jsx";
 import Home from "./screens/Home.jsx";
 import Placeholder from "./screens/Placeholder.jsx";
+import Settings from "./screens/Settings.jsx";
+import { SignIn, ChooseOwn, SetUp } from "./screens/SignIn.jsx";
 import useToday from "./state/useToday.js";
 import useDoor from "./state/useDoor.js";
 
@@ -21,7 +23,12 @@ const crumbOf = (id) => {
 export default function App() {
   const settings = demoSettings;   // F5 brings the real country settings
   const today = useToday(settings.timeZone);
-  const { door, error, tick } = useDoor();
+  const { door, accounts, error, tick } = useDoor();
+  // Who is signed in (F2). Read from the store every time, so a level change or archiving takes effect at once.
+  const [auth, setAuth] = useState({ id: null, mustChange: false, ready: false });
+  useEffect(() => { if (accounts && !auth.ready) setAuth({ id: accounts.stayed(), mustChange: false, ready: true }); }, [accounts, auth.ready]);
+  const me = accounts && auth.id ? accounts.person(auth.id) : null;
+  const signedIn = !!(me && me.state === "Active" && !auth.mustChange);
   const [view, setView] = useState("home");
   const [drawer, setDrawer] = useState(false);
   const [toasts, setToasts] = useState([]);
@@ -38,9 +45,10 @@ export default function App() {
 
   // Every screen saves through here: the store door, and a red message if this computer couldn't save (F3.6).
   const save = useCallback(async (p) => {
-    try { return await door.apply(p); }
+    if (me && !can(me.level, "changeStock")) { toast("View level can look but not change anything.", "danger"); return null; }
+    try { return await door.apply({ by: me ? me.id : "unknown", ...p }); }
     catch (e) { toast(e.message || "Not saved. Nothing was changed.", "danger"); return null; }
-  }, [door, toast]);
+  }, [door, toast, me]);
   useEffect(() => { if (door && window.__mdTest) window.__mdTest.save = save; }, [door, save]);
 
   // What the screens read: records from the door, joined by ID (R5).
@@ -66,7 +74,17 @@ export default function App() {
   };
 
   if (error) return <div className="opening"><div><div className="mark"><Icon name="plus" stroke={2.4} /></div><b>The program couldn't open its data.</b><br />{error}</div></div>;
-  if (!door || !data) return <div className="opening" data-testid="opening"><div><div className="mark"><Icon name="plus" stroke={2.4} /></div>Opening…</div></div>;
+  if (!door || !data || !auth.ready) return <div className="opening" data-testid="opening"><div><div className="mark"><Icon name="plus" stroke={2.4} /></div>Opening…</div></div>;
+
+  const demo = door.records("person").some(p => p.demo === true) || door.records("item").some(i => i.demo === true);
+  // Signing out takes effect at once; forgetting "stay signed in" is saved after.
+  const signOut = () => { setAuth({ id: null, mustChange: false, ready: true }); setView("home"); accounts.stay(null).catch(e => toast(String(e.message || e), "danger")); };
+  if (accounts.needsSetUp()) return <SetUp accounts={accounts} baseName={settings.baseName} demo={demo} onDone={(id) => setAuth({ id, mustChange: false, ready: true })} />;
+  if (me && me.state === "Active" && auth.mustChange) return <ChooseOwn accounts={accounts} person={me} demo={demo} onDone={() => setAuth(a => ({ ...a, mustChange: false }))} onCancel={signOut} />;
+  if (!signedIn) return <SignIn accounts={accounts} demo={demo} baseName={settings.baseName} onSignedIn={async (id, o) => {
+    if (o.stay && !o.mustChange) { try { await accounts.stay(id); } catch (e) { toast(String(e.message || e), "danger"); } }
+    setAuth({ id, mustChange: o.mustChange, ready: true });
+  }} />;
 
   const status = door.status();
   const entry = findEntry(view);
@@ -81,15 +99,17 @@ export default function App() {
           <button type="button" className="hamb" aria-label="Open the menu" aria-expanded={drawer} onClick={() => setDrawer(true)}><Icon name="menu" stroke={2} /></button>
           <div><div className="crumb">{crumbOf(view)}</div><h1>{title}</h1></div>
           <SearchBox source={data.source} today={today} dateStyle={settings.dateStyle} onOpen={openResult} />
-          <div className="tb-right"><SyncLight status={status} waiting={door.waiting()} describe={describe} timeZone={settings.timeZone} /></div>
+          <div className="tb-right"><span className="who" data-testid="who">{String(me.name)} · {String(me.level)}</span><button type="button" className="btn small" onClick={signOut}>Sign out</button><SyncLight status={status} waiting={door.waiting()} describe={describe} timeZone={settings.timeZone} /></div>
         </header>
         <Banners status={status} flags={door.flags()} nameOf={nameOfLine} timeZone={settings.timeZone} offlineClosed={offlineClosed} onCloseOffline={() => setOfflineClosed(true)} />
         <main className="content" id="content">
-          {view === "home" ? <Home go={go} today={today} baseName={settings.baseName} /> : <Placeholder view={view} />}
+          {view === "home" ? <Home go={go} today={today} baseName={settings.baseName} />
+            : view === "settings" ? <Settings me={me} accounts={accounts} tick={tick} toast={toast} />
+            : <Placeholder view={view} />}
         </main>
       </div>
       <Toasts items={toasts} drop={dropToast} />
-      <span className="demo-mark">DEMO DATA</span>
+      {demo ? <span className="demo-mark">DEMO DATA</span> : null}
     </div>
   );
 }

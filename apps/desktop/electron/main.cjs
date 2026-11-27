@@ -23,7 +23,7 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: true,
       spellcheck: false,
-      additionalArguments: TEST ? ["--md-test", ...(process.env.MD_TEST_OFFLINE === "1" ? ["--md-test-offline"] : [])] : [],
+      additionalArguments: TEST ? ["--md-test", ...(process.env.MD_TEST_OFFLINE === "1" ? ["--md-test-offline"] : []), ...(process.env.MD_TEST_EMPTY === "1" ? ["--md-test-empty"] : [])] : [],
     },
   });
   win.once("ready-to-show", () => win.show());

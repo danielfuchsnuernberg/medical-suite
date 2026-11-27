@@ -33,6 +33,7 @@ export function fold(changes: Change[], country = "PG"): Folded {
         break;
       case "archive": if (cur) t.set(c.recordId, touch({ ...cur, state: "Archived" })); break;
       case "restore": if (cur) t.set(c.recordId, touch({ ...cur, state: "Active" })); break;
+      case "delete": if (cur) t.delete(c.recordId); break;
     }
   }
   // Two counts made without seeing each other (same basedOn) that disagree are flagged; the later one is used (F3.5).
