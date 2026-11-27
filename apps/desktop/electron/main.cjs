@@ -3,6 +3,12 @@
 const { app, BrowserWindow, shell } = require("electron");
 const path = require("path");
 
+// Test mode (program tests only): MD_TEST=1 gives the screens a stand-in server and test controls.
+// It is never set when Danny or the nurses start the program.
+const TEST = process.env.MD_TEST === "1";
+// A separate data folder (used by program tests, so they never touch the data of a program someone has open).
+if (process.env.MD_USER_DATA) app.setPath("userData", process.env.MD_USER_DATA);
+
 if (!app.requestSingleInstanceLock()) { app.quit(); }
 
 function createWindow() {
@@ -17,6 +23,7 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: true,
       spellcheck: false,
+      additionalArguments: TEST ? ["--md-test", ...(process.env.MD_TEST_OFFLINE === "1" ? ["--md-test-offline"] : [])] : [],
     },
   });
   win.once("ready-to-show", () => win.show());

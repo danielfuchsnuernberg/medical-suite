@@ -1,0 +1,46 @@
+import { useEffect, useState } from "react";
+import { Door, IdbBackend, MemoryBackend, FakeServer } from "@md/store";
+import { demoSeedChanges } from "@md/core";
+
+// Opens the store door once. In everyday use there is no server yet (REACH SD2), so the door works on
+// this computer only. In a program test (window.md.test) a stand-in server and a second "computer" are added,
+// and test controls are put on window.__mdTest. Nothing else in the screens knows the difference.
+let opening = null;
+async function openDoor() {
+  const test = !!(window.md && window.md.test);
+  const backend = new IdbBackend();
+  if (!test) return { door: await Door.open({ backend, seed: demoSeedChanges, device: "this-computer" }) };
+  const server = new FakeServer();
+  server.receive(demoSeedChanges());
+  const here = server.connect();
+  const there = server.connect();
+  if (window.md.testOffline) here.setOnline(false);   // start with no internet (F3.1)
+  const door = await Door.open({ backend, transport: here, seed: demoSeedChanges, device: "test-mac" });
+  const other = await Door.open({ backend: new MemoryBackend(), transport: there, device: "test-pc" });
+  await door.sync(); await other.sync();
+  window.__mdTest = {
+    door, other, server,
+    setOnline(v) { here.setOnline(v); return door.sync(); },
+    failNextWrite(n = 1) { backend.failNext = n; },
+    async otherApplies(p) { await other.apply(p); await other.sync(); },
+  };
+  return { door };
+}
+
+export default function useDoor() {
+  const [state, setState] = useState({ door: null, error: null, tick: 0 });
+  useEffect(() => {
+    let off = () => {}, timer;
+    opening = opening || openDoor();
+    opening.then(({ door }) => {
+      setState(s => ({ ...s, door }));
+      off = door.subscribe(() => setState(s => ({ ...s, tick: s.tick + 1 })));
+      const sync = () => door.sync();
+      timer = setInterval(sync, 15000);
+      window.addEventListener("online", sync);
+      window.addEventListener("offline", sync);
+    }).catch(e => setState(s => ({ ...s, error: String(e && e.message || e) })));
+    return () => { off(); clearInterval(timer); };
+  }, []);
+  return state;
+}

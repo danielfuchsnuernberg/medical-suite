@@ -1,5 +1,5 @@
 # CHECKLIST — REACH Medical Suite
-**Now:** Stage 6 — Execution · F1 built and tested · waiting for Danny: try F1 (`npm start`) and GO for F2 (sign-in and levels)
+**Now:** Stage 6 — Execution · F1 and F3 built and tested · waiting for Danny: commit F3, then F2 (sign-in and levels)
 
 ### ARCHIVE — clear away the June prototype (26 Nov 2026)
 **Goal:** only the new app is left in sight; nothing is lost.
@@ -123,16 +123,16 @@ Danny: nobody uses the June app, so no patches. All 26 bugs are rules for the ne
 **Checklist:**
 - [x] Workspace set up as approved in Stage 5: npm workspaces, `packages/core` (TypeScript), `packages/store` (stub until F3), `apps/desktop` (React 18.3.1, Vite 5.4.21, Electron 45.5.0), Vitest 3.2.4, Playwright 1.65.1 (27 Nov)
 - [x] F1 window, menu and search: built, 5 of 5 lines tested in the real program (27 Nov)
+- [x] F3 works without internet (the store door): built, 7 of 7 lines tested in the real program; built before F2 (Danny, 27 Nov) — the server parts are proven against a stand-in server until REACH decides the real one
 - [ ] F2 sign-in and levels
-- [ ] F3 works without internet (the store door)
 - [ ] F4 activity log · [ ] F5 settings · [ ] F6 overview · [ ] F7 Store and bags · [ ] F8 item page · [ ] F9 restock and dispense
 - [ ] F10 count · [ ] F11 stock takes · [ ] F12 register · [ ] F13 backup and import · [ ] F14 staff · [ ] F15 training
 **Tests for this stage:**
-- [x] Unit tests: `npx vitest run` → 16 of 16 pass (27 Nov)
-- [x] Program tests: `npx playwright test` → 5 of 5 pass, twice in a row (27 Nov)
-- [x] Each program test can fail: F1.5 checked by breaking the date tick on purpose (it failed), then restored
+- [x] Unit tests: `npx vitest run` → 25 of 25 pass (27 Nov, after F3)
+- [x] Program tests: `npx playwright test` → 12 of 12 pass (F1 5, F3 7) (27 Nov)
+- [x] Each program test can fail: F1.5 (date tick broken), F3.6 (a failed save pretended to work: the June B22), F3.7 (a new version threw old data away: the June B3), unit F3.4/F3.5 (movements overwritten instead of added) — each failed when broken, then restored
 **Status:** 🟡 IN PROGRESS
-**Open questions:** none
+**Open questions:** none (order: F3 before F2, Danny 27 Nov)
 
 ### STAGE 7 — Testing
 **Status:** 🔴 OPEN
@@ -179,14 +179,14 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 **Status:** 🔴 not built
 
 ### F3 — Works without internet · release 1 · new · demo batch 1
-- [ ] F3.1 The program opens with no internet, showing the data of the last sync and the time of that sync. (Danny, Stage 3: "App also needs to Open without Internet")
-- [ ] F3.2 Changes made offline are kept on the computer and sent on their own when the internet is back. (Q5, Q9)
-- [ ] F3.3 Sync light: green up to date, amber offline with the number of changes waiting, red not saved; a click lists what's waiting. (demo 1)
-- [ ] F3.4 Two computers changing the same stock line: both movements count, and it's shown. (demo 1)
-- [ ] F3.5 Two counts of the same line that disagree: the later count is used, both are kept, and it's flagged for checking. (demo 3, approved without comment)
-- [ ] F3.6 A save that fails is shown in red, and nothing pretends to be saved. (B22)
-- [ ] F3.7 A new version carries all data over: nothing is ever replaced by built-in data. (B3)
-**Status:** 🔴 not built
+- [x] F3.1 The program opens with no internet, showing the data of the last sync and the time of that sync. (Danny, Stage 3: "App also needs to Open without Internet") ✅ 27 Nov: tests/app/f3-offline.spec.mjs › F3.1 (closed, reopened with no internet: banner with last sync time, saved change still there)
+- [x] F3.2 Changes made offline are kept on the computer and sent on their own when the internet is back. (Q5, Q9) ✅ 27 Nov: › F3.2 (2 changes offline → “Offline · 2 waiting” → online → both on the stand-in server)
+- [x] F3.3 Sync light: green up to date, amber offline with the number of changes waiting, red not saved; a click lists what's waiting. (demo 1) ✅ 27 Nov: › F3.3 (grey with no server, green, amber with count and list, red)
+- [x] F3.4 Two computers changing the same stock line: both movements count, and it's shown. (demo 1) ✅ 27 Nov: › F3.4 (Mac −1, PC +2 → 13 on both) + unit test
+- [x] F3.5 Two counts of the same line that disagree: the later count is used, both are kept, and it's flagged for checking. (demo 3, approved without comment) ✅ 27 Nov: › F3.5 (11 and 9 → 9 used, both kept, banner) + unit test
+- [x] F3.6 A save that fails is shown in red, and nothing pretends to be saved. (B22) ✅ 27 Nov: › F3.6 (red light, red message, unchanged after reopening; failed when the rule was broken)
+- [x] F3.7 A new version carries all data over: nothing is ever replaced by built-in data. (B3) ✅ 27 Nov: › F3.7 (older data without version and app code: kept, migrated, nothing re-added; failed when old data was thrown away)
+**Status:** 🟢 built and tested (27 Nov 2026). The parts that need the shared server (F3.2, F3.4, F3.5) are proven against a stand-in server in test mode; they get tested again when REACH decides the real server (SD2).
 
 ### F4 — Activity log · release 1 · June J12 · demo batch 4
 - [ ] F4.1 One log for all REACH apps (Inventory, People, Settings, EDP), newest first, filter by app; every entry in the REACH shape: who, which record, what changed, when, from which app. (Q7, REACH R9, demo 4)

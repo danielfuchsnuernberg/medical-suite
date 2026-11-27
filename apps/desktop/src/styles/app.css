@@ -83,3 +83,26 @@ button{font-family:inherit}
   .home-title{font-size:24px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* F3: sync light, banners, toasts, loading */
+.tb-right{display:flex;align-items:center;gap:8px}
+.sync-wrap{position:relative}
+.sync{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding:5px 11px;border-radius:var(--r-pill);border:0;cursor:pointer;white-space:nowrap}
+.sync i{width:8px;height:8px;border-radius:50%;background:currentColor}
+.sl-none{background:#EDEDF1;color:var(--text-muted)} .sl-ok{background:var(--success-soft);color:var(--success)}
+.sl-off{background:var(--warning-soft);color:var(--warning)} .sl-busy{background:var(--info-soft);color:var(--info)} .sl-err{background:var(--danger-soft);color:var(--danger)}
+.pop{position:absolute;top:calc(100% + 6px);right:0;width:300px;max-width:calc(100vw - 24px);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:var(--shadow-pop);z-index:70;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.pop .line{display:flex;justify-content:space-between;gap:10px}
+.pop-note{margin:0;font-size:12px;color:var(--text-muted)}
+.pop-err{font-size:12.5px;padding:8px 10px;border-radius:8px;background:var(--danger-soft);color:var(--danger)}
+.pop-list{margin:0;padding:0 0 0 16px;font-size:12.5px;display:flex;flex-direction:column;gap:3px}
+.banners{display:flex;flex-direction:column}
+.banner{display:flex;gap:10px;align-items:flex-start;padding:10px 20px;font-size:12.5px;border-bottom:1px solid var(--border)}
+.banner button{margin-left:auto;background:none;border:0;cursor:pointer;color:inherit;font-weight:700;font-size:16px;line-height:1}
+.b-off{background:var(--warning-soft);color:#7a4a08} .b-flag{background:var(--info-soft);color:#1d3f8a}
+.toasts{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:200;max-width:calc(100vw - 24px)}
+.toast{background:var(--text);color:#fff;padding:10px 16px;border-radius:var(--r-sm);font-size:13px;box-shadow:var(--shadow-md)}
+.toast.danger{background:var(--danger)} .toast.success{background:var(--success)}
+.opening{height:100%;display:grid;place-items:center;color:var(--text-muted);font-size:13px;text-align:center}
+.opening .mark{width:46px;height:46px;border-radius:12px;background:var(--accent);display:grid;place-items:center;color:#fff;margin:0 auto 10px}
+@media (max-width:720px){ .sync-text{display:none} .sync{padding:6px 8px} .banner{padding:9px 12px} }

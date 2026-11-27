@@ -61,3 +61,8 @@ export function formatDayLong(d: CalendarDate): string {
   const wd = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay();
   return `${WEEKDAYS[wd]} ${+m[3]} ${MONTHS_LONG[+m[2] - 1]} ${m[1]}`;
 }
+
+/** A moment shown as the base's local time, 24-hour ("16:14"), whatever the computer's own clock is set to (R6). */
+export function formatTimeIn(moment: Moment, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-GB", { timeZone, hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(moment));
+}

@@ -1,16 +1,21 @@
 // F1 — Program window, menu and search. One test per Master Checklist line, run in the real program (Electron).
 import { test, expect, _electron as electron } from "@playwright/test";
 import path from "node:path";
+import fs from "node:fs";
+import os from "node:os";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 let app, page;
 
 async function launch() {
-  app = await electron.launch({ args: [path.join(ROOT, "apps/desktop")], env: { ...process.env, TZ: "Pacific/Port_Moresby" } });
+  // Each test gets its own empty data folder: tests never touch the data of a program someone has open.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "md-test-"));
+  app = await electron.launch({ args: [path.join(ROOT, "apps/desktop")], env: { ...process.env, TZ: "Pacific/Port_Moresby", MD_TEST: "1", MD_USER_DATA: dir } });
   page = await app.firstWindow();
   await page.waitForSelector(".shell");
 }
+
 async function setSize(w, h) {
   await app.evaluate(({ BrowserWindow }, [w, h]) => { const win = BrowserWindow.getAllWindows()[0]; win.setMinimumSize(320, 480); win.setContentSize(w, h); }, [w, h]);
   await page.waitForFunction(([w]) => window.innerWidth === w, [w]);

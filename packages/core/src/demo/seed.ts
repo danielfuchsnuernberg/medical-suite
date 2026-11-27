@@ -50,3 +50,19 @@ export function demoSearchSource() {
     stock: demoLines.map(l => ({ id: l.id, item: item(l.itemId).name, location: loc(l.locationId).name, qty: l.qty, unit: item(l.itemId).unit, expiry: l.expiry })),
   };
 }
+
+import { type Change, APP_CODE } from "../reachCore/change";
+
+/** The DEMO data as messages, for an empty store's first start (only ever into an empty store, B3). */
+export function demoSeedChanges(at = Date.UTC(2026, 10, 1)): Change[] {
+  const out: Change[] = [];
+  const add = (recordType: string, rec: { id: string } & Record<string, unknown>) => {
+    const { id, createdAt, createdBy, changedAt, changedBy, state, ...data } = rec as any;
+    out.push({ messageId: `seed-${id}`, at, by: "demo", app: APP_CODE, recordType, recordId: id, op: "create", data: { ...data, demo: true } });
+  };
+  demoLocations.forEach(r => add("location", r));
+  demoItems.forEach(r => add("item", r));
+  demoLines.forEach(r => add("line", { ...r, country: "PG" }));
+  demoPeople.forEach(r => add("person", r));
+  return out;
+}

@@ -43,3 +43,12 @@ describe("plain calendar dates", () => {
     expect(formatDayLong("2026-11-27")).toBe("Friday 27 November 2026");
   });
 });
+
+import { formatTimeIn } from "../src/reachCore/dates";
+describe("formatTimeIn: times shown in base time, 24-hour (R6)", () => {
+  it("one moment, two bases", () => {
+    const t = Date.UTC(2026, 10, 27, 6, 14);
+    expect(formatTimeIn(t, "Pacific/Port_Moresby")).toBe("16:14");
+    expect(formatTimeIn(t, "America/Lima")).toBe("01:14");
+  });
+});

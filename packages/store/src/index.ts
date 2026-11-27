@@ -1,2 +1,6 @@
-// The store door (REACH Core R7). Built in F3. Until then the screens read the DEMO data from @md/core.
-export const STORE_DOOR_READY = false;
+// The store door (REACH Core R7) and what it's made of.
+export { Door, DoorError, SCHEMA_VERSION, type DoorStatus, type ServerState, type OpenOptions } from "./door";
+export { MemoryBackend, type Backend, type Loaded } from "./backend";
+export { IdbBackend } from "./idbBackend";
+export { FakeServer, type Transport } from "./transport";
+export { fold, type CountFlag } from "./fold";

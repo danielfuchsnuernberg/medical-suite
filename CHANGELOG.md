@@ -1,5 +1,12 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-27 — F3 built: the store door (works without internet)
+- Built before F2 (sign-in needs to store through the door; Danny: "keep building").
+- `packages/store`: the door (every change a message with its own ID, records worked out from the messages, failed save changes nothing and shows red, old data carried into new versions, DEMO data only into an empty store), IndexedDB on the computer (idb 8.0.4), outbox, sync with each message counted once, a stand-in server for tests.
+- Program: the sync light (grey "This computer only" — there is no server yet —, green, amber with the number waiting, red), its details with the waiting list, the "opened without internet" banner, the "two counts disagree" banner, a red message when a save fails. Screens now read from the door.
+- Tests: 9 new unit tests and 7 program tests, one per F3 line, all passing; F3.6 and F3.7 proven to fail when the June mistakes B22 and B3 are put back.
+- Found and fixed while looking: times showed in the computer's own 12-hour style instead of base time (now 16:14); a short dash instead of a minus sign. Found while testing: the program allows one copy at a time, so tests now use their own data folder and run even while Danny has the program open.
+
 ## 2026-11-27 — Stage 6 started: workspace and F1 built
 - Workspace as approved in Stage 5: `packages/core` (rules: dates, menu, search, DEMO data), `packages/store` (stub until F3), `apps/desktop` (Electron window, React screens in the June look).
 - F1 built: the June menu (Home, Inventory, Team, Later, Settings), Home cards with today's date at the base, search across staff and stock with expiry badges, the ☰ drawer below 720 px.

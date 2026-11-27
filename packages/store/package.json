@@ -6,5 +6,11 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "exports": { ".": "./src/index.ts" }
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@md/core": "0.1.0",
+    "idb": "8.0.4"
+  }
 }
