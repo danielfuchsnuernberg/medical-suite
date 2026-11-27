@@ -58,10 +58,10 @@ test("F6.1 the June Overview: totals, attention strip, bag readiness, soonest to
   await expect(rows()).toHaveCount(2);
   await page.getByLabel("Place").selectOption("");
   await expect(rows()).toHaveCount(10);
-  // a soonest-to-expire row opens the list it is in
+  // a soonest-to-expire row opens its item (F8)
   await back();
   await page.getByTestId("soonest").locator(".srow").first().click();
-  await expect(page.locator(".panel-head h2")).toHaveText("Store (main)");
+  await expect(page.getByTestId("item-page")).toHaveAttribute("data-item", "demo-i2");
   // the numbers follow a change at once
   await back();
   await save({ recordType: "line", recordId: "demo-s4", op: "delta", data: { field: "qty", by: 4 } });

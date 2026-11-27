@@ -80,7 +80,8 @@ test("F7.2 Export CSV holds exactly what the table shows, with local dates (B13)
   await page.getByLabel("Sort").selectOption("expiry");
   await page.getByRole("button", { name: "Export CSV" }).click();
   const file = path.join(dir, "downloads", "inventory-bag-2-child-2026-11-28.csv");    // today at the base, not the computer's 27 Nov
-  await expect.poll(() => fs.existsSync(file)).toBe(true);
+  // wait until the download is completely written (it can exist before it is full)
+  await expect.poll(() => fs.existsSync(file) && fs.readFileSync(file, "utf8").split("\r\n").length).toBe(4);
   const text = fs.readFileSync(file, "utf8");
   expect(text.charCodeAt(0)).toBe(0xFEFF);
   expect(text.slice(1).trimEnd().split("\r\n")).toEqual([
@@ -95,7 +96,7 @@ test("F7.2 Export CSV holds exactly what the table shows, with local dates (B13)
   await page.getByLabel("Stock level").selectOption("low");
   await page.getByRole("button", { name: "Export CSV" }).click();
   const all = path.join(dir, "downloads", "inventory-all-places-2026-11-28.csv");
-  await expect.poll(() => fs.existsSync(all)).toBe(true);
+  await expect.poll(() => fs.existsSync(all) && fs.readFileSync(all, "utf8").split("\r\n").length).toBe(3);
   const lines = fs.readFileSync(all, "utf8").trimEnd().split("\r\n");
   expect(lines.length).toBe(2);
   expect(lines[1]).toBe("\"Gloves, size M\",PPE,Store (main),6,box,10,Below reorder level,,,");

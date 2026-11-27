@@ -7,7 +7,7 @@ import ExpiryBadge from "../components/ExpiryBadge.jsx";
 
 const VERDICT_CLASS = { empty: "b-muted", notReady: "b-danger", short: "b-warning", notSetUp: "b-info", ready: "b-success" };
 
-export default function Overview({ inv, today, dateStyle, open }) {
+export default function Overview({ inv, today, dateStyle, open, openItem }) {
   const { lines, items, locations } = inv;
   const o = overview(lines, today);
   const Stat = ({ k, icon, children, filter }) => filter
@@ -54,7 +54,7 @@ export default function Overview({ inv, today, dateStyle, open }) {
           <ul className="soonest" data-testid="soonest">
             {o.soonest.map(l => (
               <li key={l.id}>
-                <button type="button" className="srow" data-line={l.id} onClick={() => open({ locationId: l.locationId })}>
+                <button type="button" className="srow" data-line={l.id} onClick={() => openItem(l.itemId)}>
                   <span className="ti"><span className="t">{String(items.get(l.itemId)?.name ?? "?")}</span><span className="d">{String(locations.find(x => x.id === l.locationId)?.name ?? "?")} · {Number(l.qty)} {String(items.get(l.itemId)?.unit ?? "")}</span></span>
                   <ExpiryBadge expiry={l.expiry} today={today} dateStyle={dateStyle} />
                 </button>

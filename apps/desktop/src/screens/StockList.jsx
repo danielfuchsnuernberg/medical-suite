@@ -1,4 +1,6 @@
-import { listLines, readiness, readinessLine, stockStatus, linesCsv, csvFileName } from "@md/core";
+import { useState } from "react";
+import { listLines, readiness, readinessLine, stockStatus, linesCsv, csvFileName, can } from "@md/core";
+import Dialog from "../components/Dialog.jsx";
 import Icon from "../components/Icon.jsx";
 import ExpiryBadge from "../components/ExpiryBadge.jsx";
 
@@ -12,7 +14,8 @@ const STOCK_WORDS = {
   ok: (store) => ["b-success", store ? "In stock" : "At or above required"],
 };
 
-export default function StockList({ inv, today, dateStyle, filter, setFilter, openItem }) {
+export default function StockList({ inv, today, dateStyle, filter, setFilter, openItem, me, store, toast }) {
+  const [adding, setAdding] = useState(false);
   const { lines, archivedLines, items, locations, categories } = inv;
   const f = filter || {};
   const set = (k, v) => setFilter({ ...f, [k]: v || undefined });
@@ -87,7 +90,10 @@ export default function StockList({ inv, today, dateStyle, filter, setFilter, op
       <section className="panel">
         <div className="panel-head">
           <div><h2>{loc ? String(loc.name) : "All places"}</h2><p className="muted" data-testid="count">{shown.length} {shown.length === 1 ? "line" : "lines"}</p></div>
-          <button type="button" className="btn small" onClick={exportCsv} disabled={shown.length === 0}><Icon name="download" width={14} stroke={2} />Export CSV</button>
+          <div className="acts">
+            <button type="button" className="btn small" onClick={exportCsv} disabled={shown.length === 0}><Icon name="download" width={14} stroke={2} />Export CSV</button>
+            {can(me.level, "changeStock") ? <button type="button" className="btn small primary" onClick={() => setAdding(true)}><Icon name="plus" width={14} stroke={2.2} />Add item</button> : null}
+          </div>
         </div>
         {shown.length === 0 ? <p className="empty">No lines match these filters.</p> : (
           <table className="table stock" data-testid="lines">
@@ -116,6 +122,29 @@ export default function StockList({ inv, today, dateStyle, filter, setFilter, op
           </table>
         )}
       </section>
+      {adding ? <AddItem inv={inv} at={f.locationId} close={() => setAdding(false)} go={async (p) => { const id = await store.addItem(me, p); setAdding(false); toast("Item added. Set its required amount with Edit.", "success"); openItem(id); }} /> : null}
     </div>
+  );
+}
+
+// F8.4: a new item with its first place. A duplicate name is refused (in the store, any capitals, archived items too).
+function AddItem({ inv, at, close, go }) {
+  const [v, setV] = useState({ name: "", categoryId: "", unit: "", locationId: at || inv.locations[0]?.id || "", qty: "0" });
+  const [why, setWhy] = useState("");
+  const set = (k) => (e) => setV(x => ({ ...x, [k]: e.target.value }));
+  const save = async () => { setWhy(""); try { await go(v); } catch (e) { setWhy(String(e.message || e)); } };
+  return (
+    <Dialog title="Add item" onClose={close} testid="add-item" footer={<>
+      <button type="button" className="btn" onClick={close}>Cancel</button>
+      <button type="button" className="btn primary" onClick={save}>Add item</button></>}>
+      <div className="form-grid">
+        <label className="field wide"><span>Name</span><input aria-label="Name" value={v.name} onChange={set("name")} placeholder="e.g. Burn dressing 10×10 cm" /></label>
+        <label className="field"><span>Category</span><select aria-label="Category of the new item" value={v.categoryId} onChange={set("categoryId")}><option value="">No category</option>{inv.categories.map(c => <option key={c.id} value={c.id}>{String(c.name)}</option>)}</select></label>
+        <label className="field"><span>Counted in</span><input aria-label="Counted in" value={v.unit} onChange={set("unit")} placeholder="pack, tab, box…" /></label>
+        <label className="field"><span>First place</span><select aria-label="First place" value={v.locationId} onChange={set("locationId")}>{inv.locations.map(l => <option key={l.id} value={l.id}>{String(l.name)}</option>)}</select></label>
+        <label className="field"><span>On hand</span><input aria-label="On hand" inputMode="numeric" value={v.qty} onChange={set("qty")} /></label>
+      </div>
+      {why ? <div className="form-err" role="alert" data-testid="refusal">{why}</div> : null}
+    </Dialog>
   );
 }

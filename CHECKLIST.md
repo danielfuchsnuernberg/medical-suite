@@ -1,5 +1,5 @@
 # CHECKLIST — REACH Medical Suite
-**Now:** Stage 6 — Execution · F1–F7 built and tested (F7 not committed) · waiting for Danny: try F7 (Store and bags), commit, then F8
+**Now:** Stage 6 — Execution · F1–F8 built and tested (F8 not committed) · waiting for Danny: try F8 (item page), commit, then F9
 
 ### ARCHIVE — clear away the June prototype (26 Nov 2026)
 **Goal:** only the new app is left in sight; nothing is lost.
@@ -116,7 +116,7 @@ Danny: nobody uses the June app, so no patches. All 26 bugs are rules for the ne
 - [x] Every Master Checklist line maps to a module in the architecture (page count: 103 of 103)
 - [x] Every REACH Core rule R1–R12 maps to a place in the architecture (12 of 12)
 **Status:** 🟢 SIGNED OFF (27 Nov 2026)
-**Open questions:** none here; server location goes to the REACH chat (SD2 / EDP Q44)
+**Open questions:** none (Q24 answered: C); server location goes to the REACH chat (SD2 / EDP Q44)
 
 ### STAGE 6 — Execution
 **Goal:** build F1 → F15 in the order of the Master Checklist; each feature is built, then every one of its lines is proven by a test that can fail, then Danny tries it.
@@ -129,12 +129,13 @@ Danny: nobody uses the June app, so no patches. All 26 bugs are rules for the ne
 - [x] F5 settings: built, 7 of 7 lines tested in the real program (28 Nov); Q23 = C
 - [x] F6 overview: built, 4 of 4 lines tested in the real program (28 Nov); the cards open a first version of Store and bags (F7 adds its filters, sort and CSV)
 - [x] F7 Store and bags: built, 3 of 3 lines tested in the real program (28 Nov); a row opens a stand-in item page until F8 fills it in
-- [ ] F8 item page · [ ] F9 restock and dispense
+- [x] F8 item page: built, 5 of 5 lines tested in the real program (28 Nov); Q24 = C applied
+- [ ] F9 restock and dispense
 - [ ] F10 count · [ ] F11 stock takes · [ ] F12 register · [ ] F13 backup and import · [ ] F14 staff · [ ] F15 training
 **Tests for this stage:**
-- [x] Unit tests: `npx vitest run` → 70 of 70 pass (28 Nov, after F7)
-- [x] Program tests: `npx playwright test` → 38 of 38 pass (F1 5, F2 8, F3 7, F4 4, F5 7, F6 4, F7 3) (28 Nov)
-- [x] Each program test can fail: F1.5 (date tick broken), F3.6 (a failed save pretended to work: the June B22), F3.7 (a new version threw old data away: the June B3), unit F3.4/F3.5 (movements overwritten instead of added); F2: 7 rules broken one at a time (last Manage person, archive yourself, wrong password accepted, stay signed in ignored, Settings unlocked, 24-hour delete rule, one-time password by Work level) and the new same-moment test (B27); F4: 6 rules broken one at a time (newest first, filter by app, one record's history, old → new, what was there, locked entries); F5: 8 rules broken one at a time (archived users count, case-only rename, base time zone, styled boxes, Manage only behind and on the screen, bag with stock, country proposes time zone); F6: 8 rules broken one at a time (exactly-required counted low (B1), no amount counted OK (B25), bag ignoring missing amounts, expired line still Ready, Store never saying reorder (B10), warnings opening every line, Overview not following changes, Store line without reorder level as in June); F7: 8 rules broken one at a time (category filter ignored, archived always shown, sort ignored, Clear filters leaving expiry, CSV of all lines instead of what is shown, file date from the computer in UTC (B13), row click doing nothing, spreadsheet-formula guard removed) — each failed when broken, then restored
+- [x] Unit tests: `npx vitest run` → 82 of 82 pass (28 Nov, after F8 and Q24)
+- [x] Program tests: `npx playwright test` → 43 of 43 pass (F1 5, F2 8, F3 7, F4 4, F5 7, F6 4, F7 3, F8 5) (28 Nov)
+- [x] Each program test can fail: F1.5 (date tick broken), F3.6 (a failed save pretended to work: the June B22), F3.7 (a new version threw old data away: the June B3), unit F3.4/F3.5 (movements overwritten instead of added); F2: 7 rules broken one at a time (last Manage person, archive yourself, wrong password accepted, stay signed in ignored, Settings unlocked, 24-hour delete rule, one-time password by Work level) and the new same-moment test (B27); F4: 6 rules broken one at a time (newest first, filter by app, one record's history, old → new, what was there, locked entries); F5: 8 rules broken one at a time (archived users count, case-only rename, base time zone, styled boxes, Manage only behind and on the screen, bag with stock, country proposes time zone); F6: 8 rules broken one at a time (exactly-required counted low (B1), no amount counted OK (B25), bag ignoring missing amounts, expired line still Ready, Store never saying reorder (B10), warnings opening every line, Overview not following changes, Store line without reorder level as in June); F7: 8 rules broken one at a time (category filter ignored, archived always shown, sort ignored, Clear filters leaving expiry, CSV of all lines instead of what is shown, file date from the computer in UTC (B13), row click doing nothing, spreadsheet-formula guard removed); F8: 12 rules broken one at a time (join ignoring the lot, join ignoring the expiry (unit test), new line copying the required amount, place editable in Edit, fractions accepted, duplicate item name accepted, delete after 24 hours, delete without confirm, View level seeing change buttons, movements of every item, a move saved piece by piece (unit test), an error left on the page after closing a box; Q24: always archive, never archive, archive after a part move). Two survived at first (lot, piece by piece): the tests were made stronger, then both failed — each failed when broken, then restored
 **Status:** 🟡 IN PROGRESS
 **Open questions:** none
 
@@ -223,12 +224,12 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 **Status:** 🟢 built and tested (28 Nov 2026).
 
 ### F8 — Item page · release 1 · June J6 · demo batch 2
-- [ ] F8.1 Stock per location with lot, expiry and status, and the item's movements. (June J6)
-- [ ] F8.2 Move all or part of a line to another bag or the Store. It joins a matching line (same lot and expiry), or starts a new one without a required amount. Logged. (B24)
-- [ ] F8.3 Edit a line: the location can't be edited there (use Move); every change is logged old → new; amounts are whole numbers. (demo 2)
-- [ ] F8.4 Add a location; add an item (a duplicate name is refused); archive and reactivate; delete for good only a mistake within 24 hours, after a confirm, logged. Rights per F2.7. (demo 2, Q17, REACH Q38)
-- [ ] F8.5 A "Used on EDP cases" panel waits for F17. (demo 2)
-**Status:** 🔴 not built
+- [x] F8.1 Stock per location with lot, expiry and status, and the item's movements. (June J6) ✅ 28 Nov: › F8.1 (Gauze: Store first, then Bag 1, each with amount, required / reorder at, lot, stock and expiry; movements show this item's changes old → new and nothing of other items)
+- [x] F8.2 Move all or part of a line to another bag or the Store. It joins a matching line (same lot and expiry), or starts a new one without a required amount. Logged. (B24) ✅ 28 Nov: › F8.2 (13 of 12 refused; 5 to Bag 2: a new line without a required amount, lot and expiry carried; the rest joins it; same expiry but another lot: a new line; the log says from where to where) + unit tests (saved all or none; lot and expiry both must match). Q24 = C: a line with an amount emptied by a move stays at 0 (Bag 1 shows Out of stock); one without is archived, and the message says so
+- [x] F8.3 Edit a line: the location can't be edited there (use Move); every change is logged old → new; amounts are whole numbers. (demo 2) ✅ 28 Nov: › F8.3 (place greyed with “use Move”; 2.7, −5, empty and “ten” refused, nothing saved; four changes logged old → new; the expiry also written out in words, and stored as the plain date) + unit tests
+- [x] F8.4 Add a location; add an item (a duplicate name is refused); archive and reactivate; delete for good only a mistake within 24 hours, after a confirm, logged. Rights per F2.7. (demo 2, Q17, REACH Q38) ✅ 28 Nov: › F8.4 (duplicate “gauze 10×10 CM” refused; new item and a second place added; line archived and reactivated; an item in use can't be archived; delete asks first, Cancel keeps it, then logged; old DEMO lines offer no delete; Anna archives but can't delete, also behind the screen; View level sees no change buttons) + unit tests
+- [x] F8.5 A "Used on EDP cases" panel waits for F17. (demo 2) ✅ 28 Nov: › F8.5
+**Status:** 🟢 built and tested (28 Nov 2026); Q24 = C applied.
 
 ### F9 — Restock and dispense · release 1 · June J7 · demo batch 2
 - [ ] F9.1 + and − ask for a whole number, 1 or more. 0, negatives, decimals and an empty box are refused with a message, and nothing changes. (B17)

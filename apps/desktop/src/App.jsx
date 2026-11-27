@@ -12,7 +12,7 @@ import Settings from "./screens/Settings.jsx";
 import Activity from "./screens/Activity.jsx";
 import Overview from "./screens/Overview.jsx";
 import StockList from "./screens/StockList.jsx";
-import ItemStub from "./screens/ItemStub.jsx";
+import ItemPage from "./screens/ItemPage.jsx";
 import { SignIn, ChooseOwn, SetUp } from "./screens/SignIn.jsx";
 import useToday from "./state/useToday.js";
 import useDoor from "./state/useDoor.js";
@@ -26,7 +26,7 @@ const crumbOf = (id) => {
 };
 
 export default function App() {
-  const { door, accounts, settings: settingsStore, error, tick } = useDoor();
+  const { door, accounts, settings: settingsStore, inventory, error, tick } = useDoor();
   // The base's settings (F5), from the store. Until they are set: the computer's own time zone, and it says so.
   const base = door ? door.get("settings", "base") : null;
   const settings = {
@@ -128,9 +128,9 @@ export default function App() {
         <Banners status={status} flags={door.flags()} nameOf={nameOfLine} timeZone={settings.timeZone} offlineClosed={offlineClosed} onCloseOffline={() => setOfflineClosed(true)} />
         <main className="content" id="content">
           {view === "home" ? <Home go={go} today={today} baseName={settings.baseName} />
-            : view === "overview" ? <Overview inv={data.inv} today={today} dateStyle={settings.dateStyle} open={(f) => go("where", f)} />
-            : view === "where" ? <StockList inv={data.inv} today={today} dateStyle={settings.dateStyle} filter={filter} setFilter={setFilter} openItem={(id) => { setItemId(id); setView("item"); }} />
-            : view === "item" ? <ItemStub item={door.get("item", itemId)} back={() => setView("where")} />
+            : view === "overview" ? <Overview inv={data.inv} today={today} dateStyle={settings.dateStyle} open={(f) => go("where", f)} openItem={(id) => { setItemId(id); setView("item"); }} />
+            : view === "where" ? <StockList inv={data.inv} today={today} dateStyle={settings.dateStyle} filter={filter} setFilter={setFilter} openItem={(id) => { setItemId(id); setView("item"); }} me={me} store={inventory} toast={toast} />
+            : view === "item" ? <ItemPage itemId={itemId} me={me} door={door} inv={data.inv} store={inventory} tick={tick} today={today} timeZone={settings.timeZone} dateStyle={settings.dateStyle} back={() => setView("where")} toast={toast} />
             : view === "log" ? <Activity door={door} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} />
             : view === "settings" ? <Settings me={me} accounts={accounts} store={settingsStore} door={door} tick={tick} toast={toast} />
             : <Placeholder view={view} />}

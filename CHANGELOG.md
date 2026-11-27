@@ -1,5 +1,19 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — Q24 answered: C
+- When all of a line is moved away: a line with a required amount or reorder level stays, at 0, so the bag or Store shows it as missing; a line with no amount set is archived, in the same save as the move. The message after the move says when a line was archived.
+- Tests: 1 new unit test, the F8.2 program test extended; 3 wrong rules tried (always archive, never archive, archive after a part move): each failed. 82 of 82 and 43 of 43 pass.
+
+## 2026-11-28 — F8 built: item page; question Q24
+- F7 committed and pushed first (605fc37).
+- Item page (a row in Store and bags, or a soonest-to-expire row on the Overview): name, category, unit, total on hand; Stock by place (Store first) with amount, required / reorder at, lot, stock and expiry; Stock movements (everything logged for this item and its lines, in the Activity log's words); a “Used on EDP cases” panel that waits for F17.
+- Move: all or part of a line to another bag or the Store. It joins a line there with the same lot and expiry, or starts a new one without a required amount (the message says which). The take and the add are saved together: all or nothing. The log says “moved 5 from … to …”.
+- Edit: amount, required amount / reorder level, lot, expiry. The place is greyed (use Move). Whole numbers only. Only what changed is saved, so the log shows old → new. The expiry is also written out in words under the box (the box itself follows the Mac's date order and can show 12/01/2027 for 1 Dec).
+- Add a place, Add item (on Store and bags; a duplicate name is refused, any capitals, archived items too), archive and reactivate lines and items (an item with lines in use can't be archived), delete for good: only Manage, only a mistake within 24 hours, after a confirm, logged. View level sees no change buttons. Every rule is also checked in the inventory store, not only on the screen.
+- Q24 on https://claude.ai/artifact/1QgMRcRqYBihnspJahsjqF: when all of a line is moved away, does the emptied line stay at 0 or get archived? Built for now: it stays at 0. Proposed: C (keep it if it has a required amount or reorder level, otherwise archive).
+- Tests: 11 new unit tests, 5 program tests (one per F8 line); the F6 test for soonest-to-expire now opens the item. 12 rules broken on purpose; two survived at first, so those tests were made stronger; now each fails when broken. 81 of 81 and 43 of 43 pass.
+- Found and fixed while building: after closing a box with an error in it (Escape), the error stayed on the item page; on a phone the line buttons squeezed the place name; the F7.2 test sometimes read the CSV before it was fully written (a test problem, not a program one).
+
 ## 2026-11-28 — F7 built: Store and bags
 - F6 committed and pushed first (e9fe747).
 - Store and bags: filter boxes for place, category, stock level (including “No required amount set”) and expiry (expired, soon, expired or soon, in date); sort by name A–Z / Z–A, stock (worst first), expiry (soonest first), amount (lowest first); Show archived (archived lines marked); Clear filters. The Overview's cards and warnings now open this screen with the matching box already set.

@@ -8,3 +8,4 @@ export { Accounts, Refused, DEMO_PASSWORD, type SignInResult, type PasswordState
 export { buildLog, areaOf, NOT_SHOWN, type LogEntry, type LogArea, type FieldChange } from "./log";
 export { step } from "./fold";
 export { SettingsStore } from "./settingsStore";
+export { InventoryStore, type LineValues } from "./inventoryStore";

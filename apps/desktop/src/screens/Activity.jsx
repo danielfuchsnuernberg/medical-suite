@@ -40,13 +40,25 @@ export default function Activity({ door, tick, timeZone, dateStyle }) {
             ? "Nothing from EDP yet. EDP's changes appear here once the shared server joins the apps (REACH SD2)."
             : "Nothing here yet."}</p>
         ) : (
-          <ol className="log" data-testid="log">
-            {entries.slice(0, shown).map(e => (
+          <LogList entries={entries.slice(0, shown)} w={w} when={when} open={(e) => setRec({ type: e.recordType, id: e.recordId })} />
+        )}
+        {entries.length > shown ? <button type="button" className="btn more" onClick={() => setShown(s => s + PAGE)}>Show {Math.min(PAGE, entries.length - shown)} more</button> : null}
+        <p className="lock" data-testid="log-lock"><Icon name="lock" width={13} /> Nobody can edit or delete log entries, Manage level included.</p>
+      </section>
+    </div>
+  );
+}
+
+/** The entries in plain words (F4); also used for an item's stock movements (F8.1). */
+export function LogList({ entries, w, when, open, testid = "log" }) {
+  return (
+          <ol className="log" data-testid={testid}>
+            {entries.map(e => (
               <li key={e.messageId} className={`entry${e.op === "delete" ? " del" : ""}`} data-op={e.op} data-record={e.recordId}>
                 <span className="ic"><Icon name={e.op === "delete" ? "trash" : "clock"} width={15} /></span>
                 <div className="tx">
                   <span className={`tagapp a-${String(e.area).toLowerCase()}`}>{String(e.area).toUpperCase()}</span>
-                  <span className="what">{w.sentence(e, () => setRec({ type: e.recordType, id: e.recordId }))}</span>
+                  <span className="what">{w.sentence(e, () => open(e))}</span>
                   {e.op === "delete" && e.was ? <span className="was" data-testid="was">What was there: {Object.entries(e.was).map(([k, v]) => `${w.field(k)} ${w.value(k, v)}`).join(" · ")}</span> : null}
                   {e.op !== "create" && e.changes.length ? (
                     <span className="changes">{e.changes.map(c => (
@@ -58,16 +70,11 @@ export default function Activity({ door, tick, timeZone, dateStyle }) {
               </li>
             ))}
           </ol>
-        )}
-        {entries.length > shown ? <button type="button" className="btn more" onClick={() => setShown(s => s + PAGE)}>Show {Math.min(PAGE, entries.length - shown)} more</button> : null}
-        <p className="lock" data-testid="log-lock"><Icon name="lock" width={13} /> Nobody can edit or delete log entries, Manage level included.</p>
-      </section>
-    </div>
   );
 }
 
 // Plain words for an entry. Names are looked up by ID now, so a renamed item shows its current name everywhere (F4.2).
-function words(door, log) {
+export function words(door, log) {
   // The last name each record had, from the log itself: a record deleted for good still has a name in its history.
   const lastName = new Map();
   for (let i = log.length - 1; i >= 0; i--) {
@@ -112,7 +119,14 @@ function words(door, log) {
     switch (e.op) {
       case "create": return <>added {kind}{link}</>;
       case "set": return <>changed {kind}{link}</>;
-      case "delta": { const by = Number(e.data.by); return <>{by < 0 ? "took" : "added"} {Math.abs(by)} {by < 0 ? "from" : "to"} {link}</>; }
+      case "delta": {
+        const by = Number(e.data.by);
+        // F8.2: a move is a take here and an add there; both say where the stock went or came from
+        const placeOf = (lineId) => { const l = door.get("line", String(lineId)); return l ? String(door.get("location", l.locationId)?.name ?? "?") : "another place"; };
+        if (e.data.moveTo) return <>moved {Math.abs(by)} from {link} to {placeOf(e.data.moveTo)}</>;
+        if (e.data.moveFrom) return <>{Math.abs(by)} moved in to {link} from {placeOf(e.data.moveFrom)}</>;
+        return <>{by < 0 ? "took" : "added"} {Math.abs(by)} {by < 0 ? "from" : "to"} {link}</>;
+      }
       case "count": return <>counted {link}</>;
       case "archive": return <>archived {kind}{link}</>;
       case "restore": return <>restored {kind}{link}</>;

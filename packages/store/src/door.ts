@@ -124,6 +124,26 @@ export class Door {
     return c;
   }
 
+  /** Saves several changes together: all of them or none (a move is a take here and an add there, F8.2). */
+  async applyAll(ps: { recordType: string; recordId?: string; op: ChangeOp; data?: Record<string, unknown>; by: string }[]): Promise<Change[]> {
+    const at = this.o.now ? this.o.now() : Date.now();
+    const cs = ps.map((p, i) => makeChange({ ...p, at: at + i, device: this.o.device }));     // one after the other, in this order
+    try {
+      await this.o.backend.commit(cs, { toOutbox: true });
+    } catch (e) {
+      this.st.error = "Not saved. This computer couldn't store the change, so nothing was changed.";
+      this.emit();
+      throw new DoorError(this.st.error);
+    }
+    this.st.error = null;
+    for (const c of cs) { this.changes.set(c.messageId, frozen(c)); this.outbox.add(c.messageId); }
+    this.st.waiting = this.outbox.size;
+    this.refold();
+    this.emit();
+    if (this.o.transport && this.o.transport.online()) void this.sync();
+    return cs;
+  }
+
   /** Sends what's waiting and fetches what other computers sent. Safe to call any time; does nothing without a server. */
   async sync(): Promise<void> {
     const t = this.o.transport;
