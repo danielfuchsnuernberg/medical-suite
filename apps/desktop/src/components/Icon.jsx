@@ -13,6 +13,8 @@ const P = {
   plus: '<path d="M12 5v14M5 12h14"/>',
   menu: '<path d="M3 6h18M3 12h18M3 18h18"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>',
+  trash: '<path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/>',
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
 };
 // The paths above are fixed strings written here, never user text, so setting them as markup is safe.
 export default function Icon({ name, width = 18, stroke = 1.8 }) {

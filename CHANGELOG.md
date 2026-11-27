@@ -1,5 +1,13 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — F4 built: Activity log
+- F2 committed and pushed first (cc59147).
+- Activity (menu › Activity): one log for all REACH apps, newest first, filter Everything / Inventory / People / Settings / EDP. Each entry: app tag, what happened in words (“took 2 from Gauze 10×10 cm in Bag 1 (adult)”), old → new per field, who · when (base time, 24-hour), and “from EDP” for other apps.
+- Click a name: that record's whole history, under every name it has had. A delete for good shows “What was there”. Nobody can edit or delete an entry (lock note at the bottom; locked behind the screen too).
+- How: `packages/store/src/log.ts` builds the log from the change messages with the same step as the records (`fold.step`, split out of `fold`); the door locks every stored message. New icons: trash and lock (from the approved demo).
+- Tests: 6 unit tests and 4 program tests (one per F4 line); 6 rules broken on purpose, each made its test fail. 52 of 52 and 24 of 24 pass.
+- Found and fixed while building: the log handed out a list a screen could empty (now locked); a new record listed “state: — → Active” as a change (left out); on a phone the filter buttons and long old → new boxes wrapped badly.
+
 ## 2026-11-28 — F2 built: sign-in and levels (Q22 = A)
 - Q22 answered A on the page: the first Management person sets up a computer; a Manage-level person gives one-time passwords, changed at first sign-in.
 - The program now opens on a sign-in screen (name from the list, password, “Stay signed in on this computer”). A new, empty computer opens on “Set up this computer”. After a one-time password: “Choose your own password” (at least 8 characters, typed twice).

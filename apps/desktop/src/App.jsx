@@ -9,6 +9,7 @@ import Icon from "./components/Icon.jsx";
 import Home from "./screens/Home.jsx";
 import Placeholder from "./screens/Placeholder.jsx";
 import Settings from "./screens/Settings.jsx";
+import Activity from "./screens/Activity.jsx";
 import { SignIn, ChooseOwn, SetUp } from "./screens/SignIn.jsx";
 import useToday from "./state/useToday.js";
 import useDoor from "./state/useDoor.js";
@@ -104,6 +105,7 @@ export default function App() {
         <Banners status={status} flags={door.flags()} nameOf={nameOfLine} timeZone={settings.timeZone} offlineClosed={offlineClosed} onCloseOffline={() => setOfflineClosed(true)} />
         <main className="content" id="content">
           {view === "home" ? <Home go={go} today={today} baseName={settings.baseName} />
+            : view === "log" ? <Activity door={door} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} />
             : view === "settings" ? <Settings me={me} accounts={accounts} tick={tick} toast={toast} />
             : <Placeholder view={view} />}
         </main>

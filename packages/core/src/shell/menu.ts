@@ -14,7 +14,7 @@ export const MENU: MenuGroup[] = [
     { id: "count", label: "Count a bag", icon: "count", feature: "F10", state: "coming" },
     { id: "takes", label: "Stock takes", icon: "clock", feature: "F11", state: "coming" },
     { id: "cd", label: "Controlled drugs", icon: "pill", feature: "F12", state: "coming" },
-    { id: "log", label: "Activity", icon: "clock", feature: "F4", state: "coming" },
+    { id: "log", label: "Activity", icon: "clock", feature: "F4", state: "built" },
   ] },
   { label: "Team", entries: [
     { id: "staff", label: "Staff and training", icon: "users", feature: "F14", state: "coming" },

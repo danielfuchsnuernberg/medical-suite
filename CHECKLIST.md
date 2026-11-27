@@ -1,5 +1,5 @@
 # CHECKLIST — REACH Medical Suite
-**Now:** Stage 6 — Execution · F1, F3, F2 built and tested · waiting for Danny: try F2 (sign-in), commit, then F4
+**Now:** Stage 6 — Execution · F1, F2, F3, F4 built and tested · waiting for Danny: try F4 (Activity), commit, then F5 (needs Q23 first)
 
 ### ARCHIVE — clear away the June prototype (26 Nov 2026)
 **Goal:** only the new app is left in sight; nothing is lost.
@@ -125,12 +125,13 @@ Danny: nobody uses the June app, so no patches. All 26 bugs are rules for the ne
 - [x] F1 window, menu and search: built, 5 of 5 lines tested in the real program (27 Nov)
 - [x] F3 works without internet (the store door): built, 7 of 7 lines tested in the real program; built before F2 (Danny, 27 Nov) — the server parts are proven against a stand-in server until REACH decides the real one
 - [x] F2 sign-in and levels: built, 8 of 8 lines tested in the real program (28 Nov); Q22 = A. The parts that need the server (one REACH account shared with EDP; “first sign-in needs internet”) wait for REACH SD2
-- [ ] F4 activity log · [ ] F5 settings · [ ] F6 overview · [ ] F7 Store and bags · [ ] F8 item page · [ ] F9 restock and dispense
+- [x] F4 activity log: built, 4 of 4 lines tested in the real program (28 Nov); EDP's part proven with the stand-in server until EDP is joined (SD2)
+- [ ] F5 settings · [ ] F6 overview · [ ] F7 Store and bags · [ ] F8 item page · [ ] F9 restock and dispense
 - [ ] F10 count · [ ] F11 stock takes · [ ] F12 register · [ ] F13 backup and import · [ ] F14 staff · [ ] F15 training
 **Tests for this stage:**
-- [x] Unit tests: `npx vitest run` → 46 of 46 pass (28 Nov, after F2)
-- [x] Program tests: `npx playwright test` → 20 of 20 pass (F1 5, F2 8, F3 7), twice in a row (28 Nov)
-- [x] Each program test can fail: F1.5 (date tick broken), F3.6 (a failed save pretended to work: the June B22), F3.7 (a new version threw old data away: the June B3), unit F3.4/F3.5 (movements overwritten instead of added); F2: 7 rules broken one at a time (last Manage person, archive yourself, wrong password accepted, stay signed in ignored, Settings unlocked, 24-hour delete rule, one-time password by Work level) and the new same-moment test (B27) — each failed when broken, then restored
+- [x] Unit tests: `npx vitest run` → 52 of 52 pass (28 Nov, after F4)
+- [x] Program tests: `npx playwright test` → 24 of 24 pass (F1 5, F2 8, F3 7, F4 4) (28 Nov)
+- [x] Each program test can fail: F1.5 (date tick broken), F3.6 (a failed save pretended to work: the June B22), F3.7 (a new version threw old data away: the June B3), unit F3.4/F3.5 (movements overwritten instead of added); F2: 7 rules broken one at a time (last Manage person, archive yourself, wrong password accepted, stay signed in ignored, Settings unlocked, 24-hour delete rule, one-time password by Work level) and the new same-moment test (B27); F4: 6 rules broken one at a time (newest first, filter by app, one record's history, old → new, what was there, locked entries) — each failed when broken, then restored
 **Status:** 🟡 IN PROGRESS
 **Open questions:** Q23 (Settings: locked or look-only below Manage), needed before F5
 
@@ -189,11 +190,11 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 **Status:** 🟢 built and tested (27 Nov 2026). The parts that need the shared server (F3.2, F3.4, F3.5) are proven against a stand-in server in test mode; they get tested again when REACH decides the real server (SD2).
 
 ### F4 — Activity log · release 1 · June J12 · demo batch 4
-- [ ] F4.1 One log for all REACH apps (Inventory, People, Settings, EDP), newest first, filter by app; every entry in the REACH shape: who, which record, what changed, when, from which app. (Q7, REACH R9, demo 4)
-- [ ] F4.2 Every change shows old → new; renaming an item keeps its history (history follows the ID, not the name). (B19)
-- [ ] F4.3 Every delete for good is logged with who, when and what was there. (B18)
-- [ ] F4.4 Nobody can edit or delete a log entry, Admins included. (demo 4)
-**Status:** 🔴 not built
+- [x] F4.1 One log for all REACH apps (Inventory, People, Settings, EDP), newest first, filter by app; every entry in the REACH shape: who, which record, what changed, when, from which app. (Q7, REACH R9, demo 4) ✅ 28 Nov: tests/app/f4-log.spec.mjs › F4.1 (an EDP change through the stand-in server, a People change, an Inventory change: newest first, each with who · when in base time · app tag; filter Inventory / EDP / Settings) + unit tests
+- [x] F4.2 Every change shows old → new; renaming an item keeps its history (history follows the ID, not the name). (B19) ✅ 28 Nov: › F4.2 (rename shows name: old → new; the earlier movement shows the new name; the item's history keeps its DEMO creation) + unit test
+- [x] F4.3 Every delete for good is logged with who, when and what was there. (B18) ✅ 28 Nov: › F4.3 (Typo Persn deleted by Cara: “What was there: name … job … level … state”, and its creation stays) + unit test
+- [x] F4.4 Nobody can edit or delete a log entry, Admins included. (demo 4) ✅ 28 Nov: › F4.4 (no edit or delete control in the log; stored messages and entries can't be changed, even from behind the screen; a changed copy with the same message ID from outside is ignored, unit test)
+**Status:** 🟢 built and tested (28 Nov 2026). EDP's entries are proven with the stand-in server; they get tested again when EDP is joined through the real server (SD2).
 
 ### F5 — Settings and country settings · release 1 · June J10 · demo batch 4
 - [ ] F5.1 Country settings: base name, country, time zone, date style, shift times. (brief, Stage 3)

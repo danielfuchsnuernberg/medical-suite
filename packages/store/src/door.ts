@@ -7,6 +7,11 @@ import { makeChange, APP_CODE, type Change, type ChangeOp, type StoredRecord, ty
 import type { Backend } from "./backend";
 import type { Transport } from "./transport";
 import { fold, type CountFlag } from "./fold";
+import { buildLog, type LogEntry } from "./log";
+
+/** A message, once stored, can't be changed by anyone holding it (F4.4). */
+function deepFreeze<T>(o: T): T { if (o && typeof o === "object" && !Object.isFrozen(o)) { Object.freeze(o); for (const v of Object.values(o as object)) deepFreeze(v); } return o; }
+function frozen(c: Change): Change { return deepFreeze(c); }
 
 export const SCHEMA_VERSION = 1;
 export type ServerState = "none" | "online" | "offline";
@@ -25,6 +30,7 @@ export class Door {
   private outbox = new Set<string>();
   private meta: Record<string, unknown> = {};
   private folded = fold([]);
+  private logCache: readonly LogEntry[] | null = null;
   private listeners = new Set<() => void>();
   private st: DoorStatus = { server: "none", waiting: 0, lastSyncAt: null, error: null, openedOffline: false, version: SCHEMA_VERSION };
   private constructor(private o: OpenOptions) {}
@@ -42,13 +48,13 @@ export class Door {
     }
     await o.backend.setMeta({ schemaVersion: SCHEMA_VERSION });
     d.meta.schemaVersion = SCHEMA_VERSION;
-    for (const c of changes) d.changes.set(c.messageId, c);
+    for (const c of changes) d.changes.set(c.messageId, frozen(c));
     for (const id of loaded.outbox) d.outbox.add(id);
     // Built-in (DEMO) data only goes into an empty store, once; never over existing data (B3).
     if (d.changes.size === 0 && !d.meta.seeded && o.seed) {
       const seed = o.seed();
       await o.backend.commit(seed, { toOutbox: false });
-      for (const c of seed) d.changes.set(c.messageId, c);
+      for (const c of seed) d.changes.set(c.messageId, frozen(c));
       await o.backend.setMeta({ seeded: true });
     }
     d.refold();
@@ -59,7 +65,9 @@ export class Door {
     return d;
   }
 
-  private refold() { this.folded = fold([...this.changes.values()]); }
+  private refold() { this.folded = fold([...this.changes.values()]); this.logCache = null; }
+  /** The activity log, newest first (F4). Read-only: there is no way to edit or remove an entry. */
+  log(): readonly LogEntry[] { if (!this.logCache) this.logCache = deepFreeze(buildLog([...this.changes.values()])); return this.logCache; }
   private emit() { for (const f of this.listeners) f(); }
   subscribe(f: () => void): () => void { this.listeners.add(f); return () => this.listeners.delete(f); }
 
@@ -91,7 +99,7 @@ export class Door {
       throw new DoorError(this.st.error);
     }
     this.st.error = null;
-    this.changes.set(c.messageId, c);
+    this.changes.set(c.messageId, frozen(c));
     this.outbox.add(c.messageId);
     this.st.waiting = this.outbox.size;
     this.refold();
@@ -111,7 +119,7 @@ export class Door {
       const cursor = Number(this.meta.cursor ?? 0);
       const got = await t.pull(cursor);
       const fresh = got.changes.filter(c => !this.changes.has(c.messageId)); // counted once (R8)
-      if (fresh.length) { await this.o.backend.commit(fresh, { toOutbox: false }); for (const c of fresh) this.changes.set(c.messageId, c); this.refold(); }
+      if (fresh.length) { await this.o.backend.commit(fresh, { toOutbox: false }); for (const c of fresh) this.changes.set(c.messageId, frozen(c)); this.refold(); }
       const now = this.o.now ? this.o.now() : Date.now();
       this.meta.cursor = got.cursor; this.meta.lastSyncAt = now;
       await this.o.backend.setMeta({ cursor: got.cursor, lastSyncAt: now });
