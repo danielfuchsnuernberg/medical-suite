@@ -1,5 +1,5 @@
 # CHECKLIST — REACH Medical Suite
-**Now:** Stage 6 — Execution · F1–F6 built and tested (F6 not committed) · waiting for Danny: try F6 (Overview), commit, then F7
+**Now:** Stage 6 — Execution · F1–F7 built and tested (F7 not committed) · waiting for Danny: try F7 (Store and bags), commit, then F8
 
 ### ARCHIVE — clear away the June prototype (26 Nov 2026)
 **Goal:** only the new app is left in sight; nothing is lost.
@@ -128,12 +128,13 @@ Danny: nobody uses the June app, so no patches. All 26 bugs are rules for the ne
 - [x] F4 activity log: built, 4 of 4 lines tested in the real program (28 Nov); EDP's part proven with the stand-in server until EDP is joined (SD2)
 - [x] F5 settings: built, 7 of 7 lines tested in the real program (28 Nov); Q23 = C
 - [x] F6 overview: built, 4 of 4 lines tested in the real program (28 Nov); the cards open a first version of Store and bags (F7 adds its filters, sort and CSV)
-- [ ] F7 Store and bags · [ ] F8 item page · [ ] F9 restock and dispense
+- [x] F7 Store and bags: built, 3 of 3 lines tested in the real program (28 Nov); a row opens a stand-in item page until F8 fills it in
+- [ ] F8 item page · [ ] F9 restock and dispense
 - [ ] F10 count · [ ] F11 stock takes · [ ] F12 register · [ ] F13 backup and import · [ ] F14 staff · [ ] F15 training
 **Tests for this stage:**
-- [x] Unit tests: `npx vitest run` → 67 of 67 pass (28 Nov, after F6)
-- [x] Program tests: `npx playwright test` → 35 of 35 pass (F1 5, F2 8, F3 7, F4 4, F5 7, F6 4) (28 Nov)
-- [x] Each program test can fail: F1.5 (date tick broken), F3.6 (a failed save pretended to work: the June B22), F3.7 (a new version threw old data away: the June B3), unit F3.4/F3.5 (movements overwritten instead of added); F2: 7 rules broken one at a time (last Manage person, archive yourself, wrong password accepted, stay signed in ignored, Settings unlocked, 24-hour delete rule, one-time password by Work level) and the new same-moment test (B27); F4: 6 rules broken one at a time (newest first, filter by app, one record's history, old → new, what was there, locked entries); F5: 8 rules broken one at a time (archived users count, case-only rename, base time zone, styled boxes, Manage only behind and on the screen, bag with stock, country proposes time zone); F6: 8 rules broken one at a time (exactly-required counted low (B1), no amount counted OK (B25), bag ignoring missing amounts, expired line still Ready, Store never saying reorder (B10), warnings opening every line, Overview not following changes, Store line without reorder level as in June) — each failed when broken, then restored
+- [x] Unit tests: `npx vitest run` → 70 of 70 pass (28 Nov, after F7)
+- [x] Program tests: `npx playwright test` → 38 of 38 pass (F1 5, F2 8, F3 7, F4 4, F5 7, F6 4, F7 3) (28 Nov)
+- [x] Each program test can fail: F1.5 (date tick broken), F3.6 (a failed save pretended to work: the June B22), F3.7 (a new version threw old data away: the June B3), unit F3.4/F3.5 (movements overwritten instead of added); F2: 7 rules broken one at a time (last Manage person, archive yourself, wrong password accepted, stay signed in ignored, Settings unlocked, 24-hour delete rule, one-time password by Work level) and the new same-moment test (B27); F4: 6 rules broken one at a time (newest first, filter by app, one record's history, old → new, what was there, locked entries); F5: 8 rules broken one at a time (archived users count, case-only rename, base time zone, styled boxes, Manage only behind and on the screen, bag with stock, country proposes time zone); F6: 8 rules broken one at a time (exactly-required counted low (B1), no amount counted OK (B25), bag ignoring missing amounts, expired line still Ready, Store never saying reorder (B10), warnings opening every line, Overview not following changes, Store line without reorder level as in June); F7: 8 rules broken one at a time (category filter ignored, archived always shown, sort ignored, Clear filters leaving expiry, CSV of all lines instead of what is shown, file date from the computer in UTC (B13), row click doing nothing, spreadsheet-formula guard removed) — each failed when broken, then restored
 **Status:** 🟡 IN PROGRESS
 **Open questions:** none
 
@@ -216,10 +217,10 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 **Status:** 🟢 built and tested (28 Nov 2026).
 
 ### F7 — Store and bags · release 1 · June J5 · demo batch 2
-- [ ] F7.1 Filters: location, category, stock level (including "no required amount"), expiry; sort; show archived; clear filters. (June J5)
-- [ ] F7.2 Export CSV holds exactly what the table shows, with local dates. (June J5, B13)
-- [ ] F7.3 A row opens its item page. (June J5)
-**Status:** 🔴 not built
+- [x] F7.1 Filters: location, category, stock level (including "no required amount"), expiry; sort; show archived; clear filters. (June J5) ✅ 28 Nov: › F7.1 (each filter alone and two together; Clear filters; 4 sorts; an archived line only with Show archived, marked Archived) + unit tests
+- [x] F7.2 Export CSV holds exactly what the table shows, with local dates. (June J5, B13) ✅ 28 Nov: › F7.2 (computer on UTC, still 27 Nov there: file named 28 Nov, Glucose gel expiry 2026-11-28; same rows and order as the table; follows filters everywhere) + unit tests (quotes, formulas never run, Excel mark)
+- [x] F7.3 A row opens its item page. (June J5) ✅ 28 Nov: › F7.3 (click anywhere on the row, or Enter on the name: that item opens; Back keeps the filters). The page is a stand-in until F8
+**Status:** 🟢 built and tested (28 Nov 2026).
 
 ### F8 — Item page · release 1 · June J6 · demo batch 2
 - [ ] F8.1 Stock per location with lot, expiry and status, and the item's movements. (June J6)

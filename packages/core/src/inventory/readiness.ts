@@ -81,3 +81,67 @@ export function overview(lines: StockLine[], today: CalendarDate) {
     soonest: lines.filter(l => l.expiry && (isExpired(l, today) || isExpiringSoon(l, today))).sort((a, b) => String(a.expiry).localeCompare(String(b.expiry))).slice(0, 6),
   };
 }
+
+// ---- F7: Store and bags — filters, sort, CSV (June J5) ----
+
+export interface ListFilter extends Omit<LineFilter, "expiry"> {
+  categoryId?: string;
+  expiry?: "expired" | "soon" | "expiredOrSoon" | "inDate";
+  sort?: "name" | "nameZ" | "stock" | "expiry" | "qtyLow";
+  archived?: boolean;                       // show archived lines too
+}
+export interface ListItem { name: string; categoryId?: string | null; unit?: string | null }
+
+/** The lines the Store and bags table shows, filtered and sorted. `active` and `archived` are the two sets of lines. */
+export function listLines(active: StockLine[], archived: StockLine[], f: ListFilter, today: CalendarDate, itemOf: (id: string) => ListItem | undefined): StockLine[] {
+  const pool = f.archived ? [...active, ...archived] : active;
+  const out = pool.filter(l => {
+    if (f.locationId && l.locationId !== f.locationId) return false;
+    if (f.categoryId && itemOf(l.itemId)?.categoryId !== f.categoryId) return false;
+    if (f.stock && stockStatus(l) !== f.stock) return false;
+    const ex = isExpired(l, today), soon = isExpiringSoon(l, today);
+    if (f.expiry === "expired" && !ex) return false;
+    if (f.expiry === "soon" && !soon) return false;
+    if (f.expiry === "expiredOrSoon" && !(ex || soon)) return false;
+    if (f.expiry === "inDate" && (ex || soon)) return false;
+    return true;
+  });
+  const name = (l: StockLine) => String(itemOf(l.itemId)?.name ?? "");
+  const byName = (a: StockLine, b: StockLine) => name(a).localeCompare(name(b), undefined, { sensitivity: "base" });
+  const rank: Record<StockStatus, number> = { out: 0, low: 1, none: 2, ok: 3 };
+  const exp = (l: StockLine) => l.expiry ? String(l.expiry) : "9999-99-99";
+  const cmp: Record<string, (a: StockLine, b: StockLine) => number> = {
+    name: byName,
+    nameZ: (a, b) => byName(b, a),
+    stock: (a, b) => rank[stockStatus(a)] - rank[stockStatus(b)] || byName(a, b),
+    expiry: (a, b) => exp(a).localeCompare(exp(b)) || byName(a, b),
+    qtyLow: (a, b) => Number(a.qty) - Number(b.qty) || byName(a, b),
+  };
+  return out.sort(cmp[f.sort ?? "name"] ?? byName);
+}
+
+/** One CSV cell: quoted when needed; a cell starting with = + - @ gets a ' so a spreadsheet never runs it as a formula. */
+export function csvCell(v: unknown): string {
+  let s = v === null || v === undefined ? "" : String(v);
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return /[",\n\r;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+export const CSV_HEADER = ["Item", "Category", "Place", "On hand", "Unit", "Required / reorder at", "Stock", "Lot", "Expiry", "Archived"];
+
+/** The CSV of exactly the lines given, in that order. Expiry is the plain calendar date (YYYY-MM-DD), so it can't slip a day (B13). */
+export function linesCsv(lines: StockLine[], look: { item: (id: string) => ListItem | undefined; category: (id: string) => string; place: (id: string) => string; archived: (l: StockLine) => boolean; stockWord: (l: StockLine) => string }): string {
+  const rows = [CSV_HEADER.map(csvCell).join(",")];
+  for (const l of lines) {
+    const it = look.item(l.itemId);
+    rows.push([it?.name ?? "?", it?.categoryId ? look.category(it.categoryId) : "", look.place(l.locationId), Number(l.qty), it?.unit ?? "",
+      l.required === null || l.required === undefined ? "" : Number(l.required), look.stockWord(l), (l as { lot?: string }).lot ?? "", l.expiry ?? "", look.archived(l) ? "yes" : ""].map(csvCell).join(","));
+  }
+  return "﻿" + rows.join("\r\n") + "\r\n";      // the mark at the start lets Excel read × and – correctly
+}
+
+/** "inventory-bag-1-adult-2026-11-28.csv" — the date is today at the base. */
+export function csvFileName(label: string, today: CalendarDate): string {
+  const s = label.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "lines";
+  return `inventory-${s}-${today}.csv`;
+}

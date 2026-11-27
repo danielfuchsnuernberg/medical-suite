@@ -9,7 +9,7 @@ export const MENU: MenuGroup[] = [
   { label: null, entries: [{ id: "home", label: "Home", icon: "home", feature: "F1", state: "built" }] },
   { label: "Inventory", entries: [
     { id: "overview", label: "Overview", icon: "box", feature: "F6", state: "built" },
-    { id: "where", label: "Store and bags", icon: "filter", feature: "F7", state: "built", note: "first version from F6; F7 adds filters, sort and CSV" },
+    { id: "where", label: "Store and bags", icon: "filter", feature: "F7", state: "built" },
     { id: "items", label: "Item list", icon: "file", feature: "F8", state: "coming" },
     { id: "count", label: "Count a bag", icon: "count", feature: "F10", state: "coming" },
     { id: "takes", label: "Stock takes", icon: "clock", feature: "F11", state: "coming" },

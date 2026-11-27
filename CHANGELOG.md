@@ -1,5 +1,14 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — F7 built: Store and bags
+- F6 committed and pushed first (e9fe747).
+- Store and bags: filter boxes for place, category, stock level (including “No required amount set”) and expiry (expired, soon, expired or soon, in date); sort by name A–Z / Z–A, stock (worst first), expiry (soonest first), amount (lowest first); Show archived (archived lines marked); Clear filters. The Overview's cards and warnings now open this screen with the matching box already set.
+- Export CSV: exactly the rows and order the table shows. The file is named with today's date at the base; expiry dates are written as stored (YYYY-MM-DD), so they can't slip a day (B13). Opens in Excel or Numbers (with × and – intact). A name starting with = + - @ gets a ' in front, so a spreadsheet never runs it as a formula. The computer asks where to save it.
+- A row (or Enter on the item name) opens that item. Until F8, the item page is a stand-in that says what F8 brings; Back keeps the filters.
+- Category column added to the table (hidden on a phone).
+- Tests: 3 new unit tests, 3 program tests (one per F7 line), two F6 tests updated for the new table. 8 rules broken on purpose, each made its test fail. 70 of 70 and 38 of 38 pass.
+- Found while testing: one of my own test expectations was wrong (I counted 5 lines in stock and in date; there are 4); the program was right.
+
 ## 2026-11-28 — F6 built: Inventory overview
 - F5 committed and pushed first (406feb3).
 - Overview (menu › Overview, and the Inventory card on Home): item types, units everywhere, out of stock, expired / soon; the attention strip; Bag readiness per place (Store first); Soonest to expire (expired or within 60 days).

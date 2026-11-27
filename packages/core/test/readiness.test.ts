@@ -62,3 +62,38 @@ describe("F6 overview and what each card opens", () => {
     expect(o.units).toBe(lines.reduce((s, l) => s + l.qty, 0));
   });
 });
+
+import { listLines, csvCell, linesCsv, csvFileName, demoItems, demoCategories } from "../src";
+
+describe("F7 Store and bags: filters, sort, CSV", () => {
+  const itemOf = (id: string) => demoItems.find(i => i.id === id);
+  const names = (ls: { itemId: string; locationId: string }[]) => ls.map(l => `${itemOf(l.itemId)!.name}@${l.locationId}`);
+  const archived = [{ id: "x1", itemId: "demo-i6", locationId: "demo-l1", qty: 1, required: 1, expiry: null }];
+  it("filters by place, category, stock level (incl. no amount) and expiry; archived only on request", () => {
+    expect(listLines(demoLines, archived, { locationId: "demo-l2" }, T, itemOf).length).toBe(2);
+    expect(names(listLines(demoLines, archived, { categoryId: "cat-fluids" }, T, itemOf))).toEqual(["Saline 0.9% 500 ml@demo-l1", "Saline 0.9% 500 ml@demo-l0"]);
+    expect(listLines(demoLines, archived, { stock: "none" }, T, itemOf).map(l => l.id).sort()).toEqual(["demo-s8", "demo-s9"]);
+    expect(listLines(demoLines, archived, { expiry: "soon" }, T, itemOf).map(l => l.id)).toEqual(["demo-s3"]);
+    expect(listLines(demoLines, archived, { expiry: "inDate" }, T, itemOf).length).toBe(8);
+    expect(listLines(demoLines, archived, {}, T, itemOf).some(l => l.id === "x1")).toBe(false);
+    expect(listLines(demoLines, archived, { archived: true }, T, itemOf).some(l => l.id === "x1")).toBe(true);
+  });
+  it("sorts by name both ways, worst stock first, soonest expiry first, lowest amount first", () => {
+    const by = (sort: any) => listLines(demoLines, [], { sort }, T, itemOf).map(l => l.id);
+    expect(by("name")[0]).toBe("demo-s9");                     // Bandage
+    expect(by("nameZ")[0]).toBe("demo-s8");                    // Tourniquet
+    expect(by("stock")[0]).toBe("demo-s4");                    // out of stock first
+    expect(by("expiry").slice(0, 2)).toEqual(["demo-s5", "demo-s3"]);
+    expect(by("expiry").slice(-2).sort()).toEqual(["demo-s10", "demo-s8"]);   // no expiry last
+    expect(by("qtyLow")[0]).toBe("demo-s4");
+  });
+  it("CSV: quotes, formulas never run, plain dates, Excel-readable", () => {
+    expect(csvCell('Gauze "big", 10×10')).toBe('"Gauze ""big"", 10×10"');
+    expect(csvCell("=HYPERLINK(\"x\")")).toBe("\"'=HYPERLINK(\"\"x\"\")\"");
+    expect(csvCell("-5")).toBe("'-5");
+    const text = linesCsv([demoLines[2]], { item: itemOf, category: id => demoCategories.find(c => c.id === id)!.name, place: () => "Bag 2 (child)", archived: () => false, stockWord: () => "At or above required" });
+    expect(text.startsWith("﻿")).toBe(true);
+    expect(text.slice(1).split("\r\n")).toEqual(["Item,Category,Place,On hand,Unit,Required / reorder at,Stock,Lot,Expiry,Archived", "Glucose gel 15 g,Medication,Bag 2 (child),2,tube,2,At or above required,GG-5,2026-11-28,", ""]);
+    expect(csvFileName("Bag 1 (adult)", T)).toBe("inventory-bag-1-adult-2026-11-28.csv");
+  });
+});

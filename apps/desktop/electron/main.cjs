@@ -32,6 +32,11 @@ function createWindow() {
     if (/^https:\/\//.test(url)) shell.openExternal(url);
     return { action: "deny" };
   });
+  // Saving a file the program made (F7 CSV): the computer asks where, with its own Save window.
+  // In test mode it goes into the test data folder instead, so tests can read it back.
+  win.webContents.session.on("will-download", (_e, item) => {
+    if (TEST) { const dir = path.join(app.getPath("userData"), "downloads"); require("fs").mkdirSync(dir, { recursive: true }); item.setSavePath(path.join(dir, item.getFilename())); }
+  });
   win.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   return win;
 }

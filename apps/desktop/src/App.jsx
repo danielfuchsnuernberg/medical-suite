@@ -12,12 +12,14 @@ import Settings from "./screens/Settings.jsx";
 import Activity from "./screens/Activity.jsx";
 import Overview from "./screens/Overview.jsx";
 import StockList from "./screens/StockList.jsx";
+import ItemStub from "./screens/ItemStub.jsx";
 import { SignIn, ChooseOwn, SetUp } from "./screens/SignIn.jsx";
 import useToday from "./state/useToday.js";
 import useDoor from "./state/useDoor.js";
 
 const crumbOf = (id) => {
   if (id === "home") return "Workspace";
+  if (id === "item") return "Inventory";
   if (id === "settings") return "Admin";
   const g = MENU.find(g => g.entries.some(e => e.id === id));
   return g && g.label ? g.label : "Workspace";
@@ -40,7 +42,8 @@ export default function App() {
   const me = accounts && auth.id ? accounts.person(auth.id) : null;
   const signedIn = !!(me && me.state === "Active" && !auth.mustChange);
   const [view, setView] = useState("home");
-  const [filter, setFilter] = useState(null);     // what the Store and bags list shows when opened from the Overview (F6.1)
+  const [filter, setFilter] = useState(null);     // the Store and bags filters (F7); the Overview opens it with one set (F6.1)
+  const [itemId, setItemId] = useState(null);     // the item a row opened (F7.3; the page itself is F8)
   const [drawer, setDrawer] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [offlineClosed, setOfflineClosed] = useState(false);
@@ -72,7 +75,14 @@ export default function App() {
     const locations = door.records("location").filter(l => l.state === "Active").sort((a, b) => (a.kind === "store" ? 0 : 1) - (b.kind === "store" ? 0 : 1) || String(a.name).localeCompare(String(b.name)));
     return {
       items, locs,
-      inv: { lines: lines.filter(l => locs.get(l.locationId)?.state === "Active"), items, locations },
+      inv: {
+        lines: lines.filter(l => locs.get(l.locationId)?.state === "Active"),
+        // archived lines, and lines in an archived place: shown only with "Show archived" (F7.1)
+        archivedLines: door.records("line").filter(l => l.state !== "Active" || locs.get(l.locationId)?.state !== "Active"),
+        items, locs, locations,
+        categories: door.records("category").filter(c => c.state === "Active").sort((a, b) => String(a.name).localeCompare(String(b.name))),
+        categoryName: (id) => String(door.get("category", id)?.name ?? ""),
+      },
       source: {
         people: door.records("person").filter(p => p.state === "Active").map(p => ({ id: p.id, name: String(p.name), job: String(p.job) })),
         stock: lines.map(l => { const it = items.get(l.itemId) || {}; const lc = locs.get(l.locationId) || {}; return { id: l.id, item: String(it.name ?? "?"), location: String(lc.name ?? "?"), qty: Number(l.qty), unit: String(it.unit ?? ""), expiry: l.expiry ?? null }; }),
@@ -102,11 +112,11 @@ export default function App() {
 
   const status = door.status();
   const entry = findEntry(view);
-  const title = view === "home" ? "Home" : entry ? entry.label : "";
+  const title = view === "home" ? "Home" : view === "item" ? String(door.get("item", itemId)?.name ?? "Item") : entry ? entry.label : "";
   const openResult = (kind) => go(kind === "person" ? "staff" : "where"); // F7/F8/F14 bring the real screens
   return (
     <div className={`shell${drawer ? " drawer" : ""}`}>
-      <Sidebar view={view} go={go} baseName={settings.baseName} />
+      <Sidebar view={view === "item" ? "where" : view} go={go} baseName={settings.baseName} />
       {drawer ? <button type="button" className="scrim" aria-label="Close the menu" onClick={() => setDrawer(false)} /> : null}
       <div className="main">
         <header className="topbar">
@@ -119,7 +129,8 @@ export default function App() {
         <main className="content" id="content">
           {view === "home" ? <Home go={go} today={today} baseName={settings.baseName} />
             : view === "overview" ? <Overview inv={data.inv} today={today} dateStyle={settings.dateStyle} open={(f) => go("where", f)} />
-            : view === "where" ? <StockList inv={data.inv} today={today} dateStyle={settings.dateStyle} filter={filter} clear={() => setFilter(null)} />
+            : view === "where" ? <StockList inv={data.inv} today={today} dateStyle={settings.dateStyle} filter={filter} setFilter={setFilter} openItem={(id) => { setItemId(id); setView("item"); }} />
+            : view === "item" ? <ItemStub item={door.get("item", itemId)} back={() => setView("where")} />
             : view === "log" ? <Activity door={door} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} />
             : view === "settings" ? <Settings me={me} accounts={accounts} store={settingsStore} door={door} tick={tick} toast={toast} />
             : <Placeholder view={view} />}

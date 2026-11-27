@@ -48,7 +48,7 @@ test("F6.1 the June Overview: totals, attention strip, bag readiness, soonest to
     await page.click(sel);
     await expect(page.locator('.side [data-view="where"]')).toHaveAttribute("aria-current", "page");
     await expect(page.getByTestId("filter-bar")).toBeVisible();
-    expect(await rows().locator("td:first-child b").allTextContents()).toEqual(names);
+    expect(await rows().locator(".rowlink").allTextContents()).toEqual(names);
     if (badge) await expect(rows().first().locator("[data-stock]")).toHaveText(badge);
     await back();
   }
@@ -56,7 +56,7 @@ test("F6.1 the June Overview: totals, attention strip, bag readiness, soonest to
   await card("Bag 2 (child)").click();
   await expect(page.locator(".panel-head h2")).toHaveText("Bag 2 (child)");
   await expect(rows()).toHaveCount(2);
-  await page.getByRole("button", { name: "Show all places" }).click();
+  await page.getByLabel("Place").selectOption("");
   await expect(rows()).toHaveCount(10);
   // a soonest-to-expire row opens the list it is in
   await back();
@@ -108,7 +108,7 @@ test("F6.4 Store lines have reorder levels; below it shows 'Below reorder level'
   await launch();
   await expect(card("Store (main)")).toContainText("1 below reorder level");
   await card("Store (main)").click();
-  await expect(page.locator("thead th").nth(2)).toHaveText("Reorder at");
+  await expect(page.locator("thead th").nth(3)).toHaveText("Reorder at");
   const gloves = rows().filter({ hasText: "Gloves" });
   await expect(gloves.getByTestId("required")).toHaveText("10");
   await expect(gloves.locator("[data-stock]")).toHaveText("Below reorder level");

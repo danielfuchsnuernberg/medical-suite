@@ -65,4 +65,9 @@
 | 2026-11-28 | F6: the Store uses the same rule as a bag, its required amount shown as “Reorder at”, with the words Reorder / Stocked | A separate reorder field | one number per line; the words of demo batch 2 |
 | 2026-11-28 | F6: a line that expires today still counts as in date; from the next day it is expired | Expired on its expiry day | the June badge rule and demo batch 2 (“Expires today” warns, it doesn't fail the bag) |
 | 2026-11-28 | F6: the cards open a first version of Store and bags (the lines they mean, verdict line, show all); F7 adds filters, sort, CSV | Wait for F7, or build F7 now | F6.1 needs a list to open; the rest is F7's own work |
+| 2026-11-28 | F7: filtering and sorting are rules in the core (listLines); the CSV is built from the same list the table shows | Filter in the screen, CSV from the data | F7.2: the file can't differ from the table |
+| 2026-11-28 | F7: CSV dates are the stored calendar date (YYYY-MM-DD); the file name uses today at the base | Format through the computer's clock | B13 |
+| 2026-11-28 | F7: a CSV cell starting with = + - @ gets a ' in front | Write it as typed | a typed name must never run as a spreadsheet formula on someone's computer |
+| 2026-11-28 | F7: the file is saved with the computer's own Save window | A fixed folder | the nurse chooses where it goes |
+| 2026-11-28 | F7: a row opens a stand-in item page (name, what F8 brings) until F8 | Leave rows dead until F8 | F7.3 is about where the row leads; F8 builds the page |
 | 2026-11-28 | F5: countries offered: Papua New Guinea and Peru, each proposing its time zone; any time zone can be picked | A full country list | PNG first, Peru may follow (brief); more countries are one line each |
