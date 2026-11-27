@@ -59,6 +59,24 @@ export class InventoryStore {
     });
   }
 
+  /** A controlled drug moves only through the register (Q8: every movement; F12.8, F12.9). */
+  private controlled(l: StoredRecord): boolean { return this.door.get("item", String(l.itemId))?.controlled === true; }
+  static CD_REGISTER = "This is a controlled drug. Its stock changes only through the controlled-drug register (with witness and running balance), which comes with F12.";
+
+  /** F9: restock (+) or dispense (−). A whole number, 1 or more; never more out than is there; logged old → new. */
+  adjust(actor: StoredRecord, lineId: string, kind: "restock" | "dispense", amount: unknown) {
+    return this.one(async () => {
+      const me = this.allowed(actor, "changeStock");
+      const l = this.line(lineId);
+      if (l.state !== "Active") throw new Refused("Reactivate the line first.");
+      if (this.controlled(l)) throw new Refused(InventoryStore.CD_REGISTER);
+      const out = kind === "dispense";
+      const q = wholeNumber(amount, out ? { min: 1, max: Number(l.qty) } : { min: 1 }); if (!q.ok) throw new Refused(q.why);
+      await this.door.apply({ recordType: "line", recordId: lineId, op: "delta", data: { field: "qty", by: out ? -q.n : q.n, kind }, by: me.id });
+      return Number(l.qty) + (out ? -q.n : q.n);
+    });
+  }
+
   /** F8.3: edit a line. The place can't be changed here (use Move). Only what changed is saved, so the log shows old → new. */
   editLine(actor: StoredRecord, lineId: string, v: LineValues & { locationId?: unknown }) {
     return this.one(async () => {
@@ -66,6 +84,7 @@ export class InventoryStore {
       const l = this.line(lineId);
       if (v.locationId !== undefined && v.locationId !== l.locationId) throw new Refused("The place can't be changed here. Use Move.");
       const clean = this.values(v);
+      if (this.controlled(l) && clean.qty !== Number(l.qty)) throw new Refused(InventoryStore.CD_REGISTER);
       const changed = Object.fromEntries(Object.entries(clean).filter(([k, x]) => (l[k] ?? null) !== x));
       if (!Object.keys(changed).length) return false;
       await this.door.apply({ recordType: "line", recordId: lineId, op: "set", data: changed, by: me.id });
@@ -79,6 +98,7 @@ export class InventoryStore {
       const me = this.allowed(actor, "changeStock");
       const l = this.line(lineId);
       if (l.state !== "Active") throw new Refused("Restore the line first.");
+      if (this.controlled(l)) throw new Refused(InventoryStore.CD_REGISTER);
       if (toLocationId === l.locationId) throw new Refused("Pick a different place to move to.");
       this.place(toLocationId);
       const q = wholeNumber(qty, { min: 1, max: Number(l.qty) }); if (!q.ok) throw new Refused(q.why);

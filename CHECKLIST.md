@@ -1,5 +1,5 @@
 # CHECKLIST — REACH Medical Suite
-**Now:** Stage 6 — Execution · F1–F8 built and tested (F8 not committed) · waiting for Danny: try F8 (item page), commit, then F9
+**Now:** Stage 6 — Execution · F1–F9 built and tested (F9 not committed) · waiting for Danny: try F9 (restock and dispense), commit, then F10
 
 ### ARCHIVE — clear away the June prototype (26 Nov 2026)
 **Goal:** only the new app is left in sight; nothing is lost.
@@ -130,12 +130,13 @@ Danny: nobody uses the June app, so no patches. All 26 bugs are rules for the ne
 - [x] F6 overview: built, 4 of 4 lines tested in the real program (28 Nov); the cards open a first version of Store and bags (F7 adds its filters, sort and CSV)
 - [x] F7 Store and bags: built, 3 of 3 lines tested in the real program (28 Nov); a row opens a stand-in item page until F8 fills it in
 - [x] F8 item page: built, 5 of 5 lines tested in the real program (28 Nov); Q24 = C applied
-- [ ] F9 restock and dispense
+- [x] F9 restock and dispense: built, 4 of 4 lines tested in the real program (28 Nov); controlled drugs: + and − both lead to the register (Q8, F12.9), and their amount can't be edited or moved outside it (gap left in F8, closed)
+- [ ] (F12, before building) Q25: does moving a controlled drug between places need its own register line?
 - [ ] F10 count · [ ] F11 stock takes · [ ] F12 register · [ ] F13 backup and import · [ ] F14 staff · [ ] F15 training
 **Tests for this stage:**
-- [x] Unit tests: `npx vitest run` → 82 of 82 pass (28 Nov, after F8 and Q24)
-- [x] Program tests: `npx playwright test` → 43 of 43 pass (F1 5, F2 8, F3 7, F4 4, F5 7, F6 4, F7 3, F8 5) (28 Nov)
-- [x] Each program test can fail: F1.5 (date tick broken), F3.6 (a failed save pretended to work: the June B22), F3.7 (a new version threw old data away: the June B3), unit F3.4/F3.5 (movements overwritten instead of added); F2: 7 rules broken one at a time (last Manage person, archive yourself, wrong password accepted, stay signed in ignored, Settings unlocked, 24-hour delete rule, one-time password by Work level) and the new same-moment test (B27); F4: 6 rules broken one at a time (newest first, filter by app, one record's history, old → new, what was there, locked entries); F5: 8 rules broken one at a time (archived users count, case-only rename, base time zone, styled boxes, Manage only behind and on the screen, bag with stock, country proposes time zone); F6: 8 rules broken one at a time (exactly-required counted low (B1), no amount counted OK (B25), bag ignoring missing amounts, expired line still Ready, Store never saying reorder (B10), warnings opening every line, Overview not following changes, Store line without reorder level as in June); F7: 8 rules broken one at a time (category filter ignored, archived always shown, sort ignored, Clear filters leaving expiry, CSV of all lines instead of what is shown, file date from the computer in UTC (B13), row click doing nothing, spreadsheet-formula guard removed); F8: 12 rules broken one at a time (join ignoring the lot, join ignoring the expiry (unit test), new line copying the required amount, place editable in Edit, fractions accepted, duplicate item name accepted, delete after 24 hours, delete without confirm, View level seeing change buttons, movements of every item, a move saved piece by piece (unit test), an error left on the page after closing a box; Q24: always archive, never archive, archive after a part move). Two survived at first (lot, piece by piece): the tests were made stronger, then both failed — each failed when broken, then restored
+- [x] Unit tests: `npx vitest run` → 87 of 87 pass (28 Nov, after F9)
+- [x] Program tests: `npx playwright test` → 47 of 47 pass (F1 5, F2 8, F3 7, F4 4, F5 7, F6 4, F7 3, F8 5, F9 4) (28 Nov)
+- [x] Each program test can fail: F1.5 (date tick broken), F3.6 (a failed save pretended to work: the June B22), F3.7 (a new version threw old data away: the June B3), unit F3.4/F3.5 (movements overwritten instead of added); F2: 7 rules broken one at a time (last Manage person, archive yourself, wrong password accepted, stay signed in ignored, Settings unlocked, 24-hour delete rule, one-time password by Work level) and the new same-moment test (B27); F4: 6 rules broken one at a time (newest first, filter by app, one record's history, old → new, what was there, locked entries); F5: 8 rules broken one at a time (archived users count, case-only rename, base time zone, styled boxes, Manage only behind and on the screen, bag with stock, country proposes time zone); F6: 8 rules broken one at a time (exactly-required counted low (B1), no amount counted OK (B25), bag ignoring missing amounts, expired line still Ready, Store never saying reorder (B10), warnings opening every line, Overview not following changes, Store line without reorder level as in June); F7: 8 rules broken one at a time (category filter ignored, archived always shown, sort ignored, Clear filters leaving expiry, CSV of all lines instead of what is shown, file date from the computer in UTC (B13), row click doing nothing, spreadsheet-formula guard removed); F8: 12 rules broken one at a time (join ignoring the lot, join ignoring the expiry (unit test), new line copying the required amount, place editable in Edit, fractions accepted, duplicate item name accepted, delete after 24 hours, delete without confirm, View level seeing change buttons, movements of every item, a move saved piece by piece (unit test), an error left on the page after closing a box; Q24: always archive, never archive, archive after a part move). Two survived at first (lot, piece by piece): the tests were made stronger, then both failed; F9: 8 rules broken one at a time (0 accepted, decimals accepted, more out than is there, not logged as restock or dispense, plain dispense of a controlled drug in the store and on the screen, controlled amount editable, controlled drug movable) — each failed when broken, then restored
 **Status:** 🟡 IN PROGRESS
 **Open questions:** none
 
@@ -232,11 +233,11 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 **Status:** 🟢 built and tested (28 Nov 2026); Q24 = C applied.
 
 ### F9 — Restock and dispense · release 1 · June J7 · demo batch 2
-- [ ] F9.1 + and − ask for a whole number, 1 or more. 0, negatives, decimals and an empty box are refused with a message, and nothing changes. (B17)
-- [ ] F9.2 Taking out more than is there is refused. (June J7)
-- [ ] F9.3 Every booked movement is logged old → new. (B19)
-- [ ] F9.4 For a controlled drug, − leads to the register (F12); there's no plain dispense. (demo 2, Q8)
-**Status:** 🔴 not built
+- [x] F9.1 + and − ask for a whole number, 1 or more. 0, negatives, decimals and an empty box are refused with a message, and nothing changes. (B17) ✅ 28 Nov: › F9.1 (0, -5, 2.7 and empty refused for both, nothing saved; 3 added, 2 taken by Enter) + unit test
+- [x] F9.2 Taking out more than is there is refused. (June J7) ✅ 28 Nov: › F9.2 (5 of 4 refused; all 4 allowed: Out of stock) + unit test
+- [x] F9.3 Every booked movement is logged old → new. (B19) ✅ 28 Nov: › F9.3 (“dispensed 2 … 12 → 10”, “restocked 6 … 30 → 36”, with who; also on the item page, which has the same + and −) + unit test
+- [x] F9.4 For a controlled drug, − leads to the register (F12); there's no plain dispense. (demo 2, Q8) ✅ 28 Nov: › F9.4 (− and + on Morphine show the register note, no box to type in; “Open the register” goes to Controlled drugs; dispense, amount edit and move refused behind the screen too) + unit test
+**Status:** 🟢 built and tested (28 Nov 2026).
 
 ### F10 — Count stock · release 1 · June J8 · demo batch 3
 - [ ] F10.1 Pick a bag or the Store and type what you find; an empty box means "not counted" and leaves the line as it was. (B16)

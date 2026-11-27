@@ -10,6 +10,7 @@ const P = {
   filter: '<path d="M3 6h18M6 12h12M9 18h6"/>',
   count: '<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/>',
   pill: '<rect x="2" y="8" width="20" height="8" rx="4"/><path d="M12 8v8"/>',
+  minus: '<path d="M5 12h14"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   menu: '<path d="M3 6h18M3 12h18M3 18h18"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>',

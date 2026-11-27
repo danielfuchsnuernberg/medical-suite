@@ -136,3 +136,46 @@ describe("inventory store (F8)", () => {
     expect(inv.deleteProblem(cara(door), "line", door.records("line").find(l => l.itemId === late)!.id)).toMatch(/within 24 hours/);
   });
 });
+
+describe("restock and dispense (F9)", () => {
+  it("F9.1 a whole number, 1 or more; 0, negatives, decimals and an empty box are refused and nothing changes (B17)", async () => {
+    const { door, inv, b } = await open();
+    const before = (await b.load()).changes.length;
+    for (const [bad, why] of [["0", "It has to be at least 1. 0 isn't allowed."], ["-5", "It has to be at least 1."], ["2.7", "Whole numbers only. 2.7 isn't allowed."], ["", "Type the amount."], ["  ", "Type the amount."], ["3 boxes", "isn't a number"]] as const) {
+      await expect(inv.adjust(anna(door), "demo-s1", "restock", bad)).rejects.toThrow(why);
+      await expect(inv.adjust(anna(door), "demo-s1", "dispense", bad)).rejects.toThrow(why);
+    }
+    expect(line(door, "demo-s1").qty).toBe(12);
+    expect((await b.load()).changes.length).toBe(before);
+    expect(await inv.adjust(anna(door), "demo-s1", "restock", "3")).toBe(15);
+    expect(await inv.adjust(anna(door), "demo-s1", "dispense", " 5 ")).toBe(10);
+  });
+  it("F9.2 taking out more than is there is refused; all of it is allowed", async () => {
+    const { door, inv } = await open();
+    await expect(inv.adjust(anna(door), "demo-s2", "dispense", 5)).rejects.toThrow("Only 4 on hand, so 5 can't be taken.");
+    expect(await inv.adjust(anna(door), "demo-s2", "dispense", 4)).toBe(0);
+    await expect(inv.adjust(anna(door), "demo-s4", "dispense", 1)).rejects.toThrow("Only 0 on hand, so 1 can't be taken.");
+  });
+  it("F9.3 every booked movement is logged old → new, as restock or dispense", async () => {
+    const { door, inv } = await open();
+    await inv.adjust(anna(door), "demo-s1", "dispense", 2);
+    expect(door.log()[0]).toMatchObject({ by: "demo-p1", recordId: "demo-s1", data: { kind: "dispense", by: -2 }, changes: [{ field: "qty", from: 12, to: 10 }] });
+    await inv.adjust(anna(door), "demo-s1", "restock", 7);
+    expect(door.log()[0].changes).toEqual([{ field: "qty", from: 10, to: 17 }]);
+  });
+  it("F9.4 a controlled drug has no plain restock or dispense; its amount can't be edited or moved outside the register (Q8)", async () => {
+    const { door, inv } = await open();
+    for (const f of [() => inv.adjust(anna(door), "demo-s7", "dispense", 1), () => inv.adjust(cara(door), "demo-s7", "restock", 1),
+      () => inv.editLine(cara(door), "demo-s7", { qty: 4, required: 5, lot: "M-3", expiry: "2027-07-24" }), () => inv.move(cara(door), "demo-s7", "demo-l1", 1)])
+      await expect(f()).rejects.toThrow("controlled-drug register");
+    expect(line(door, "demo-s7").qty).toBe(5);
+    expect(await inv.editLine(cara(door), "demo-s7", { qty: 5, required: 6, lot: "M-3", expiry: "2027-07-24" })).toBe(true);   // the reorder level may change
+  });
+  it("View level and archived lines can't be restocked or dispensed", async () => {
+    const { door, inv } = await open();
+    await door.apply({ recordType: "person", recordId: "demo-p4", op: "set", data: { level: "View" }, by: "demo-p3" });
+    await expect(inv.adjust(door.get("person", "demo-p4")!, "demo-s1", "restock", 1)).rejects.toThrow("View level");
+    await inv.archive(anna(door), "line", "demo-s1");
+    await expect(inv.adjust(anna(door), "demo-s1", "restock", 1)).rejects.toThrow("Reactivate the line first.");
+  });
+});

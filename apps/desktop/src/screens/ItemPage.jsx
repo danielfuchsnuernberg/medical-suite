@@ -3,6 +3,7 @@ import { can, stockStatus, todayIn, formatCalendarDate, formatTimeIn, isCalendar
 import Icon from "../components/Icon.jsx";
 import ExpiryBadge from "../components/ExpiryBadge.jsx";
 import Dialog from "../components/Dialog.jsx";
+import AdjustDialog from "../components/AdjustDialog.jsx";
 import { LogList, words } from "./Activity.jsx";
 
 // F8 — Item page (June J6): stock per place with lot, expiry and status; the item's movements; move, edit, add a place,
@@ -16,7 +17,7 @@ const STOCK_WORDS = {
   ok: (store) => ["b-success", store ? "In stock" : "At or above required"],
 };
 
-export default function ItemPage({ itemId, me, door, inv, store, tick, today, timeZone, dateStyle, back, toast }) {
+export default function ItemPage({ itemId, me, door, inv, store, tick, today, timeZone, dateStyle, back, toast, openRegister }) {
   const item = door.get("item", itemId);
   const [dlg, setDlg] = useState(null);          // { kind: "move" | "edit" | "add" | "delete", lineId?, type? }
   const [why, setWhy] = useState("");
@@ -94,6 +95,8 @@ export default function ItemPage({ itemId, me, door, inv, store, tick, today, ti
                     {work ? (
                       <div className="pl-acts">
                         {arch ? <button type="button" className="btn small" onClick={() => run(() => store.restore(me, "line", l.id), "Line reactivated.")}>Reactivate</button> : <>
+                          <button type="button" className="btn small" aria-label={`Restock ${placeName(l.locationId)}`} title="Restock (+)" onClick={() => open({ kind: "restock", lineId: l.id })}><Icon name="plus" width={13} stroke={2.4} />Restock</button>
+                          <button type="button" className="btn small" aria-label={`Dispense ${placeName(l.locationId)}`} title="Dispense (−)" onClick={() => open({ kind: "dispense", lineId: l.id })}><Icon name="minus" width={13} stroke={2.4} />Dispense</button>
                           <button type="button" className="btn small" onClick={() => open({ kind: "move", lineId: l.id })}>Move</button>
                           <button type="button" className="btn small" onClick={() => open({ kind: "edit", lineId: l.id })}>Edit</button>
                           <button type="button" className="btn small" onClick={() => run(() => store.archive(me, "line", l.id), "Line archived. It can be reactivated.")}>Archive</button>
@@ -119,6 +122,8 @@ export default function ItemPage({ itemId, me, door, inv, store, tick, today, ti
         </div>
       </div>
 
+      {dlg?.kind === "restock" || dlg?.kind === "dispense" ? <AdjustDialog line={door.get("line", dlg.lineId)} item={item} placeName={placeName} kind={dlg.kind} store={store} me={me}
+        close={() => setDlg(null)} done={(t) => { setDlg(null); toast(t, "success"); }} openRegister={openRegister} /> : null}
       {dlg?.kind === "move" ? <MoveDialog line={door.get("line", dlg.lineId)} item={item} places={places} placeName={placeName} why={why} close={() => { setDlg(null); setWhy(""); }}
         go={(to, qty) => run(() => store.move(me, dlg.lineId, to, qty), (r) => `Moved ${qty} to ${placeName(to)}${r.joined ? " (added to the line already there)" : ` (a new line; set its ${place(to)?.kind === "store" ? "reorder level" : "required amount"} with Edit)`}${r.archived ? ". The emptied line had no amount set, so it was archived." : ""}`)} /> : null}
       {dlg?.kind === "edit" ? <LineDialog dateStyle={dateStyle} title={`Edit: ${placeName(door.get("line", dlg.lineId)?.locationId)}`} line={door.get("line", dlg.lineId)} placeName={placeName} why={why} close={() => { setDlg(null); setWhy(""); }}

@@ -125,6 +125,8 @@ export function words(door, log) {
         const placeOf = (lineId) => { const l = door.get("line", String(lineId)); return l ? String(door.get("location", l.locationId)?.name ?? "?") : "another place"; };
         if (e.data.moveTo) return <>moved {Math.abs(by)} from {link} to {placeOf(e.data.moveTo)}</>;
         if (e.data.moveFrom) return <>{Math.abs(by)} moved in to {link} from {placeOf(e.data.moveFrom)}</>;
+        if (e.data.kind === "restock") return <>restocked {Math.abs(by)} to {link}</>;
+        if (e.data.kind === "dispense") return <>dispensed {Math.abs(by)} from {link}</>;
         return <>{by < 0 ? "took" : "added"} {Math.abs(by)} {by < 0 ? "from" : "to"} {link}</>;
       }
       case "count": return <>counted {link}</>;

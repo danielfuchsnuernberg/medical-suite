@@ -1,5 +1,12 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — F9 built: restock and dispense
+- F8 committed and pushed first (fa2b7f1).
+- + and − on every line in Store and bags, and Restock / Dispense on the item page. One box: a whole number, 1 or more; 0, negatives, decimals and an empty box are refused with a message and nothing changes (B17); taking out more than is there is refused. Every booking is logged as “restocked” or “dispensed”, old → new (B19).
+- Controlled drugs: − and + both open a note instead of a box: their stock changes only through the controlled-drug register (Q8: every movement; F12.9: receiving needs a witness), with a button to the register (F12). Closing a gap left in F8: a controlled drug's amount can no longer be changed in Edit, and it can't be moved, until the register exists. Q25 (does a move between places need its own register line?) will be shown before F12.
+- Tests: 5 new unit tests, 4 program tests (one per F9 line). 8 rules broken on purpose, each made its test fail. 87 of 87 and 47 of 47 pass.
+- Found while testing: my own test counted the table columns wrong (the program was right); on a phone the + and − sat in the middle of a row, now at its right edge.
+
 ## 2026-11-28 — Q24 answered: C
 - When all of a line is moved away: a line with a required amount or reorder level stays, at 0, so the bag or Store shows it as missing; a line with no amount set is archived, in the same save as the move. The message after the move says when a line was archived.
 - Tests: 1 new unit test, the F8.2 program test extended; 3 wrong rules tried (always archive, never archive, archive after a part move): each failed. 82 of 82 and 43 of 43 pass.

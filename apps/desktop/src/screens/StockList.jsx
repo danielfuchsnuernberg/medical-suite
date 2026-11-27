@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { listLines, readiness, readinessLine, stockStatus, linesCsv, csvFileName, can } from "@md/core";
 import Dialog from "../components/Dialog.jsx";
+import AdjustDialog from "../components/AdjustDialog.jsx";
 import Icon from "../components/Icon.jsx";
 import ExpiryBadge from "../components/ExpiryBadge.jsx";
 
@@ -14,8 +15,10 @@ const STOCK_WORDS = {
   ok: (store) => ["b-success", store ? "In stock" : "At or above required"],
 };
 
-export default function StockList({ inv, today, dateStyle, filter, setFilter, openItem, me, store, toast }) {
+export default function StockList({ inv, today, dateStyle, filter, setFilter, openItem, me, store, toast, openRegister }) {
   const [adding, setAdding] = useState(false);
+  const [adj, setAdj] = useState(null);          // F9: { lineId, kind }
+  const work = can(me.level, "changeStock");
   const { lines, archivedLines, items, locations, categories } = inv;
   const f = filter || {};
   const set = (k, v) => setFilter({ ...f, [k]: v || undefined });
@@ -92,12 +95,12 @@ export default function StockList({ inv, today, dateStyle, filter, setFilter, op
           <div><h2>{loc ? String(loc.name) : "All places"}</h2><p className="muted" data-testid="count">{shown.length} {shown.length === 1 ? "line" : "lines"}</p></div>
           <div className="acts">
             <button type="button" className="btn small" onClick={exportCsv} disabled={shown.length === 0}><Icon name="download" width={14} stroke={2} />Export CSV</button>
-            {can(me.level, "changeStock") ? <button type="button" className="btn small primary" onClick={() => setAdding(true)}><Icon name="plus" width={14} stroke={2.2} />Add item</button> : null}
+            {work ? <button type="button" className="btn small primary" onClick={() => setAdding(true)}><Icon name="plus" width={14} stroke={2.2} />Add item</button> : null}
           </div>
         </div>
         {shown.length === 0 ? <p className="empty">No lines match these filters.</p> : (
           <table className="table stock" data-testid="lines">
-            <thead><tr><th>Item</th><th className="hide-sm">Category</th>{loc ? null : <th>Place</th>}<th>On hand</th><th>{loc ? (loc.kind === "store" ? "Reorder at" : "Required") : "Required / reorder at"}</th><th>Stock</th><th>Expiry</th></tr></thead>
+            <thead><tr><th>Item</th><th className="hide-sm">Category</th>{loc ? null : <th>Place</th>}<th>On hand</th><th>{loc ? (loc.kind === "store" ? "Reorder at" : "Required") : "Required / reorder at"}</th><th>Stock</th><th>Expiry</th>{work ? <th><span className="sr">Restock or dispense</span></th> : null}</tr></thead>
             <tbody>
               {shown.map(l => {
                 const store = isStore(l.locationId);
@@ -115,6 +118,9 @@ export default function StockList({ inv, today, dateStyle, filter, setFilter, op
                     <td className="muted" data-testid="required" data-label={store ? "Reorder at" : "Required"}>{l.required === null || l.required === undefined ? "—" : Number(l.required)}</td>
                     <td><span className={`badge ${cls}`} data-stock={stockStatus(l)}>{word}</span></td>
                     <td><ExpiryBadge expiry={l.expiry} today={today} dateStyle={dateStyle} /></td>
+                    {work ? <td className="acts-cell" onClick={e => e.stopPropagation()}>{arch ? null : <>
+                      <button type="button" className="iconbtn" aria-label={`Restock ${String(it?.name ?? "")} in ${placeName(l.locationId)}`} title="Restock (+)" onClick={() => setAdj({ lineId: l.id, kind: "restock" })}><Icon name="plus" width={15} stroke={2.2} /></button>
+                      <button type="button" className="iconbtn" aria-label={`Dispense ${String(it?.name ?? "")} in ${placeName(l.locationId)}`} title="Dispense (−)" onClick={() => setAdj({ lineId: l.id, kind: "dispense" })}><Icon name="minus" width={15} stroke={2.2} /></button></>}</td> : null}
                   </tr>
                 );
               })}
@@ -122,6 +128,8 @@ export default function StockList({ inv, today, dateStyle, filter, setFilter, op
           </table>
         )}
       </section>
+      {adj ? <AdjustDialog line={inv.lines.find(x => x.id === adj.lineId)} item={items.get(inv.lines.find(x => x.id === adj.lineId)?.itemId)} placeName={placeName} kind={adj.kind} store={store} me={me}
+        close={() => setAdj(null)} done={(t) => { setAdj(null); toast(t, "success"); }} openRegister={openRegister} /> : null}
       {adding ? <AddItem inv={inv} at={f.locationId} close={() => setAdding(false)} go={async (p) => { const id = await store.addItem(me, p); setAdding(false); toast("Item added. Set its required amount with Edit.", "success"); openItem(id); }} /> : null}
     </div>
   );

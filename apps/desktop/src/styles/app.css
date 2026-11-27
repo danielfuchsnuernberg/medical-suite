@@ -293,3 +293,13 @@ button.att:hover{filter:brightness(.97)}
 .hint{font-weight:400;color:var(--text-faint)}
 .muted.small{font-size:var(--fs-xs)}
 @media (max-width:720px){ .prof-grid{grid-template-columns:minmax(0,1fr)} .dialog .form-grid{grid-template-columns:minmax(0,1fr)} }
+
+/* F9: restock and dispense */
+.iconbtn{width:30px;height:30px;display:inline-grid;place-items:center;border-radius:var(--r-sm);border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer;padding:0}
+.iconbtn:hover{border-color:var(--accent-border);color:var(--accent)}
+.iconbtn svg{margin:0}
+.acts-cell{white-space:nowrap;text-align:right}
+.acts-cell .iconbtn+.iconbtn{margin-left:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.table.stock .rowlink+.badge{margin-left:6px}
+@media (max-width:720px){ .table.stock td.acts-cell{grid-column:1 / -1;text-align:right} }
