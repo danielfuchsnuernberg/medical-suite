@@ -318,3 +318,10 @@ button.att:hover{filter:brightness(.97)}
 .savebar .spacer{flex:1}
 .counttable .lot{font-size:var(--fs-xs)}
 @media (max-width:720px){ .counttable td[data-label]::before{content:attr(data-label) ": ";font-size:var(--fs-xs);color:var(--text-muted)} }
+
+/* F11: stock takes */
+.takes{display:flex;flex-direction:column;gap:16px}
+.thennow .lot{font-size:var(--fs-xs)}
+.badge svg{margin:0}
+@media (max-width:720px){ .thennow td[data-label]::before{content:attr(data-label) ": ";font-size:var(--fs-xs);color:var(--text-muted)} }
+.itempage>.panel{align-self:stretch}

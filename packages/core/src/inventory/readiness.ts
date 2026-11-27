@@ -120,8 +120,9 @@ export function listLines(active: StockLine[], archived: StockLine[], f: ListFil
   return out.sort(cmp[f.sort ?? "name"] ?? byName);
 }
 
-/** One CSV cell: quoted when needed; a cell starting with = + - @ gets a ' so a spreadsheet never runs it as a formula. */
+/** One CSV cell: quoted when needed; text starting with = + - @ gets a ' so a spreadsheet never runs it as a formula. Numbers stay numbers (−2 is −2). */
 export function csvCell(v: unknown): string {
+  if (typeof v === "number" && Number.isFinite(v)) return String(v);
   let s = v === null || v === undefined ? "" : String(v);
   if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
   return /[",\n\r;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;

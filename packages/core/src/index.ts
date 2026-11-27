@@ -10,3 +10,4 @@ export * from "./access/password";
 export * from "./settings/lists";
 export * from "./inventory/readiness";
 export * from "./inventory/lines";
+export * from "./inventory/stockTake";

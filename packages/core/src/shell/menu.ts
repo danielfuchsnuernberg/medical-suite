@@ -12,7 +12,7 @@ export const MENU: MenuGroup[] = [
     { id: "where", label: "Store and bags", icon: "filter", feature: "F7", state: "built" },
     { id: "items", label: "Item list", icon: "file", feature: "F8", state: "coming" },
     { id: "count", label: "Count a bag", icon: "count", feature: "F10", state: "built" },
-    { id: "takes", label: "Stock takes", icon: "clock", feature: "F11", state: "coming" },
+    { id: "takes", label: "Stock takes", icon: "clock", feature: "F11", state: "built" },
     { id: "cd", label: "Controlled drugs", icon: "pill", feature: "F12", state: "coming" },
     { id: "log", label: "Activity", icon: "clock", feature: "F4", state: "built" },
   ] },

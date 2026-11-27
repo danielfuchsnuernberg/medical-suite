@@ -6,7 +6,7 @@ import Icon from "../components/Icon.jsx";
 // The entries come from door.log() (worked out from the change messages). This screen only puts them into words.
 
 const AREAS = [["all", "Everything"], ["Inventory", "Inventory"], ["People", "People"], ["Settings", "Settings"], ["EDP", "EDP"]];
-const KIND = { item: "item", line: "stock line", location: "place", person: "person", case: "case", department: "department", category: "category", course: "course", settings: "" };
+const KIND = { item: "item", line: "stock line", location: "place", person: "person", case: "case", department: "department", category: "category", course: "course", stocktake: "stock take", settings: "" };
 const FIELD = { qty: "quantity", required: "required", expiry: "expiry", lot: "lot", name: "name", job: "job", level: "level", state: "state",
   itemId: "item", locationId: "place", category: "category", unit: "unit", kind: "kind", staffNo: "staff number", itemNo: "item number",
   controlled: "controlled drug", cdRight: "doctor's right", caseNo: "case number", baseName: "base name", country: "country", timeZone: "time zone",
@@ -116,8 +116,10 @@ export function words(door, log) {
       if (e.data.what === "this computer set up") return <>set up this computer</>;
       return <>{String(e.data.what)}{about ? ` (${about})` : ""}</>;
     }
+    // F11.1: a stock take never changes; a message that tried to is kept in the log, and says it was ignored
+    if (e.recordType === "stocktake" && e.op !== "create") return <>tried to change stock take {link}: ignored, a stock take never changes</>;
     switch (e.op) {
-      case "create": return <>added {kind}{link}</>;
+      case "create": return e.recordType === "stocktake" ? <>froze a stock take: {link} ({Array.isArray(e.data.lines) ? e.data.lines.length : 0} lines)</> : <>added {kind}{link}</>;
       case "set": return <>changed {kind}{link}</>;
       case "delta": {
         const by = Number(e.data.by);

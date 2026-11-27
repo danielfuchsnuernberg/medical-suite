@@ -90,7 +90,8 @@ describe("F7 Store and bags: filters, sort, CSV", () => {
   it("CSV: quotes, formulas never run, plain dates, Excel-readable", () => {
     expect(csvCell('Gauze "big", 10×10')).toBe('"Gauze ""big"", 10×10"');
     expect(csvCell("=HYPERLINK(\"x\")")).toBe("\"'=HYPERLINK(\"\"x\"\")\"");
-    expect(csvCell("-5")).toBe("'-5");
+    expect(csvCell("-5")).toBe("'-5");                       // typed text that looks like a formula
+    expect(csvCell(-5)).toBe("-5");                            // a real number stays a number
     const text = linesCsv([demoLines[2]], { item: itemOf, category: id => demoCategories.find(c => c.id === id)!.name, place: () => "Bag 2 (child)", archived: () => false, stockWord: () => "At or above required" });
     expect(text.startsWith("﻿")).toBe(true);
     expect(text.slice(1).split("\r\n")).toEqual(["Item,Category,Place,On hand,Unit,Required / reorder at,Stock,Lot,Expiry,Archived", "Glucose gel 15 g,Medication,Bag 2 (child),2,tube,2,At or above required,GG-5,2026-11-28,", ""]);

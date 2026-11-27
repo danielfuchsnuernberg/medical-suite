@@ -14,6 +14,7 @@ import Overview from "./screens/Overview.jsx";
 import StockList from "./screens/StockList.jsx";
 import ItemPage from "./screens/ItemPage.jsx";
 import Count from "./screens/Count.jsx";
+import StockTakes from "./screens/StockTakes.jsx";
 import Dialog from "./components/Dialog.jsx";
 import { SignIn, ChooseOwn, SetUp } from "./screens/SignIn.jsx";
 import useToday from "./state/useToday.js";
@@ -65,7 +66,8 @@ export default function App() {
     window.addEventListener("beforeunload", ask);
     return () => window.removeEventListener("beforeunload", ask);
   }, [typedCounts]);
-  const goNow = (id, f = null) => { setView(id); setFilter(f); setDrawer(false); if (id !== "count") setCountResult(null); };
+  const [nav, setNav] = useState(0);              // every menu click starts the screen afresh (e.g. Stock takes goes back to the list)
+  const goNow = (id, f = null) => { setNav(n => n + 1); setView(id); setFilter(f); setDrawer(false); if (id !== "count") setCountResult(null); };
   // F10.2: leaving with unsaved counts asks Save / Throw away / Keep counting
   const go = (id, f = null) => { if (view === "count" && id !== "count" && typedCounts) { setDrawer(false); setLeaving({ id, f }); return; } goNow(id, f); };
 
@@ -165,6 +167,7 @@ export default function App() {
             : view === "where" ? <StockList inv={data.inv} today={today} dateStyle={settings.dateStyle} filter={filter} setFilter={setFilter} openItem={(id) => { setItemId(id); setView("item"); }} me={me} store={inventory} toast={toast} openRegister={() => go("cd")} />
             : view === "item" ? <ItemPage itemId={itemId} me={me} door={door} inv={data.inv} store={inventory} tick={tick} today={today} timeZone={settings.timeZone} dateStyle={settings.dateStyle} back={() => setView("where")} toast={toast} openRegister={() => go("cd")} />
             : view === "count" ? <Count inv={data.inv} me={me} state={count} setState={(f) => { setCount(f); setCountResult(null); }} save={saveCounts} result={countResult} />
+            : view === "takes" ? <StockTakes key={nav} door={door} me={me} store={inventory} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} toast={toast} typedCounts={typedCounts} />
             : view === "log" ? <Activity door={door} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} />
             : view === "settings" ? <Settings me={me} accounts={accounts} store={settingsStore} door={door} tick={tick} toast={toast} />
             : <Placeholder view={view} />}

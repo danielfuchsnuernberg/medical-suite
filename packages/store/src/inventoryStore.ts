@@ -111,6 +111,25 @@ export class InventoryStore {
     });
   }
 
+  /**
+   * F11.1: freeze a stock take: every line in use (Store and bags), with the date, who and a label. Names are copied as they are now,
+   * so the stock take still reads properly after renames and removals. It can never be changed or deleted afterwards (fold FROZEN, F2.7).
+   */
+  freezeStockTake(actor: StoredRecord, label: string) {
+    return this.one(async () => {
+      const me = this.allowed(actor, "changeStock");
+      const name = String(label ?? "").trim().replace(/\s+/g, " ");
+      if (!name) throw new Refused("Give the stock take a label, e.g. “Stock take, November 2026”.");
+      const places = new Map(this.door.records("location").filter(p => p.state === "Active").map(p => [p.id, p]));
+      const lines = this.door.records("line").filter(l => l.state === "Active" && places.has(String(l.locationId)))
+        .map(l => ({ lineId: l.id, itemId: String(l.itemId), item: String(this.door.get("item", String(l.itemId))?.name ?? "?"), place: String(places.get(String(l.locationId))!.name),
+          lot: String(l.lot ?? ""), expiry: (l.expiry as string) ?? null, qty: Number(l.qty), required: l.required === null || l.required === undefined ? null : Number(l.required) }))
+        .sort((a, b) => a.place.localeCompare(b.place) || a.item.localeCompare(b.item));
+      if (!lines.length) throw new Refused("There are no stock lines to freeze yet.");
+      return (await this.door.apply({ recordType: "stocktake", op: "create", data: { name, lines }, by: me.id })).recordId;
+    });
+  }
+
   /** F8.3: edit a line. The place can't be changed here (use Move). Only what changed is saved, so the log shows old → new. */
   editLine(actor: StoredRecord, lineId: string, v: LineValues & { locationId?: unknown }) {
     return this.one(async () => {

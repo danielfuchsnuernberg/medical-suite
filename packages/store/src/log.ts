@@ -14,7 +14,7 @@ export interface LogEntry {
   data: Record<string, unknown>;          // the message's own data (e.g. an event's "what")
 }
 
-const AREA: Record<string, LogArea> = { item: "Inventory", line: "Inventory", location: "Inventory", person: "People", event: "People", settings: "Settings", department: "Settings", category: "Settings", course: "Settings" };
+const AREA: Record<string, LogArea> = { item: "Inventory", line: "Inventory", location: "Inventory", stocktake: "Inventory", person: "People", event: "People", settings: "Settings", department: "Settings", category: "Settings", course: "Settings" };
 /** Stamps and bookkeeping, not "what changed". */
 export const NOT_SHOWN = new Set(["id", "createdAt", "createdBy", "changedAt", "changedBy", "demo", "lastCountAt", "lastCountBy"]);
 // The country stamp is set when a record is made; a later change to it (the base moving country, F5.1) is shown.
@@ -40,7 +40,7 @@ export function buildLog(changes: Change[], country = "PG"): LogEntry[] {
     out.push({
       messageId: c.messageId, at: c.at, by: c.by, app: c.app, area: areaOf(c), device: c.device,
       recordType: c.recordType, recordId: c.recordId, op: c.op, changes: changesOut,
-      was: c.op === "delete" && before ? Object.fromEntries(Object.entries(b).filter(([k]) => k !== "country")) : undefined, data: c.data,
+      was: c.op === "delete" && before && !after ? Object.fromEntries(Object.entries(b).filter(([k]) => k !== "country")) : undefined, data: c.data,
     });
   }
   return out.reverse();

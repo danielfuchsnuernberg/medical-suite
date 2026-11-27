@@ -6,12 +6,16 @@ import { changeOrder, type Change, type StoredRecord } from "@md/core";
 export interface CountFlag { recordType: string; recordId: string; counts: { messageId: string; qty: number; by: string; at: number }[]; used: number }
 export interface Folded { records: Map<string, Map<string, StoredRecord>>; flags: CountFlag[] }
 export type Tables = Map<string, Map<string, StoredRecord>>;
+/** Records that can never change after they are made (F11.1). */
+export const FROZEN = new Set(["stocktake"]);
 
 /** Applies one message. Returns the record before and after (undefined = didn't exist / was removed). */
 export function step(records: Tables, c: Change, country = "PG"): { before?: StoredRecord; after?: StoredRecord } {
   let t = records.get(c.recordType);
   if (!t) { t = new Map(); records.set(c.recordType, t); }
   const cur = t.get(c.recordId);
+  // F11.1: a stock take is frozen when it is made. Nothing after its first message changes it — from this computer or any other.
+  if (FROZEN.has(c.recordType) && c.op !== "create") return { before: cur, after: cur };
   const touch = (r: StoredRecord): StoredRecord => ({ ...r, changedAt: c.at, changedBy: c.by });
   let next: StoredRecord | undefined = cur;
   switch (c.op) {

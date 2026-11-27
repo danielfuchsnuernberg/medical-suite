@@ -1,5 +1,14 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — F11 built: stock takes
+- F10 committed and pushed first (3dbb539).
+- Stock takes (menu › Stock takes): Freeze stock take now copies every line in use in the Store and bags with the date (base time), who and a label (proposed: “Stock take, Nov 2026”). It warns if counts are typed but not saved. It can never be changed or deleted: even a change message from another computer is ignored, and Activity shows it was.
+- Open one: then vs now for every frozen line (−3, +4, no change); lines archived or deleted since show as removed, still with their names; lines added since are counted but not mixed in.
+- Export CSV: one row per line with the stock take's label, frozen on (the base's date), at, by, item, place, lot, expiry, then, now, change. The file name carries the base's date.
+- Stored as change messages like everything else, so the server keeps them and a new version can't wipe them (B3).
+- Tests: 5 new unit tests, 4 program tests. 7 rules broken on purpose, each made its test fail. 97 of 97 and 57 of 57 pass.
+- Found and fixed while building: the CSV wrote a negative number as '-2 (the F7 formula guard caught numbers too; now only text); clicking Stock takes in the menu while one was open didn't go back to the list; an ignored change to a stock take showed in Activity as “changed”, and an ignored delete showed “what was there”.
+
 ## 2026-11-28 — F10 built: count a bag
 - F9 committed and pushed first (e64b8ea).
 - Count a bag (menu › Count a bag): pick a bag or the Store (a bag first), find in the list, type what you find. Expected, counted and the difference show as you type. An empty box means “not counted” and changes nothing, even after typing in it and emptying it (B16). 0 is a real count.

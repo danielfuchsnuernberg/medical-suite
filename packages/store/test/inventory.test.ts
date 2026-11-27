@@ -234,3 +234,64 @@ describe("count stock (F10)", () => {
     expect(line(door, "demo-s1").qty).toBe(10);
   });
 });
+
+import { thenVsNow, stockTakeCsv, stockTakeFileName, checkDelete } from "@md/core";
+
+describe("stock takes (F11)", () => {
+  it("F11.1 freeze: every line in use, date, who, label; names copied as they were", async () => {
+    const { door, inv } = await open();
+    await expect(inv.freezeStockTake(anna(door), "  ")).rejects.toThrow("Give the stock take a label");
+    await inv.archive(anna(door), "line", "demo-s9");                                     // archived lines are not in it
+    const id = await inv.freezeStockTake(anna(door), "Stock take, November 2026");
+    const t = door.get("stocktake", id)!;
+    expect(t).toMatchObject({ name: "Stock take, November 2026", createdBy: "demo-p1" });
+    expect(typeof t.createdAt).toBe("number");
+    const lines = t.lines as any[];
+    expect(lines.length).toBe(9);
+    expect(lines.find(l => l.lineId === "demo-s1")).toMatchObject({ item: "Gauze 10×10 cm", place: "Bag 1 (adult)", lot: "G-2201", expiry: "2027-12-01", qty: 12, required: 10 });
+    expect(lines.some(l => l.lineId === "demo-s9")).toBe(false);
+  });
+  it("F11.1 it can't be changed or deleted afterwards — not by this computer, not by a message from another one", async () => {
+    const { door, inv } = await open();
+    const id = await inv.freezeStockTake(anna(door), "November");
+    const before = JSON.stringify(door.get("stocktake", id));
+    for (const op of ["set", "delta", "count", "archive", "delete"] as const)
+      await door.apply({ recordType: "stocktake", recordId: id, op, data: { name: "changed", field: "x", by: 1, qty: 1, lines: [] }, by: "demo-p3" });
+    expect(JSON.stringify(door.get("stocktake", id))).toBe(before);
+    expect(checkDelete("stocktake", door.get("stocktake", id)!, cara(door) as any, Date.now()).ok).toBe(false);
+  });
+  it("F11.2 then vs now for every line; lines removed since are shown as removed (archived or deleted)", async () => {
+    const { door, inv } = await open();
+    const lid = await inv.addLine(cara(door), "demo-i4", "demo-l0", { qty: 3, required: "", lot: "", expiry: "" });
+    const id = await inv.freezeStockTake(anna(door), "November");
+    await inv.adjust(anna(door), "demo-s1", "dispense", 2);
+    await inv.archive(anna(door), "line", "demo-s9");
+    await inv.deleteMistake(cara(door), "line", lid);
+    const rows = thenVsNow(door.get("stocktake", id) as any, (x) => door.get("line", x));
+    const by = (x: string) => rows.find(r => r.line.lineId === x)!;
+    expect(by("demo-s1")).toMatchObject({ now: 10, change: -2, state: "changed" });
+    expect(by("demo-s2")).toMatchObject({ now: 4, change: 0, state: "same" });
+    expect(by("demo-s9")).toMatchObject({ now: null, state: "archived" });
+    expect(by(lid)).toMatchObject({ now: null, state: "deleted", line: { item: "IV cannula 18G", place: "Store (main)" } });
+  });
+  it("F11.3 the file: local dates, then and now, removed lines named", () => {
+    const take = { name: "Stock take, November 2026", lines: [{ lineId: "a", itemId: "i", item: "Gauze, sterile", place: "Bag 1 (adult)", lot: "G-1", expiry: "2027-12-01", qty: 12, required: 10 }, { lineId: "b", itemId: "j", item: "Saline", place: "Store (main)", lot: "", expiry: null, qty: 4, required: null }] };
+    const rows = thenVsNow(take, (id) => id === "a" ? { qty: 10, state: "Active" } : undefined);
+    const text = stockTakeCsv(take, rows, "2026-11-28", "10:00", "Anna Example");
+    expect(text.slice(1).trimEnd().split("\r\n")).toEqual([
+      "Stock take,Frozen on,Frozen at,By,Item,Place,Lot,Expiry,Counted then,Now,Change",
+      "\"Stock take, November 2026\",2026-11-28,10:00,Anna Example,\"Gauze, sterile\",Bag 1 (adult),G-1,2027-12-01,12,10,-2",
+      "\"Stock take, November 2026\",2026-11-28,10:00,Anna Example,Saline,Store (main),,,4,deleted since,",
+    ]);
+    expect(stockTakeFileName("Stock take, November 2026", "2026-11-28")).toBe("stock-take-november-2026-2026-11-28.csv");
+    expect(stockTakeFileName("Monthly", "2026-11-28")).toBe("stock-take-monthly-2026-11-28.csv");
+  });
+  it("F11.4 stock takes are change messages: they survive a new version and reach the server", async () => {
+    const b = new MemoryBackend();
+    const first = await open(b);
+    const id = await first.inv.freezeStockTake(anna(first.door), "November");
+    const again = await Door.open({ backend: b, seed: demoSeedChanges, now });          // the next version opens the same data
+    expect(again.get("stocktake", id)).toMatchObject({ name: "November" });
+    expect((await b.load()).outbox).toContain(again.messages().find(m => m.recordId === id)!.messageId);   // waiting to go to the server
+  });
+});
