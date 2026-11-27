@@ -1,5 +1,12 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-27 — Stage 6 started: workspace and F1 built
+- Workspace as approved in Stage 5: `packages/core` (rules: dates, menu, search, DEMO data), `packages/store` (stub until F3), `apps/desktop` (Electron window, React screens in the June look).
+- F1 built: the June menu (Home, Inventory, Team, Later, Settings), Home cards with today's date at the base, search across staff and stock with expiry badges, the ☰ drawer below 720 px.
+- Tests: 16 unit tests (dates across PNG/Peru time zones, B13 cases, search, menu) and 5 program tests, one per F1 line, all passing; F1.5 proven to fail when the date tick is broken.
+- Found while looking at the running program and fixed: the search echo showed typed text in capitals; a second focus ring inside the search box. Found while testing: my F1.2 test read the menu mid-slide (test timing, not a program fault).
+- Machine note: npm 11 didn't fetch Electron's program file during install; `node node_modules/electron/install.js` does it.
+
 ## 2026-11-27 — Stage 5 signed off
 - Danny on the Stage 5 page: look Right, overall GO. `ARCHITECTURE.md` target and the six Stage 5 rows in `DECISIONS.md` are now APPROVED.
 - Next: Stage 6, feature by feature from F1; the server location goes to the REACH chat before release 1.

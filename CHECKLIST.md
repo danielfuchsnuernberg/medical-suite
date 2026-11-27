@@ -1,5 +1,5 @@
 # CHECKLIST — REACH Medical Suite
-**Now:** Stage 6 — Execution · waiting for Danny: GO to start building with F1 (window, menu, search); server location to raise in the REACH chat before release 1
+**Now:** Stage 6 — Execution · F1 built and tested · waiting for Danny: try F1 (`npm start`) and GO for F2 (sign-in and levels)
 
 ### ARCHIVE — clear away the June prototype (26 Nov 2026)
 **Goal:** only the new app is left in sight; nothing is lost.
@@ -119,7 +119,20 @@ Danny: nobody uses the June app, so no patches. All 26 bugs are rules for the ne
 **Open questions:** none here; server location goes to the REACH chat (SD2 / EDP Q44)
 
 ### STAGE 6 — Execution
-**Status:** 🔴 OPEN
+**Goal:** build F1 → F15 in the order of the Master Checklist; each feature is built, then every one of its lines is proven by a test that can fail, then Danny tries it.
+**Checklist:**
+- [x] Workspace set up as approved in Stage 5: npm workspaces, `packages/core` (TypeScript), `packages/store` (stub until F3), `apps/desktop` (React 18.3.1, Vite 5.4.21, Electron 45.5.0), Vitest 3.2.4, Playwright 1.65.1 (27 Nov)
+- [x] F1 window, menu and search: built, 5 of 5 lines tested in the real program (27 Nov)
+- [ ] F2 sign-in and levels
+- [ ] F3 works without internet (the store door)
+- [ ] F4 activity log · [ ] F5 settings · [ ] F6 overview · [ ] F7 Store and bags · [ ] F8 item page · [ ] F9 restock and dispense
+- [ ] F10 count · [ ] F11 stock takes · [ ] F12 register · [ ] F13 backup and import · [ ] F14 staff · [ ] F15 training
+**Tests for this stage:**
+- [x] Unit tests: `npx vitest run` → 16 of 16 pass (27 Nov)
+- [x] Program tests: `npx playwright test` → 5 of 5 pass, twice in a row (27 Nov)
+- [x] Each program test can fail: F1.5 checked by breaking the date tick on purpose (it failed), then restored
+**Status:** 🟡 IN PROGRESS
+**Open questions:** none
 
 ### STAGE 7 — Testing
 **Status:** 🔴 OPEN
@@ -147,12 +160,12 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 **Status:** 🔴 not built
 
 ### F1 — Program window, menu and search · release 1 · June J1 · demo batch 1
-- [ ] F1.1 Menu as in the June app: Home; Inventory (Overview, Store and bags, Item list, Count a bag, Stock takes, Controlled drugs, Activity); Team (Staff and training, Roster); Later (Patients); Settings at the bottom. Home has a card per section. (demo 1)
-- [ ] F1.2 Below 720 px wide the menu sits behind ☰; it opens, closes, and every screen can be reached. No sideways scroll at 375 px. (B5)
-- [ ] F1.3 Text with quotes, `<b>` or script tags shows as plain text in search, names and notes; no button breaks. (B4)
-- [ ] F1.4 Search at the top finds staff and stock from any screen; a result opens it. (demo 1)
-- [ ] F1.5 "Today" moves on while the program stays open: expiry badges change after midnight without reopening. (B7)
-**Status:** 🔴 not built
+- [x] F1.1 Menu as in the June app: Home; Inventory (Overview, Store and bags, Item list, Count a bag, Stock takes, Controlled drugs, Activity); Team (Staff and training, Roster); Later (Patients); Settings at the bottom. Home has a card per section. (demo 1) ✅ 27 Nov: tests/app/f1-shell.spec.mjs › F1.1
+- [x] F1.2 Below 720 px wide the menu sits behind ☰; it opens, closes, and every screen can be reached. No sideways scroll at 375 px. (B5) ✅ 27 Nov: › F1.2 (375 px window, drawer, every screen, no sideways scroll)
+- [x] F1.3 Text with quotes, `<b>` or script tags shows as plain text in search, names and notes; no button breaks. (B4) ✅ 27 Nov: › F1.3 (img, b, script, quotes: nothing runs)
+- [x] F1.4 Search at the top finds staff and stock from any screen; a result opens it. (demo 1) ✅ 27 Nov: › F1.4
+- [x] F1.5 "Today" moves on while the program stays open: expiry badges change after midnight without reopening. (B7) ✅ 27 Nov: › F1.5 (clock moved past midnight; failed when the tick was broken)
+**Status:** 🟢 built and tested (27 Nov 2026). Uses DEMO data until F3 brings the store door; search results open their section until F7/F8/F14 bring the item and person screens.
 
 ### F2 — Sign-in and roles · release 1 · June J1 "Acting as" · demo batch 1
 - [ ] F2.1 Everyone signs in with their own REACH account: one account per person, the same as in EDP. There is no "Acting as". (B12, Q6, REACH R3)

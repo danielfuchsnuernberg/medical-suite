@@ -11,11 +11,12 @@ for (const line of sec.split("\n")) {
     const parts = m[2].split(" · ");
     cur = { id: m[1], name: parts[0], meta: parts.slice(1), items: [], status: "" };
     blocks.push(cur);
-  } else if (cur && (m = /^- \[ \] ((?:F\d+|ALL)\.\d+) (.+)$/.exec(line))) {
-    let text = m[2], src = "";
+  } else if (cur && (m = /^- \[([ x])\] ((?:F\d+|ALL)\.\d+) (.+)$/.exec(line))) {
+    let text = m[3], src = "", done = m[1] === "x", proof = "";
+    const pm = / ✅ (.*)$/.exec(text); if (pm) { proof = pm[1]; text = text.slice(0, pm.index); }
     const s = /\s\(([^()]*(?:\([^()]*\)[^()]*)*)\)\s*$/.exec(text);
     if (s) { src = s[1]; text = text.slice(0, s.index); }
-    cur.items.push({ id: m[1], text, src });
+    cur.items.push({ id: m[2], text, src, done, proof });
   } else if (cur && (m = /^\*\*Status:\*\* (.+)$/.exec(line))) {
     cur.status = m[1];
   }

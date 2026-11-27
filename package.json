@@ -1,0 +1,22 @@
+{
+  "name": "medical-suite",
+  "version": "0.1.0",
+  "private": true,
+  "description": "REACH Medical Suite (MD) — Inventory first. Built to the REACH Core data rules.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w apps/desktop",
+    "build": "npm run build -w apps/desktop",
+    "start": "npm run build && npm run electron -w apps/desktop",
+    "test": "vitest run",
+    "test:app": "npm run build && playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "typescript": "5.9.3",
+    "vitest": "3.2.4"
+  }
+}

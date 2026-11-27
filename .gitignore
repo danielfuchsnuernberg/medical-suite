@@ -47,3 +47,7 @@ Icon?
 *.swp
 .vscode/
 .idea/
+
+# Test output
+test-results/
+playwright-report/
