@@ -133,6 +133,6 @@ test("F3.7 a new version carries all data over; nothing is replaced by built-in 
   await expect(page.locator(".results .r")).toHaveCount(2);           // the demo Store line and the old one
   await expect(page.locator(".results .r", { hasText: "4242" })).toHaveCount(1);
   const seedLines = await page.evaluate(() => window.__mdTest.door.records("line").length);
-  expect(seedLines).toBe(8);                                          // 7 DEMO lines + the old one; nothing re-added
+  expect(seedLines).toBe(11);                                         // 10 DEMO lines + the old one; nothing re-added
   expect(await page.evaluate(() => window.__mdTest.door.messages().find(m => m.messageId === "old-1").app)).toBe("MD");
 });

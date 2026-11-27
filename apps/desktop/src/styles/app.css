@@ -214,3 +214,37 @@ button{font-family:inherit}
 .check.small{font-size:var(--fs-xs);margin:0}
 @media (max-width:860px){ .setgrid{grid-template-columns:1fr} }
 @media (max-width:520px){ .form-grid{grid-template-columns:1fr} }
+
+/* F6: Inventory overview (the June look, demo batch 2) */
+.b-info{background:var(--info-soft);color:var(--info)}
+.badge.nodot::before{display:none}
+.overview,.stocklist{display:flex;flex-direction:column;gap:16px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;text-align:left;font:inherit;color:var(--text)}
+.stat.click{cursor:pointer}
+.stat.click:hover{border-color:var(--accent-border);box-shadow:var(--shadow-md)}
+.stat .k{font-size:11.5px;color:var(--text-muted);font-weight:600;display:flex;align-items:center;gap:6px}
+.stat .k svg{color:var(--accent)}
+.stat .v{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-top:4px}
+.stat .v small{font-size:12.5px;font-weight:500;color:var(--text-muted)}
+.attention{display:flex;gap:10px;flex-wrap:wrap}
+.attention:empty{display:none}
+.att{display:flex;align-items:center;gap:9px;padding:9px 13px;border-radius:var(--r-md);font:inherit;font-size:12.5px;font-weight:500;flex:1;min-width:180px;border:0;text-align:left}
+button.att{cursor:pointer}
+button.att:hover{filter:brightness(.97)}
+.att svg{flex:none}
+.att-danger{background:var(--danger-soft);color:var(--danger)} .att-warning{background:var(--warning-soft);color:var(--warning)}
+.att-info{background:var(--info-soft);color:var(--info)} .att-ok{background:var(--success-soft);color:var(--success)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.rcard{gap:8px}
+.rtop{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.soonest{list-style:none;margin:0;padding:0}
+.srow{display:flex;align-items:center;gap:12px;width:100%;padding:10px 0;border:0;border-bottom:1px solid var(--border);background:none;font:inherit;color:var(--text);text-align:left;cursor:pointer}
+.soonest li:last-child .srow{border-bottom:0}
+.srow:hover .t{color:var(--accent)}
+.srow .ti{flex:1;min-width:0;display:flex;flex-direction:column}
+.srow .t{font-weight:600;font-size:13px}
+.srow .d{font-size:11.5px;color:var(--text-muted);margin-top:2px}
+.table.stock .lot{font-size:var(--fs-xs)}
+@media (max-width:720px){ .stats{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:720px){ .table.stock td[data-label]::before{content:attr(data-label) ": ";font-size:var(--fs-xs)} }

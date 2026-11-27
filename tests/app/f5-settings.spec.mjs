@@ -141,7 +141,7 @@ test("F5.6 departments, inventory categories, courses and bags are managed here"
   await expect(entry("bag", "Bag 3 (obstetric)")).toContainText("not used");
   await entry("bag", "Bag 1 (adult)").getByRole("button", { name: "Archive" }).click();
   await expect(list("bag").getByTestId("refusal")).toHaveText("Bag 1 (adult) still has 2 stock lines. Move or archive them first.");
-  await expect(list("bag").locator("li[data-entry]")).toHaveCount(3);                           // the Store isn't a bag
+  await expect(list("bag").locator("li[data-entry]")).toHaveCount(4);                           // 3 DEMO bags + the new one; the Store isn't a bag
 });
 
 test("F5.7 only Manage level changes settings; everyone else can look (Q23 = C)", async () => {

@@ -10,6 +10,8 @@ import Home from "./screens/Home.jsx";
 import Placeholder from "./screens/Placeholder.jsx";
 import Settings from "./screens/Settings.jsx";
 import Activity from "./screens/Activity.jsx";
+import Overview from "./screens/Overview.jsx";
+import StockList from "./screens/StockList.jsx";
 import { SignIn, ChooseOwn, SetUp } from "./screens/SignIn.jsx";
 import useToday from "./state/useToday.js";
 import useDoor from "./state/useDoor.js";
@@ -38,12 +40,13 @@ export default function App() {
   const me = accounts && auth.id ? accounts.person(auth.id) : null;
   const signedIn = !!(me && me.state === "Active" && !auth.mustChange);
   const [view, setView] = useState("home");
+  const [filter, setFilter] = useState(null);     // what the Store and bags list shows when opened from the Overview (F6.1)
   const [drawer, setDrawer] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [offlineClosed, setOfflineClosed] = useState(false);
   const toast = useCallback((text, kind) => setToasts(t => [...t, { id: Math.random().toString(36).slice(2), text, kind }]), []);
   const dropToast = useCallback((id) => setToasts(t => t.filter(x => x.id !== id)), []);
-  const go = (id) => { setView(id); setDrawer(false); };
+  const go = (id, f = null) => { setView(id); setFilter(f); setDrawer(false); };
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape") setDrawer(false); };
@@ -65,8 +68,11 @@ export default function App() {
     const items = new Map(door.records("item").map(r => [r.id, r]));
     const locs = new Map(door.records("location").map(r => [r.id, r]));
     const lines = door.records("line").filter(l => l.state === "Active");
+    // Places in the order of the June Overview: the Store first, then the bags by name. Archived places are left out.
+    const locations = door.records("location").filter(l => l.state === "Active").sort((a, b) => (a.kind === "store" ? 0 : 1) - (b.kind === "store" ? 0 : 1) || String(a.name).localeCompare(String(b.name)));
     return {
       items, locs,
+      inv: { lines: lines.filter(l => locs.get(l.locationId)?.state === "Active"), items, locations },
       source: {
         people: door.records("person").filter(p => p.state === "Active").map(p => ({ id: p.id, name: String(p.name), job: String(p.job) })),
         stock: lines.map(l => { const it = items.get(l.itemId) || {}; const lc = locs.get(l.locationId) || {}; return { id: l.id, item: String(it.name ?? "?"), location: String(lc.name ?? "?"), qty: Number(l.qty), unit: String(it.unit ?? ""), expiry: l.expiry ?? null }; }),
@@ -112,6 +118,8 @@ export default function App() {
         <Banners status={status} flags={door.flags()} nameOf={nameOfLine} timeZone={settings.timeZone} offlineClosed={offlineClosed} onCloseOffline={() => setOfflineClosed(true)} />
         <main className="content" id="content">
           {view === "home" ? <Home go={go} today={today} baseName={settings.baseName} />
+            : view === "overview" ? <Overview inv={data.inv} today={today} dateStyle={settings.dateStyle} open={(f) => go("where", f)} />
+            : view === "where" ? <StockList inv={data.inv} today={today} dateStyle={settings.dateStyle} filter={filter} clear={() => setFilter(null)} />
             : view === "log" ? <Activity door={door} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} />
             : view === "settings" ? <Settings me={me} accounts={accounts} store={settingsStore} door={door} tick={tick} toast={toast} />
             : <Placeholder view={view} />}

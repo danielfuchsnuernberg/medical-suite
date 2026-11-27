@@ -19,7 +19,7 @@ export const demoDepartments = [
 export const slug = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 /** Category IDs come from the name, so data saved before categories were records gets the same IDs (migration 2). */
 export const categoryId = (name: string) => "cat-" + slug(name);
-export const demoCategories = ["Dressings", "Fluids", "Medication", "Airway and IV", "Controlled drugs", "icu"].map(name => ({ id: categoryId(name), name }));
+export const demoCategories = ["Dressings", "Fluids", "Medication", "Airway and IV", "Controlled drugs", "Trauma", "PPE", "icu"].map(name => ({ id: categoryId(name), name }));
 export const demoCourses = [
   { id: "demo-k1", name: "BLS (basic life support)", validMonths: 12 }, { id: "demo-k2", name: "ACLS", validMonths: 24 },
   { id: "demo-k3", name: "Fire safety", validMonths: 12 }, { id: "demo-k4", name: "Controlled-drug handling", validMonths: 12 },
@@ -38,6 +38,7 @@ export const demoLocations = [
   { id: "demo-l0", name: "Store (main)", kind: "store", ...stamp },
   { id: "demo-l1", name: "Bag 1 (adult)", kind: "bag", ...stamp },
   { id: "demo-l2", name: "Bag 2 (child)", kind: "bag", ...stamp },
+  { id: "demo-l3", name: "Trauma kit", kind: "bag", ...stamp },
 ];
 
 export const demoItems = [
@@ -46,6 +47,9 @@ export const demoItems = [
   { id: "demo-i3", itemNo: "I-0003", name: "Glucose gel 15 g", categoryId: categoryId("Medication"), unit: "tube", controlled: false, ...stamp },
   { id: "demo-i4", itemNo: "I-0004", name: "IV cannula 18G", categoryId: categoryId("Airway and IV"), unit: "", controlled: false, ...stamp },
   { id: "demo-i5", itemNo: "I-0005", name: "Morphine 10 mg/ml (demo)", categoryId: categoryId("Controlled drugs"), unit: "amp", controlled: true, ...stamp },
+  { id: "demo-i7", itemNo: "I-0007", name: "Bandage 8 cm", categoryId: categoryId("Dressings"), unit: "roll", controlled: false, ...stamp },
+  { id: "demo-i8", itemNo: "I-0008", name: "Tourniquet", categoryId: categoryId("Trauma"), unit: "", controlled: false, ...stamp },
+  { id: "demo-i9", itemNo: "I-0009", name: "Gloves, size M", categoryId: categoryId("PPE"), unit: "box", controlled: false, ...stamp },
   { id: "demo-i6", itemNo: "I-0006", name: "Old suction tubing (demo)", categoryId: categoryId("icu"), unit: "", controlled: false, ...stamp, state: "Archived" as const },
 ];
 
@@ -57,6 +61,10 @@ export const demoLines: { id: string; itemId: string; locationId: string; qty: n
   { id: "demo-s5", itemId: "demo-i2", locationId: "demo-l0", qty: 24, required: 12, lot: "S-099", expiry: "2026-11-20" },
   { id: "demo-s6", itemId: "demo-i1", locationId: "demo-l0", qty: 30, required: 20, lot: "G-2190", expiry: "2027-10-01" },
   { id: "demo-s7", itemId: "demo-i5", locationId: "demo-l0", qty: 5, required: 5, lot: "M-3", expiry: "2027-07-24" },
+  // F6 cases: the Trauma kit has no required amounts yet (B25, "Not set up"); the Store is below a reorder level (B10).
+  { id: "demo-s8", itemId: "demo-i8", locationId: "demo-l3", qty: 2, required: null, lot: "", expiry: null },
+  { id: "demo-s9", itemId: "demo-i7", locationId: "demo-l3", qty: 4, required: null, lot: "", expiry: "2028-10-01" },
+  { id: "demo-s10", itemId: "demo-i9", locationId: "demo-l0", qty: 6, required: 10, lot: "", expiry: null },
 ];
 
 /** The search source (F1.4) built from the DEMO records, by ID (R5). */

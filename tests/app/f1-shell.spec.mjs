@@ -36,7 +36,7 @@ test("F1.1 menu as in the June app, Home cards, Settings at the bottom", async (
   await expect(page.locator(".side .bottom button")).toHaveText("Settings");
   expect(await page.locator(".home-grid .appcard").count()).toBe(6);
   // every menu entry opens: Home, or a screen that says which feature brings it
-  for (const id of ["overview", "cd", "staff", "roster"]) {
+  for (const id of ["items", "cd", "staff", "roster"]) {
     await page.click(`.side [data-view="${id}"]`);
     await expect(page.locator(`.side [data-view="${id}"]`)).toHaveAttribute("aria-current", "page");
     await expect(page.getByTestId("placeholder")).toContainText(/Comes (with F\d+|later)/);

@@ -1,5 +1,5 @@
 # CHECKLIST — REACH Medical Suite
-**Now:** Stage 6 — Execution · F1–F5 built and tested (F5 not committed) · waiting for Danny: try F5 (Settings), commit, then F6
+**Now:** Stage 6 — Execution · F1–F6 built and tested (F6 not committed) · waiting for Danny: try F6 (Overview), commit, then F7
 
 ### ARCHIVE — clear away the June prototype (26 Nov 2026)
 **Goal:** only the new app is left in sight; nothing is lost.
@@ -127,12 +127,13 @@ Danny: nobody uses the June app, so no patches. All 26 bugs are rules for the ne
 - [x] F2 sign-in and levels: built, 8 of 8 lines tested in the real program (28 Nov); Q22 = A. The parts that need the server (one REACH account shared with EDP; “first sign-in needs internet”) wait for REACH SD2
 - [x] F4 activity log: built, 4 of 4 lines tested in the real program (28 Nov); EDP's part proven with the stand-in server until EDP is joined (SD2)
 - [x] F5 settings: built, 7 of 7 lines tested in the real program (28 Nov); Q23 = C
-- [ ] F6 overview · [ ] F7 Store and bags · [ ] F8 item page · [ ] F9 restock and dispense
+- [x] F6 overview: built, 4 of 4 lines tested in the real program (28 Nov); the cards open a first version of Store and bags (F7 adds its filters, sort and CSV)
+- [ ] F7 Store and bags · [ ] F8 item page · [ ] F9 restock and dispense
 - [ ] F10 count · [ ] F11 stock takes · [ ] F12 register · [ ] F13 backup and import · [ ] F14 staff · [ ] F15 training
 **Tests for this stage:**
-- [x] Unit tests: `npx vitest run` → 59 of 59 pass (28 Nov, after F5)
-- [x] Program tests: `npx playwright test` → 31 of 31 pass (F1 5, F2 8, F3 7, F4 4, F5 7) (28 Nov)
-- [x] Each program test can fail: F1.5 (date tick broken), F3.6 (a failed save pretended to work: the June B22), F3.7 (a new version threw old data away: the June B3), unit F3.4/F3.5 (movements overwritten instead of added); F2: 7 rules broken one at a time (last Manage person, archive yourself, wrong password accepted, stay signed in ignored, Settings unlocked, 24-hour delete rule, one-time password by Work level) and the new same-moment test (B27); F4: 6 rules broken one at a time (newest first, filter by app, one record's history, old → new, what was there, locked entries); F5: 8 rules broken one at a time (archived users count, case-only rename, base time zone, styled boxes, Manage only behind and on the screen, bag with stock, country proposes time zone) — each failed when broken, then restored
+- [x] Unit tests: `npx vitest run` → 67 of 67 pass (28 Nov, after F6)
+- [x] Program tests: `npx playwright test` → 35 of 35 pass (F1 5, F2 8, F3 7, F4 4, F5 7, F6 4) (28 Nov)
+- [x] Each program test can fail: F1.5 (date tick broken), F3.6 (a failed save pretended to work: the June B22), F3.7 (a new version threw old data away: the June B3), unit F3.4/F3.5 (movements overwritten instead of added); F2: 7 rules broken one at a time (last Manage person, archive yourself, wrong password accepted, stay signed in ignored, Settings unlocked, 24-hour delete rule, one-time password by Work level) and the new same-moment test (B27); F4: 6 rules broken one at a time (newest first, filter by app, one record's history, old → new, what was there, locked entries); F5: 8 rules broken one at a time (archived users count, case-only rename, base time zone, styled boxes, Manage only behind and on the screen, bag with stock, country proposes time zone); F6: 8 rules broken one at a time (exactly-required counted low (B1), no amount counted OK (B25), bag ignoring missing amounts, expired line still Ready, Store never saying reorder (B10), warnings opening every line, Overview not following changes, Store line without reorder level as in June) — each failed when broken, then restored
 **Status:** 🟡 IN PROGRESS
 **Open questions:** none
 
@@ -208,11 +209,11 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 **Status:** 🟢 built and tested (28 Nov 2026).
 
 ### F6 — Inventory overview · release 1 · June J4 · demo batch 2
-- [ ] F6.1 The June Overview: totals, attention strip, bag readiness, soonest to expire. Every card and warning opens the matching list. (June J4)
-- [ ] F6.2 A line holding exactly its required amount counts as OK; a bag is Ready only when every line is at or above it and in date. (B1)
-- [ ] F6.3 A line with no required amount makes its bag "Not set up", never Ready. (B25)
-- [ ] F6.4 Store lines have reorder levels; below it shows "Below reorder level", and the Store card warns. (B10)
-**Status:** 🔴 not built
+- [x] F6.1 The June Overview: totals, attention strip, bag readiness, soonest to expire. Every card and warning opens the matching list. (June J4) ✅ 28 Nov: › F6.1 (8 item types, 89 units, 1 out, 1 expired / 1 soon; 4 cards, Store first; each of 6 cards and warnings opens exactly the lines it counts; a readiness card opens its place; numbers follow a change at once) + unit test
+- [x] F6.2 A line holding exactly its required amount counts as OK; a bag is Ready only when every line is at or above it and in date. (B1) ✅ 28 Nov: › F6.2 (Bag 1 with Saline 4 of 4: Ready; one taken: Short; put back: Ready; Gauze out of date: Not ready) + unit test
+- [x] F6.3 A line with no required amount makes its bag "Not set up", never Ready. (B25) ✅ 28 Nov: › F6.3 (Trauma kit: Not set up with the reason; one amount given: still Not set up; both: Ready) + unit test
+- [x] F6.4 Store lines have reorder levels; below it shows "Below reorder level", and the Store card warns. (B10) ✅ 28 Nov: › F6.4 (Gloves 6, reorder at 10: “Below reorder level”; Store card “1 below reorder level”, then Reorder, then Stocked) + unit test
+**Status:** 🟢 built and tested (28 Nov 2026).
 
 ### F7 — Store and bags · release 1 · June J5 · demo batch 2
 - [ ] F7.1 Filters: location, category, stock level (including "no required amount"), expiry; sort; show archived; clear filters. (June J5)

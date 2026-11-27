@@ -1,5 +1,14 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — F6 built: Inventory overview
+- F5 committed and pushed first (406feb3).
+- Overview (menu › Overview, and the Inventory card on Home): item types, units everywhere, out of stock, expired / soon; the attention strip; Bag readiness per place (Store first); Soonest to expire (expired or within 60 days).
+- Readiness rules in one place (`packages/core/src/inventory/readiness.ts`): exactly the required amount is OK (B1); a line with no required amount makes its bag “Not set up”, never Ready (B25); the Store uses reorder levels and says Reorder / Stocked (B10); out of stock or expired → Not ready.
+- Every card and warning opens Store and bags showing just those lines, with a one-line verdict for a place and a button to show everything. This is a first version of Store and bags; F7 adds filters, sort, CSV and archived lines. A soonest-to-expire row opens its place until the item page (F8) exists.
+- DEMO data: a Trauma kit with two lines without required amounts, Bandage, Tourniquet, Gloves (Store, below its reorder level), categories Trauma and PPE. An existing program keeps its data and doesn't get these lines.
+- Tests: 8 new unit tests, 4 program tests (one per F6 line); three older tests now count the new DEMO bag and lines. 8 rules broken on purpose, each made its test fail. 67 of 67 and 35 of 35 pass.
+- Found and fixed while building: on a phone the required amount showed as a bare “—”; it now says “Required: —”.
+
 ## 2026-11-28 — Q23 answered; F5 built: Settings and country settings
 - Q23 = C on the page: nurses look at the base's settings and lists; People and access stays with Management. F2.3 and F5.7 reworded, F2 changed to match (Anna now opens Settings, greyed, without People and access).
 - Settings: Country and base (base name, country, time zone, date style, day and night shift, Save), Departments, Inventory categories, Courses (with months valid), Bags: add, rename, archive / restore, delete. People and access below, for Manage level.

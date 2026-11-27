@@ -59,7 +59,7 @@ describe("settings (F5)", () => {
   it("F5.6 departments, categories, courses and bags are managed here", async () => {
     const { door, s } = await open();
     expect(s.entries("department").map(e => e.name)).toEqual(["Clinical", "Logistics", "Management", "Training"]);
-    expect(s.entries("bag").map(e => e.name)).toEqual(["Bag 1 (adult)", "Bag 2 (child)"]);       // the Store is not a bag
+    expect(s.entries("bag").map(e => e.name)).toEqual(["Bag 1 (adult)", "Bag 2 (child)", "Trauma kit"]);       // the Store is not a bag
     const k = await s.add(cara(door), "course", "Neonatal resuscitation", { validMonths: 24 });
     expect(door.get("course", k)).toMatchObject({ name: "Neonatal resuscitation", validMonths: 24 });
     await expect(s.add(cara(door), "course", "Bad", { validMonths: 0 })).rejects.toThrow(/1 to 120/);
