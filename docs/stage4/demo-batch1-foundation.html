@@ -1,0 +1,858 @@
+<title>REACH Inventory Demo 1</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Stage 4 demo batch 1: F1 window/menu/search, F2 sign-in and roles, F3 works without internet.
+   Outer page: Stage 3/4 page colours with dark mode. The app inside (.app) keeps the June Medical Suite look
+   (tokens copied from the June index.html :root), light only, as in June. All app styles are scoped to .app. */
+:root{
+  --bg:#F4F4F6; --surface:#FFFFFF; --surface-2:#FAFAFB;
+  --border:#E4E4EA; --border-strong:#D2D2DA;
+  --text:#1B1B23; --muted:#6B6B78; --faint:#9B9BA6;
+  --accent:#4F46E5; --accent-soft:#EEEDFD; --accent-border:#C9C6F7; --on-accent:#FFFFFF;
+  --ok:#1E9E62; --ok-soft:#E7F5EE; --warn:#C77A12; --warn-soft:#F8EFDF; --bad:#D14343; --bad-soft:#FAEAEA;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A;
+  --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A;
+  --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:64px}
+.wrap{max-width:1240px;margin:0 auto}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:28px;font-weight:700;letter-spacing:-.4px}
+h2{font-size:19px;font-weight:700}
+h3{font-size:14.5px;font-weight:600}
+p{margin:0;max-width:72ch}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:13px}
+.mono{font-family:var(--mono);font-size:12.5px}
+header.top{padding-block:32px 18px;display:flex;flex-direction:column;gap:10px}
+.fid{font-family:var(--mono);font-size:12px;font-weight:500;padding:1px 6px;border-radius:5px;background:var(--surface-2);border:1px solid var(--border-strong);white-space:nowrap}
+.bid{font-family:var(--mono);font-size:11.5px;padding:1px 6px;border-radius:5px;background:var(--bad-soft);color:var(--bad);white-space:nowrap}
+
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:start}
+@media (max-width:1000px){.stage{grid-template-columns:1fr}}
+.left{display:flex;flex-direction:column;gap:12px;min-width:0}
+.right{display:flex;flex-direction:column;gap:14px;min-width:0}
+@media (min-width:1001px){.right{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding-bottom:8px}}
+
+.world{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.world .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.world .lbl{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--faint);margin-right:4px}
+.wbtn{font:inherit;font-size:13px;padding:6px 11px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.wbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.wbtn.off[aria-pressed="true"]{background:var(--warn);border-color:var(--warn)}
+.wbtn.danger[aria-pressed="true"]{background:var(--bad);border-color:var(--bad)}
+.wbtn:disabled{opacity:.45;cursor:not-allowed}
+.devwrap{display:flex;justify-content:center}
+.devframe{width:100%;transition:max-width .2s}
+.devframe.phone{max-width:390px;border:10px solid #1b1b23;border-radius:34px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.exnote{font-size:12px;color:var(--faint)}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{font:inherit;font-size:13.5px;padding:7px 12px;border-radius:9px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.tab[aria-selected="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tab .cnt{font-size:11px;font-family:var(--mono)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.card ol{margin:0;padding-left:20px;font-size:13.5px;display:flex;flex-direction:column;gap:6px}
+.card ul{margin:0;padding-left:18px;font-size:13.5px}
+.k{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.checks{display:flex;flex-direction:column;gap:6px}
+.chk{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:13px;padding:8px 10px;border-radius:9px;background:var(--surface-2);border:1px solid var(--border)}
+.chk .box{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border-strong);display:grid;place-items:center;font-size:13px;font-weight:700;color:transparent}
+.chk.seen{background:var(--ok-soft);border-color:transparent}
+.chk.seen .box{background:var(--ok);border-color:var(--ok);color:#fff}
+.chk .was{display:block;font-size:12px;color:var(--muted)}
+.inline{font:inherit;font-size:12px;padding:1px 8px;border-radius:6px;border:1px solid var(--border-strong);background:var(--surface);color:var(--accent);cursor:pointer;margin-left:4px}
+
+.review{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--border-strong)}
+.review .q{font-size:13.5px;font-weight:600;flex:1 1 200px}
+.review .btns{display:flex;gap:6px}
+.review button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.review button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.review button[aria-pressed="true"].yes{background:var(--ok);border-color:var(--ok);color:var(--on-accent)}
+.review button[aria-pressed="true"].no{background:var(--warn);border-color:var(--warn);color:var(--on-accent)}
+.review textarea{flex:1 1 100%;min-height:54px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);resize:vertical}
+.review .state{font-size:12px;color:var(--faint);flex:1 1 100%}
+.final{border:2px solid var(--accent);background:var(--accent-soft)}
+.final .q{font-size:15.5px}
+footer{padding-top:28px;font-size:12.5px;color:var(--faint)}
+
+/* =================== THE APP (June look, scoped) =================== */
+.app{
+  --bg:#F4F4F6; --surface:#FFFFFF; --surface-2:#FAFAFB; --sidebar:#F0F0F3;
+  --border:#E4E4EA; --border-strong:#D2D2DA;
+  --text:#1B1B23; --text-muted:#6B6B78; --text-faint:#9B9BA6;
+  --accent:#4F46E5; --accent-hover:#4338CA; --accent-soft:#EEEDFD; --accent-border:#C9C6F7;
+  --success:#1E9E62; --success-soft:#E7F5EE; --warning:#C77A12; --warning-soft:#F8EFDF; --danger:#D14343; --danger-soft:#FAEAEA;
+  --info:#2563EB; --info-soft:#E6EEFD;
+  --r-sm:6px; --r-md:10px; --r-lg:14px; --shadow-md:0 6px 18px -8px rgba(20,20,35,.18); --shadow-pop:0 14px 40px -12px rgba(20,20,35,.28);
+  --focus-ring:0 0 0 3px var(--accent-soft);
+  color-scheme:light;
+  container-type:inline-size;container-name:app;
+  position:relative;height:660px;overflow:hidden;border-radius:12px;border:1px solid var(--border-strong);
+  background:var(--bg);color:var(--text);font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:13.5px;line-height:1.45;
+}
+.devframe.phone .app{height:720px;border:0;border-radius:24px}
+.app *{box-sizing:border-box}
+.app button{font-family:inherit}
+.app svg{flex:none}
+.app .shell{display:grid;grid-template-columns:220px 1fr;height:100%}
+.app .side{background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 10px;overflow:auto;z-index:40}
+.app .logo{display:flex;align-items:center;gap:10px;padding:4px 8px 14px;cursor:pointer;background:none;border:0;text-align:left;color:var(--text)}
+.app .logo .mark{width:30px;height:30px;border-radius:8px;background:var(--accent);display:grid;place-items:center;color:#fff}
+.app .logo .name{font-weight:700;font-size:14.5px}
+.app .logo .name small{display:block;font-weight:500;font-size:11px;color:var(--text-muted)}
+.app .navlabel{font-size:10.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-faint);padding:12px 10px 5px}
+.app .nav{display:flex;flex-direction:column;gap:2px}
+.app .nav button{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-sm);color:var(--text-muted);background:none;border:none;font-size:13.5px;font-weight:500;cursor:pointer;text-align:left;position:relative}
+.app .nav button svg{width:17px;height:17px}
+.app .nav button:hover{background:color-mix(in srgb,var(--accent) 8%,transparent);color:var(--text)}
+.app .nav button.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.app .nav button.active::before{content:"";position:absolute;left:-10px;top:6px;bottom:6px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
+.app .nav button .ext{margin-left:auto;font-size:9.5px;font-weight:600;letter-spacing:.4px;color:var(--text-faint);border:1px solid var(--border-strong);padding:1px 5px;border-radius:4px}
+.app .side .bottom{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}
+.app .main{display:flex;flex-direction:column;min-width:0;overflow:hidden;position:relative}
+.app .topbar{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface);flex:none;flex-wrap:wrap;position:relative;z-index:20}
+.app .topbar .crumb{font-size:11px;color:var(--text-muted)}
+.app .topbar h1{font-size:18px;font-weight:700;margin:0}
+.app .hamb{display:none;width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surface);place-items:center;cursor:pointer;color:var(--text)}
+.app .search{margin-left:auto;display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:6px 14px;color:var(--text-muted);min-width:200px;position:relative}
+.app .search svg{width:15px;height:15px}
+.app .search input{border:none;background:none;outline:none;font:inherit;color:var(--text);width:100%;min-width:0}
+.app .results{position:absolute;top:calc(100% + 6px);right:0;width:340px;max-width:calc(100cqw - 24px);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:var(--shadow-pop);max-height:320px;overflow:auto;z-index:60;padding:6px}
+.app .results .r{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;cursor:pointer;width:100%;background:none;border:0;text-align:left;color:var(--text)}
+.app .results .r:hover{background:var(--accent-soft)}
+.app .results .grp{font-size:10.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--text-faint);padding:6px 10px 2px}
+.app .results .none{padding:10px;color:var(--text-muted);font-size:13px}
+.app .sync{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding:5px 11px;border-radius:999px;border:0;cursor:pointer;white-space:nowrap}
+.app .sync i{width:8px;height:8px;border-radius:50%;background:currentColor}
+.app .sync.ok{background:var(--success-soft);color:var(--success)}
+.app .sync.off{background:var(--warning-soft);color:var(--warning)}
+.app .sync.busy{background:var(--info-soft);color:var(--info)}
+.app .sync.err{background:var(--danger-soft);color:var(--danger)}
+.app .me{display:flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:3px 10px 3px 3px;cursor:pointer;color:var(--text)}
+.app .avatar{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:11.5px;font-weight:600;color:#fff;background:var(--accent)}
+.app .me .who{font-size:12.5px;font-weight:600;line-height:1.1;text-align:left}
+.app .me .who small{display:block;font-weight:500;color:var(--text-muted);font-size:11px}
+.app .pop{position:absolute;top:calc(100% + 6px);right:12px;width:280px;max-width:calc(100cqw - 24px);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:var(--shadow-pop);z-index:70;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.app .pop .line{display:flex;justify-content:space-between;gap:10px}
+.app .pop .wait{font-size:12.5px;padding:6px 8px;border-radius:7px;background:var(--warning-soft)}
+.app .banner{display:flex;gap:10px;align-items:flex-start;padding:10px 20px;font-size:12.5px;border-bottom:1px solid var(--border)}
+.app .banner.off{background:var(--warning-soft);color:#7a4a08}
+.app .banner.info{background:var(--info-soft);color:#1d3f8a}
+.app .banner.okb{background:var(--success-soft);color:#14663f}
+.app .banner button{margin-left:auto;background:none;border:0;cursor:pointer;color:inherit;font-weight:700}
+.app .content{padding:20px;overflow:auto;flex:1}
+.app .scrim{position:absolute;inset:0;background:rgba(20,20,35,.35);z-index:35}
+.app .btn{font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:var(--r-sm);border:1px solid transparent;cursor:pointer;white-space:nowrap}
+.app .btn svg{width:15px;height:15px}
+.app .btn-primary{background:var(--accent);color:#fff}
+.app .btn-primary:hover{background:var(--accent-hover)}
+.app .btn-ghost{background:var(--surface);color:var(--text);border-color:var(--border)}
+.app .btn-sm{padding:4px 9px;font-size:12.5px}
+.app .btn:disabled{opacity:.45;cursor:not-allowed}
+.app .btn:focus-visible,.app .nav button:focus-visible,.app .appcard:focus-visible,.app .me:focus-visible,.app .sync:focus-visible{outline:none;box-shadow:0 0 0 3px var(--accent-border)}
+.app .badge{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.app .badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.app .b-success{background:var(--success-soft);color:var(--success)}
+.app .b-warning{background:var(--warning-soft);color:var(--warning)}
+.app .b-danger{background:var(--danger-soft);color:var(--danger)}
+.app .b-muted{background:#EDEDF1;color:var(--text-muted)}
+.app .b-accent{background:var(--accent-soft);color:var(--accent)}
+.app .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;margin-bottom:16px}
+.app .panel-head{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.app .panel-head h2{font-size:14.5px;font-weight:700;margin:0}
+.app .panel-head .sub{font-size:12px;color:var(--text-muted);margin-left:auto}
+.app .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.app .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px}
+.app .stat .k{font-size:11.5px;color:var(--text-muted);font-weight:600;display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0}
+.app .stat .k svg{width:14px;height:14px;color:var(--accent)}
+.app .stat .v{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-top:4px}
+.app .stat .v small{font-size:12.5px;font-weight:500;color:var(--text-muted)}
+.app .attention{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.app .att{display:flex;align-items:center;gap:9px;padding:9px 13px;border-radius:var(--r-md);font-size:12.5px;font-weight:500;flex:1;min-width:180px}
+.app .att svg{width:16px;height:16px}
+.app .att-danger{background:var(--danger-soft);color:var(--danger)}
+.app .att-warning{background:var(--warning-soft);color:var(--warning)}
+.app .cards{padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.app .appcard{text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;cursor:pointer;display:flex;flex-direction:column;gap:4px;color:var(--text)}
+.app .appcard:hover{border-color:var(--accent-border);box-shadow:var(--shadow-md)}
+.app .appcard-ic{width:40px;height:40px;border-radius:var(--r-md);background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;margin-bottom:8px}
+.app .appcard-ic svg{width:20px;height:20px}
+.app .appcard-name{font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:8px}
+.app .appcard-tag{font-size:9.5px;font-weight:600;letter-spacing:.4px;color:var(--text-faint);border:1px solid var(--border-strong);padding:1px 5px;border-radius:4px}
+.app .appcard-desc{font-size:12.5px;color:var(--text-muted)}
+.app .home-hero{position:relative;text-align:center;padding:36px 18px 30px;margin-bottom:20px;border-radius:var(--r-lg);overflow:hidden;background:linear-gradient(180deg,var(--accent-soft) 0%,var(--surface) 100%);border:1px solid var(--border)}
+.app .home-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.app .home-title{font-size:28px;font-weight:700;letter-spacing:-.6px;margin:0}
+.app .home-sub{color:var(--text-muted);font-size:13.5px;margin:6px 0 0}
+.app .home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.app .train-item{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border)}
+.app .train-item:last-child{border-bottom:none}
+.app .train-item .ti{flex:1;min-width:0}
+.app .train-item .t{font-weight:600;font-size:13px}
+.app .train-item .d{font-size:11.5px;color:var(--text-muted);margin-top:2px}
+.app table{width:100%;border-collapse:collapse;font-size:13px}
+.app thead th{text-align:left;font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--text-faint);font-weight:600;padding:9px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+.app tbody td{padding:9px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.app tbody tr:last-child td{border-bottom:none}
+.app .tscroll{overflow-x:auto}
+.app .qty{display:inline-flex;align-items:center;gap:6px}
+.app .qty b{min-width:28px;text-align:center;font-variant-numeric:tabular-nums}
+.app .iconbtn{width:28px;height:28px;border-radius:7px;border:1px solid var(--border-strong);background:var(--surface);cursor:pointer;display:grid;place-items:center;color:var(--text)}
+.app .iconbtn:hover{color:var(--accent);border-color:var(--accent-border)}
+.app .iconbtn svg{width:14px;height:14px}
+.app .filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.app select{font:inherit;font-size:12.5px;padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--text);cursor:pointer}
+.app .placeholder{text-align:center;padding:56px 20px;color:var(--text-muted)}
+.app .placeholder svg{width:40px;height:40px;color:var(--text-faint);margin-bottom:12px}
+.app .placeholder h2{font-size:17px;color:var(--text);margin:0 0 6px}
+.app .feed .item{display:flex;gap:11px;padding:10px 16px;border-bottom:1px solid var(--border);align-items:flex-start}
+.app .feed .item:last-child{border-bottom:none}
+.app .feed .ic{width:28px;height:28px;border-radius:7px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+.app .feed .ic svg{width:15px;height:15px}
+.app .feed .tx{font-size:12.5px;flex:1;min-width:0}
+.app .feed .tx .src{display:block;font-size:11px;color:var(--text-faint);margin-top:2px}
+.app .note{font-size:11.5px;color:var(--text-faint);margin:-6px 0 14px}
+.app .lock{display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--border)}
+.app .lock svg{width:22px;height:22px;color:var(--text-faint)}
+.app .msg{font-size:12.5px;padding:8px 12px;border-radius:8px;margin:0 16px 12px}
+.app .msg.err{background:var(--danger-soft);color:var(--danger)}
+.app .msg.okm{background:var(--success-soft);color:var(--success)}
+/* sign-in */
+.app .signin{height:100%;display:grid;place-items:center;padding:20px;background:linear-gradient(180deg,var(--accent-soft),var(--bg) 60%);overflow:auto}
+.app .sbox{width:min(380px,100%);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-md);padding:24px;display:flex;flex-direction:column;gap:12px}
+.app .sbox .logo{padding:0 0 6px;cursor:default}
+.app .field label{font-size:12.5px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:5px}
+.app .field input{font:inherit;font-size:13.5px;width:100%;padding:8px 11px;background:var(--surface);color:var(--text);border:1px solid var(--border-strong);border-radius:var(--r-sm)}
+.app .field input:focus{outline:none;box-shadow:var(--focus-ring);border-color:var(--accent)}
+.app .remember{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--text-muted)}
+.app .demo-people{display:flex;flex-direction:column;gap:6px;padding-top:10px;border-top:1px dashed var(--border-strong)}
+.app .demo-people .lbl{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-faint)}
+.app .dp{display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);cursor:pointer;text-align:left;color:var(--text);font-size:12.5px}
+.app .dp:hover{border-color:var(--accent-border)}
+.app .dp small{display:block;color:var(--text-muted);font-size:11.5px}
+.app .splash{height:100%;display:grid;place-items:center;background:var(--sidebar);color:var(--text-muted);font-size:13px;text-align:center}
+.app .splash .mark{width:46px;height:46px;border-radius:12px;background:var(--accent);display:grid;place-items:center;color:#fff;margin:0 auto 10px}
+.app .toasts{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:90;width:max-content;max-width:calc(100% - 24px)}
+.app .toast{background:#1B1B23;color:#fff;padding:9px 14px;border-radius:var(--r-sm);font-size:12.5px;box-shadow:var(--shadow-md)}
+.app .toast.danger{background:var(--danger)} .app .toast.success{background:var(--success)}
+.app .exband{position:absolute;right:10px;bottom:8px;font-size:10px;color:var(--text-faint);z-index:5;pointer-events:none}
+/* Phone and small windows: the menu becomes a drawer (rule B5) */
+@container app (max-width:720px){
+  .app .shell{grid-template-columns:1fr}
+  .app .side{position:absolute;left:0;top:0;bottom:0;width:250px;transform:translateX(-105%);transition:transform .2s;box-shadow:var(--shadow-pop)}
+  .app .shell.drawer .side{transform:none}
+  .app .hamb{display:grid}
+  .app .topbar{padding:10px 12px;gap:8px}
+  .app .topbar h1{font-size:16px}
+  .app .search{order:5;flex:1 1 100%;margin-left:0;min-width:0}
+  .app .tb-right{margin-left:auto}
+  .app .me .who{display:none}
+  .app .me{padding:3px}
+  .app .content{padding:14px}
+  .app .stats{grid-template-columns:repeat(2,1fr)}
+  .app .home-grid{grid-template-columns:1fr}
+  .app .home-title{font-size:23px}
+  .app .banner{padding:9px 12px}
+  .app .hide-sm{display:none}
+}
+.app .tb-right{display:flex;align-items:center;gap:8px}
+@media (prefers-reduced-motion:reduce){.app *{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Stage 4 · Demo batch 1 of 4 · Foundation</div>
+  <h1>Try the base the whole app stands on</h1>
+  <p class="muted">This is the June Medical Suite screen, rebuilt as a working demo for <span class="fid">F1</span> window, menu and search, <span class="fid">F2</span> sign-in and roles, and <span class="fid">F3</span> working without internet. It's one demo app, so all three work together. Pick a feature on the right and follow its steps. Each June mistake the feature must not repeat ticks itself once you've seen it fixed in the demo.</p>
+  <p class="small muted">All people, items and numbers are made up. Nothing you do here is saved, except your answers at the bottom of the right-hand column.</p>
+</header>
+
+<div class="stage">
+  <div class="left">
+    <div class="world" aria-label="The world around the app">
+      <div class="row"><span class="lbl">Screen</span>
+        <button type="button" class="wbtn" data-dev="win" aria-pressed="true">Computer window</button>
+        <button type="button" class="wbtn" data-dev="phone" aria-pressed="false">Phone</button>
+      </div>
+      <div class="row"><span class="lbl">Around it</span>
+        <button type="button" class="wbtn off" id="w-net" aria-pressed="false">Internet: on</button>
+        <button type="button" class="wbtn" id="w-ben">Ben changes Gauze in Bag 1 on another computer</button>
+        <button type="button" class="wbtn danger" id="w-disk" aria-pressed="false">Computer's storage full: no</button>
+      </div>
+      <div class="row"><span class="lbl">Time</span>
+        <button type="button" class="wbtn" id="w-reopen">Close and reopen the program</button>
+        <button type="button" class="wbtn" id="w-night">Leave it open overnight</button>
+        <button type="button" class="wbtn" id="w-update">Install a new version</button>
+        <button type="button" class="wbtn" id="w-reset">Start the demo again</button>
+      </div>
+    </div>
+    <div class="devwrap"><div class="devframe" id="devframe"><div class="app" id="app" aria-label="REACH Inventory demo app"></div></div></div>
+    <p class="exnote">The grey buttons above are things that happen to the program (internet drops, someone on another computer, the night passes). They aren't part of the app.</p>
+  </div>
+
+  <div class="right">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div id="tour"></div>
+    <div class="review final" data-part="overall" data-final="1"></div>
+  </div>
+</div>
+<footer>REACH Inventory · Stage 4 · demo batch 1 (F1, F2, F3) · 27 Nov 2026 · source <span class="mono">docs/stage4/demo-batch1-foundation.html</span></footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $ = (sel, root=document) => root.querySelector(sel);
+const I = {
+  home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  box:'<path d="M21 8V21H3V8"/><rect x="1" y="3" width="22" height="5" rx="1"/><path d="M10 12h4"/>',
+  file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/>',
+  roster:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M7 14h3v3H7z"/>',
+  clock:'<path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/>',
+  settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>',
+  filter:'<path d="M3 6h18M6 12h12M9 18h6"/>', check:'<path d="M20 6L9 17l-5-5"/>',
+  alertT:'<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+  alertC:'<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>',
+  lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  menu:'<path d="M3 6h18M3 12h18M3 18h18"/>', search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>',
+  pill:'<rect x="2" y="8" width="20" height="8" rx="4"/><path d="M12 8v8"/>', count:'<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/>'
+};
+const svg = (n,sw=1.8)=>`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${I[n]}</svg>`;
+
+// ======================= Demo data (made up) =======================
+const DAY = 86400000;
+function freshData(){
+  return {
+    people:[
+      {id:"P1", first:"Anna", last:"Example", job:"Nurse", role:"Staff", archived:false, here:true, email:"anna@example.org", col:"#4F46E5"},
+      {id:"P2", first:"Ben", last:"Sample", job:"Doctor", role:"Manager", archived:false, here:false, email:"ben@example.org", col:"#0F6E8C"},
+      {id:"P3", first:"Cara", last:"Demo", job:"Base manager", role:"Admin", archived:false, here:true, email:"cara@example.org", col:"#1E9E62"}
+    ],
+    locs:[{id:"STORE",n:"Store"},{id:"BG1",n:"Bag 1 (adult)"},{id:"BG2",n:"Bag 2 (child)"}],
+    lines:[
+      {id:"L1", item:"Gauze 10×10 cm", unit:"pack", loc:"BG1", qty:12, par:10, exp:400},
+      {id:"L2", item:"Saline 0.9% 500 ml", unit:"bag", loc:"BG1", qty:3, par:4, exp:200},
+      {id:"L3", item:"Paracetamol 500 mg", unit:"tab", loc:"BG1", qty:20, par:20, exp:30},
+      {id:"L4", item:"IV cannula 18G", unit:"", loc:"BG2", qty:0, par:4, exp:500},
+      {id:"L5", item:"Glucose gel 15 g", unit:"tube", loc:"BG2", qty:2, par:2, exp:1},
+      {id:"L6", item:"Bandage 8 cm", unit:"roll", loc:"STORE", qty:40, par:25, exp:700},
+      {id:"L7", item:"Gloves, size M", unit:"box", loc:"STORE", qty:6, par:10, exp:null},
+      {id:"L8", item:"Saline 0.9% 500 ml", unit:"bag", loc:"STORE", qty:24, par:12, exp:-3}
+    ],
+    log:[]
+  };
+}
+let D, S;
+function fresh(){
+  D = freshData();
+  const now = Date.now();
+  D.lines.forEach(l=>{ l.expAt = l.exp===null ? null : startOfDay(now) + l.exp*DAY; });
+  S = {screen:"signin", user:null, remember:true, view:"home", online:true, disk:true, dayOffset:0, version:"1.0",
+       lastSync: now, queue:[], remote:[], drawer:false, q:"", pop:null, banner:null, loc:"all", signinErr:"", signinEmail:"", settingsMsg:null};
+}
+function startOfDay(t){ const d=new Date(t); d.setHours(0,0,0,0); return d.getTime(); }
+function today(){ return startOfDay(Date.now()) + S.dayOffset*DAY; }
+function nowLabel(t){ return new Date(t + S.dayOffset*DAY).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}); }
+const person = id => D.people.find(p=>p.id===id);
+const fullName = p => p.first+" "+p.last;
+const locName = id => (D.locs.find(l=>l.id===id)||{}).n || id;
+function daysLeft(l){ return l.expAt===null ? null : Math.round((l.expAt - today())/DAY); }
+function expBadge(l){
+  const d = daysLeft(l);
+  if (d===null) return `<span class="badge b-muted">No expiry</span>`;
+  if (d<0) return `<span class="badge b-danger">Expired</span>`;
+  if (d===0) return `<span class="badge b-danger">Expires today</span>`;
+  if (d===1) return `<span class="badge b-warning">Expires tomorrow</span>`;
+  if (d<=60) return `<span class="badge b-warning">Expires in ${d} days</span>`;
+  return `<span class="badge b-success">${esc(new Date(l.expAt).toLocaleDateString([], {day:"numeric", month:"short", year:"numeric"}))}</span>`;
+}
+function lineStatus(l){ if (l.qty<=0) return "Out"; if (l.qty < l.par) return "Low"; return "In"; }
+
+// ======================= Events to the tour =======================
+const seen = {};
+function emit(ev){ if (!seen[ev]){ seen[ev]=true; paintTour(); } }
+
+// ======================= Render =======================
+const root = document.getElementById("app");
+function render(){
+  if (S.screen==="splash"){ root.innerHTML = `<div class="splash"><div><div class="mark">${svg("plus",2.4)}</div><b style="color:#1B1B23">REACH Inventory</b><br>${esc(S.splashText||"Opening…")}</div></div><span class="exband">made-up example data</span>`; return; }
+  if (!S.user || S.screen==="signin"){ renderSignin(); return; }
+  renderShell();
+}
+
+function renderSignin(){
+  const u = D.people.filter(p=>!p.archived);
+  root.innerHTML = `<div class="signin"><form class="sbox" id="sform" autocomplete="off">
+    <div class="logo"><div class="mark">${svg("plus",2.4)}</div><div class="name">REACH Inventory<small>PNG base · medical</small></div></div>
+    <div><b style="font-size:16px">Sign in</b><div style="font-size:12.5px;color:var(--text-muted)">Use your REACH account, the same one as in EDP.</div></div>
+    ${S.online?"":`<div class="msg err" style="margin:0;background:var(--warning-soft);color:#7a4a08">No internet. You can sign in if you've signed in on this computer before.</div>`}
+    <div class="field"><label for="s-email">Email</label><input id="s-email" type="email" value="${esc(S.signinEmail)}" placeholder="name@example.org"></div>
+    <div class="field"><label for="s-pw">Password</label><input id="s-pw" type="password" placeholder="demo: anything works"></div>
+    <label class="remember"><input type="checkbox" id="s-rem" ${S.remember?"checked":""}> Stay signed in on this computer</label>
+    ${S.signinErr?`<div class="msg err" style="margin:0">${esc(S.signinErr)}</div>`:""}
+    <button class="btn btn-primary" type="submit" style="justify-content:center">Sign in</button>
+    <div class="demo-people"><span class="lbl">Demo only: pick a person</span>
+      ${u.map(p=>`<button type="button" class="dp" data-email="${esc(p.email)}"><span class="avatar" style="background:${p.col}">${esc(p.first[0]+p.last[0])}</span><span>${esc(fullName(p))}<small>${esc(p.job)} · ${esc(p.role)}${p.here?" · has signed in here before":" · never signed in on this computer"}</small></span></button>`).join("")}
+    </div>
+  </form></div><span class="exband">made-up example data</span>`;
+  root.querySelectorAll(".dp").forEach(b=>b.onclick=()=>{ $("#s-email",root).value=b.dataset.email; $("#s-pw",root).value="demo"; $("#s-pw",root).focus(); });
+  $("#s-rem",root).onchange = e=>{ S.remember = e.target.checked; };
+  $("#sform",root).onsubmit = e=>{
+    e.preventDefault();
+    const em = $("#s-email",root).value.trim().toLowerCase(); S.signinEmail = em;
+    const p = D.people.find(x=>x.email===em && !x.archived);
+    if (!p){ S.signinErr = "No REACH account with that email."; renderSignin(); return; }
+    if (!$("#s-pw",root).value){ S.signinErr = "Type your password."; renderSignin(); return; }
+    if (!S.online && !p.here){ S.signinErr = fullName(p)+" hasn't signed in on this computer before. The first sign-in on a computer needs internet once; after that it works offline."; renderSignin(); emit("offlineFirst"); return; }
+    p.here = true; S.user = p.id; S.signinErr = ""; S.screen = "app"; S.view = "home"; S.pop = null;
+    toast(`Signed in as ${fullName(p)} (${p.role})`, "success");
+    emit("signedIn"); if (!S.online) emit("offlineSignin");
+    render();
+  };
+}
+
+const NAV = [
+  {v:"home", t:"Home", i:"home"},
+  {grp:"Inventory"},
+  {v:"overview", t:"Overview", i:"box"}, {v:"where", t:"Store and bags", i:"filter"}, {v:"items", t:"Item list", i:"file"},
+  {v:"count", t:"Count a bag", i:"count"}, {v:"takes", t:"Stock takes", i:"clock"}, {v:"cd", t:"Controlled drugs", i:"pill"}, {v:"log", t:"Activity", i:"clock"},
+  {grp:"Team"},
+  {v:"staff", t:"Staff and training", i:"users"}, {v:"roster", t:"Roster", i:"roster", ext:"R2"},
+  {grp:"Later"},
+  {v:"patients", t:"Patients", i:"file", ext:"LATER"}
+];
+const TITLES = {home:["Workspace","Home"], overview:["Inventory","Overview"], where:["Inventory","Store and bags"], items:["Inventory","Item list"], count:["Inventory","Count a bag"], takes:["Inventory","Stock takes"], cd:["Inventory","Controlled drugs"], log:["Inventory","Activity"], staff:["Team","Staff and training"], roster:["Team","Roster"], patients:["Later","Patients"], settings:["Admin","Settings"]};
+const LATER = {items:"F8 Item page and F9 Restock / Dispense: demo batch 2", count:"F10 Count stock: demo batch 3", takes:"F11 Stock takes: demo batch 3", cd:"F12 Controlled-drug register: demo batch 3", staff:"F14 Staff and F15 Training: demo batch 4", roster:"F16 Duty roster: release 2, demo batch 4", patients:"F18 Patient File and Patient Archive: later, its own stages"};
+
+function syncState(){
+  if (!S.disk && S.failFlash) return {c:"err", t:"Not saved"};
+  if (S.sending) return {c:"busy", t:"Sending…"};
+  if (!S.online) return {c:"off", t: S.queue.length ? `Offline · ${S.queue.length} waiting` : "Offline"};
+  return {c:"ok", t:"Up to date"};
+}
+
+function renderShell(){
+  const u = person(S.user); const [crumb, title] = TITLES[S.view];
+  const sy = syncState();
+  const nav = n => n.grp ? `<div class="navlabel">${esc(n.grp)}</div>` :
+    `<button type="button" data-view="${n.v}" class="${S.view===n.v?"active":""}">${svg(n.i)}${esc(n.t)}${n.ext?`<span class="ext">${esc(n.ext)}</span>`:""}</button>`;
+  root.innerHTML = `<div class="shell ${S.drawer?"drawer":""}">
+    <aside class="side" aria-label="Menu">
+      <button type="button" class="logo" data-view="home"><div class="mark">${svg("plus",2.4)}</div><div class="name">REACH Inventory<small>PNG base · medical</small></div></button>
+      <nav class="nav">${NAV.map(nav).join("")}</nav>
+      <div class="bottom"><nav class="nav">${nav({v:"settings",t:"Settings",i:"settings"})}</nav></div>
+    </aside>
+    ${S.drawer?`<div class="scrim" id="scrim"></div>`:""}
+    <div class="main">
+      <header class="topbar">
+        <button type="button" class="hamb" id="hamb" aria-label="Open the menu">${svg("menu",2)}</button>
+        <div><div class="crumb">${esc(crumb)}</div><h1>${esc(title)}</h1></div>
+        <div class="search" role="search">${svg("search",2)}<input id="q" placeholder="Search staff &amp; inventory…" value="${esc(S.q)}" autocomplete="off" aria-label="Search">${S.q?resultsHTML():""}</div>
+        <div class="tb-right">
+          <button type="button" class="sync ${sy.c}" id="sync" aria-label="Sync status: ${esc(sy.t)}"><i></i><span class="hide-sm">${esc(sy.t)}</span></button>
+          <button type="button" class="me" id="me" aria-label="Your account"><span class="avatar" style="background:${u.col}">${esc(u.first[0]+u.last[0])}</span><span class="who">${esc(fullName(u))}<small>${esc(u.role)}</small></span></button>
+        </div>
+        ${S.pop==="sync"?syncPop():""}${S.pop==="me"?mePop(u):""}
+      </header>
+      ${S.banner?`<div class="banner ${S.banner.c}"><span>${esc(S.banner.t)}</span><button type="button" id="bx" aria-label="Close">×</button></div>`:""}
+      <div class="content" id="content"></div>
+    </div>
+  </div><div class="toasts" id="toasts"></div><span class="exband">made-up example data</span>`;
+  const c = $("#content", root);
+  ({home:vHome, overview:vOverview, where:vWhere, log:vLog, settings:vSettings}[S.view] || vLater)(c);
+  root.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{ S.view=b.dataset.view; S.drawer=false; S.pop=null; S.settingsMsg=null; render(); });
+  $("#hamb",root).onclick = ()=>{ S.drawer=true; render(); emit("phoneMenu"); };
+  const sc = $("#scrim",root); if (sc) sc.onclick = ()=>{ S.drawer=false; render(); };
+  const q = $("#q",root);
+  q.oninput = ()=>{ S.q = q.value; const pos=q.selectionStart; render(); const q2=$("#q",root); q2.focus(); q2.setSelectionRange(pos,pos); if (/[<>"']/.test(S.q)) emit("escaped"); };
+  root.querySelectorAll("[data-goto]").forEach(b=>b.onclick=()=>{ const [v,loc]=b.dataset.goto.split("|"); S.view=v; if(loc) S.loc=loc; S.q=""; render(); });
+  $("#sync",root).onclick = ()=>{ S.pop = S.pop==="sync"?null:"sync"; render(); };
+  $("#me",root).onclick = ()=>{ S.pop = S.pop==="me"?null:"me"; render(); };
+  const so = $("#signout",root); if (so) so.onclick = ()=>{ S.user=null; S.screen="signin"; S.pop=null; S.signinEmail=""; render(); };
+  const bx = $("#bx",root); if (bx) bx.onclick = ()=>{ S.banner=null; render(); };
+}
+
+function resultsHTML(){
+  const q = S.q.trim().toLowerCase(); if (!q) return "";
+  const ppl = D.people.filter(p=>!p.archived && (fullName(p)+" "+p.job).toLowerCase().includes(q));
+  const its = D.lines.filter(l=>(l.item+" "+locName(l.loc)).toLowerCase().includes(q));
+  let h = `<div class="results" role="listbox">`;
+  h += `<div class="grp">You searched for: <b style="text-transform:none;letter-spacing:0;color:#1B1B23">${esc(S.q)}</b></div>`;
+  if (!ppl.length && !its.length) h += `<div class="none">Nothing found for “${esc(S.q)}”.</div>`;
+  if (ppl.length) h += `<div class="grp">Staff</div>` + ppl.map(p=>`<button type="button" class="r" data-goto="staff">${svg("users")}<span>${esc(fullName(p))} <span style="color:var(--text-muted)">· ${esc(p.job)}</span></span></button>`).join("");
+  if (its.length) h += `<div class="grp">Inventory</div>` + its.map(l=>`<button type="button" class="r" data-goto="where|${l.loc}">${svg("box")}<span>${esc(l.item)} <span style="color:var(--text-muted)">· ${esc(locName(l.loc))} · ${l.qty}</span></span></button>`).join("");
+  return h + `</div>`;
+}
+function syncPop(){
+  const w = S.queue.map(x=>`<div class="wait">${esc(x.text)}<br><span style="color:var(--text-muted)">${esc(x.time)} · waiting to send</span></div>`).join("");
+  return `<div class="pop" role="dialog" aria-label="Sync">
+    <div class="line"><span>Internet</span><b>${S.online?"connected":"none"}</b></div>
+    <div class="line"><span>Last sync with the server</span><b>${esc(nowLabel(S.lastSync))}</b></div>
+    <div class="line"><span>Changes waiting</span><b>${S.queue.length}</b></div>
+    ${w || `<span style="color:var(--text-muted)">${S.online?"Everything is on the server.":"Changes you make now are kept on this computer and sent when the internet is back."}</span>`}
+  </div>`;
+}
+function mePop(u){
+  return `<div class="pop" role="dialog" aria-label="Account">
+    <div style="display:flex;gap:10px;align-items:center"><span class="avatar" style="background:${u.col}">${esc(u.first[0]+u.last[0])}</span><div><b>${esc(fullName(u))}</b><div style="font-size:12px;color:var(--text-muted)">${esc(u.job)} · ${esc(u.role)} · ${esc(u.email)}</div></div></div>
+    <div style="font-size:12px;color:var(--text-muted)">Your role comes from the REACH people list. Only an Admin can change it, in Settings.</div>
+    <button type="button" class="btn btn-ghost" id="signout">Sign out</button>
+  </div>`;
+}
+
+// ----- views -----
+function vHome(c){
+  const u = person(S.user);
+  const cards = [
+    {v:"overview", i:"box", n:"Inventory", d:"Stock in the Store and every bag"},
+    {v:"cd", i:"pill", n:"Controlled drugs", d:"Register with witness and balance"},
+    {v:"staff", i:"users", n:"Staff and training", d:"People, courses, certificates"},
+    {v:"roster", i:"roster", n:"Roster", d:"Who is on duty when", tag:"RELEASE 2"},
+    {v:"patients", i:"file", n:"Patients", d:"Patient File and Patient Archive", tag:"LATER"},
+    {v:"log", i:"clock", n:"Activity", d:"Who changed what, old → new"}
+  ];
+  const d = new Date(today());
+  c.innerHTML = `<div class="home-hero"><div class="home-eyebrow">REACH · PNG base · medical</div><h1 class="home-title">Welcome, ${esc(u.first)}</h1>
+    <p class="home-sub">${esc(d.toLocaleDateString([], {weekday:"long", day:"numeric", month:"long", year:"numeric"}))} · Port Moresby time</p></div>
+    <div class="home-grid">${cards.map(x=>`<button type="button" class="appcard" data-view="${x.v}"><div class="appcard-ic">${svg(x.i)}</div><div class="appcard-name">${esc(x.n)}${x.tag?`<span class="appcard-tag">${esc(x.tag)}</span>`:""}</div><div class="appcard-desc">${esc(x.d)}</div></button>`).join("")}</div>`;
+}
+function readiness(loc){
+  const ls = D.lines.filter(l=>l.loc===loc);
+  const ok = ls.filter(l=>l.qty>=l.par && (daysLeft(l)===null || daysLeft(l)>=0)).length;
+  return {total:ls.length, ok, ready: ok===ls.length};
+}
+function vOverview(c){
+  const L = D.lines;
+  const out = L.filter(l=>lineStatus(l)==="Out").length, low = L.filter(l=>lineStatus(l)==="Low").length;
+  const exp = L.filter(l=>daysLeft(l)!==null && daysLeft(l)<0).length, soon = L.filter(l=>{const d=daysLeft(l);return d!==null&&d>=0&&d<=60;}).length;
+  const att = L.filter(l=>{const d=daysLeft(l);return d!==null&&d<=60;}).sort((a,b)=>a.expAt-b.expAt);
+  c.innerHTML = `<p class="note">Simplified here. The full Overview (F6) is in demo batch 2.</p>
+    <div class="stats">
+      <div class="stat"><div class="k">${svg("box")}Item lines</div><div class="v">${L.length}</div></div>
+      <div class="stat"><div class="k">${svg("check")}Units everywhere</div><div class="v">${L.reduce((s,l)=>s+l.qty,0)}</div></div>
+      <div class="stat"><div class="k">${svg("alertC")}Out of stock</div><div class="v">${out}</div></div>
+      <div class="stat"><div class="k">${svg("alertT")}Expired</div><div class="v">${exp} <small>/ ${soon} soon</small></div></div>
+    </div>
+    <div class="attention">${out?`<div class="att att-danger">${svg("alertC",2)}<span><b>${out}</b> out of stock</span></div>`:""}${low?`<div class="att att-warning">${svg("alertT",2)}<span><b>${low}</b> below the required amount</span></div>`:""}</div>
+    <div class="panel"><div class="panel-head"><h2>Bag readiness</h2><span class="sub">grab-ready status per location</span></div>
+      <div class="cards">${D.locs.map(lc=>{const r=readiness(lc.id);return `<button type="button" class="appcard" data-goto="where|${lc.id}"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span class="appcard-name">${esc(lc.n)}</span><span class="badge ${r.ready?"b-success":"b-warning"}">${r.ready?"Ready":"Not ready"}</span></div><div class="appcard-desc" style="margin-top:8px">${r.total} lines · ${r.ok} ok</div></button>`;}).join("")}</div></div>
+    <div class="panel"><div class="panel-head"><h2>Soonest to expire</h2><span class="sub">across the Store and every bag</span></div>
+      ${att.map(l=>`<div class="train-item"><div class="ti"><div class="t">${esc(l.item)}</div><div class="d">${esc(locName(l.loc))} · ${l.qty} ${esc(l.unit)}</div></div>${expBadge(l)}</div>`).join("")}</div>`;
+}
+function vWhere(c){
+  const ls = D.lines.filter(l=>S.loc==="all" || l.loc===S.loc);
+  c.innerHTML = `<p class="note">Simplified here: + and − change the amount by 1. The full screens (F7, F9) are in demo batch 2.</p>
+    <div class="filters"><select id="locsel" aria-label="Location"><option value="all">All locations</option>${D.locs.map(l=>`<option value="${l.id}" ${S.loc===l.id?"selected":""}>${esc(l.n)}</option>`).join("")}</select></div>
+    <div class="panel"><div class="tscroll"><table><thead><tr><th>Item</th><th>Location</th><th>Amount</th><th>Required</th><th>Expiry</th></tr></thead><tbody>
+    ${ls.map(l=>`<tr><td><b>${esc(l.item)}</b></td><td>${esc(locName(l.loc))}</td>
+      <td><span class="qty"><button type="button" class="iconbtn" data-adj="${l.id}|-1" aria-label="Take one ${esc(l.item)}">${svg("minus",2)}</button><b>${l.qty}</b><button type="button" class="iconbtn" data-adj="${l.id}|1" aria-label="Add one ${esc(l.item)}">${svg("plus",2)}</button></span></td>
+      <td>${l.par}</td><td>${expBadge(l)}</td></tr>`).join("")}
+    </tbody></table></div></div>`;
+  $("#locsel",c).onchange = e=>{ S.loc = e.target.value; render(); };
+  c.querySelectorAll("[data-adj]").forEach(b=>b.onclick=()=>{ const [id,d]=b.dataset.adj.split("|"); change(id, Number(d)); });
+}
+function vLog(c){
+  const items = D.log.slice().reverse();
+  c.innerHTML = `<p class="note">Simplified here. The full REACH-wide log (F4) is in demo batch 4.</p>
+    <div class="panel"><div class="panel-head"><h2>Activity</h2><span class="sub">newest first</span></div><div class="feed">
+    ${items.length?items.map(x=>`<div class="item"><div class="ic">${svg(x.remote?"users":"box")}</div><div class="tx">${esc(x.text)}<span class="src">${esc(x.who)} · ${esc(x.time)} · ${x.state==="waiting"?"⏳ on this computer, waiting to send":"✓ on the server"}</span></div></div>`).join(""):`<div class="placeholder" style="padding:30px">Nothing yet. Change an amount in Store and bags.</div>`}
+    </div></div>`;
+}
+function vSettings(c){
+  const u = person(S.user);
+  if (u.role!=="Admin"){
+    c.innerHTML = `<div class="lock">${svg("lock")}<div><b>Only Admins can change settings.</b><div style="color:var(--text-muted);margin-top:4px">You're signed in as ${esc(fullName(u))} (${esc(u.role)}). There's no "Acting as" switch any more: your role comes with your sign-in.</div></div></div>`;
+    emit("roleLimited"); return;
+  }
+  const act = D.people.filter(p=>!p.archived);
+  c.innerHTML = `<div class="panel"><div class="panel-head"><h2>People and access</h2><span class="sub">roles come from the REACH people list</span></div>
+    ${S.settingsMsg?`<div class="msg ${S.settingsMsg.c}" style="margin-top:12px">${esc(S.settingsMsg.t)}</div>`:""}
+    <div class="tscroll"><table><thead><tr><th>Person</th><th>Role</th><th></th></tr></thead><tbody>
+    ${act.map(p=>`<tr><td><b>${esc(fullName(p))}</b>${p.id===u.id?' <span class="badge b-accent">you</span>':""}<div style="font-size:11.5px;color:var(--text-muted)">${esc(p.job)}</div></td>
+      <td><select data-role="${p.id}" aria-label="Role of ${esc(fullName(p))}">${["Staff","Manager","Admin"].map(r=>`<option ${p.role===r?"selected":""}>${r}</option>`).join("")}</select></td>
+      <td><button type="button" class="btn btn-ghost btn-sm" data-arch="${p.id}">Archive</button></td></tr>`).join("")}
+    </tbody></table></div></div>
+    <div class="panel"><div class="panel-head"><h2>Country</h2><span class="sub">full settings (F5) in demo batch 4</span></div>
+      <div class="train-item"><div class="ti"><div class="t">Papua New Guinea · Port Moresby time (UTC+10)</div><div class="d">Dates and "today" follow the base's own time zone.</div></div></div></div>`;
+  c.querySelectorAll("[data-role]").forEach(s=>s.onchange=()=>setRole(s.dataset.role, s.value));
+  c.querySelectorAll("[data-arch]").forEach(b=>b.onclick=()=>archive(b.dataset.arch));
+}
+function vLater(c){
+  c.innerHTML = `<div class="placeholder">${svg(NAV.find(n=>n.v===S.view).i)}<h2>${esc(TITLES[S.view][1])}</h2><p>${esc(LATER[S.view])}</p></div>`;
+}
+
+// ----- rules: roles (F2) -----
+function admins(){ return D.people.filter(p=>!p.archived && p.role==="Admin"); }
+function setRole(id, role){
+  const p = person(id), me = person(S.user);
+  if (p.role==="Admin" && role!=="Admin" && admins().length===1){
+    S.settingsMsg = {c:"err", t:`${fullName(p)} is the only Admin. Make someone else Admin first, otherwise nobody could open Settings again.`};
+    emit("lastAdmin"); render(); return;
+  }
+  const old = p.role; p.role = role;
+  addLog(`${fullName(p)}: role ${old} → ${role}`);
+  if (p.id===me.id && role!=="Admin"){ S.settingsMsg=null; S.view="home"; toast(`You're now ${role}. Settings is for Admins only.`); render(); return; }
+  S.settingsMsg = {c:"okm", t:`${fullName(p)} is now ${role}.`}; render();
+}
+function archive(id){
+  const p = person(id), me = person(S.user);
+  if (p.id===me.id){ S.settingsMsg = {c:"err", t:"You can't archive yourself. Another Admin has to do it, so nobody is left signed in with rights they shouldn't have."}; emit("selfArchive"); render(); return; }
+  if (p.role==="Admin" && admins().length===1){ S.settingsMsg = {c:"err", t:`${fullName(p)} is the only Admin.`}; emit("lastAdmin"); render(); return; }
+  p.archived = true; addLog(`${fullName(p)} archived`);
+  S.settingsMsg = {c:"okm", t:`${fullName(p)} archived. They can no longer sign in.`}; render();
+}
+
+// ----- changes, offline queue, sync (F3) -----
+function addLog(text, opts={}){
+  const who = opts.who || fullName(person(S.user));
+  const e = {text, who, time: nowLabel(Date.now()), state: S.online?"sent":"waiting", remote:!!opts.remote};
+  D.log.push(e); if (!S.online && !opts.remote) S.queue.push(e);
+  return e;
+}
+function change(id, d){
+  const l = D.lines.find(x=>x.id===id);
+  if (!S.disk){
+    S.failFlash = true; toast("Not saved. This computer couldn't store the change, so nothing was changed. Free up space, then try again.", "danger");
+    emit("saveFailed"); render(); setTimeout(()=>{ S.failFlash=false; if (S.screen==="app") render(); }, 2600); return;
+  }
+  if (l.qty + d < 0){ toast("There are none left to take."); return; }
+  const old = l.qty; l.qty += d;
+  addLog(`${l.item}, ${locName(l.loc)}: ${old} → ${l.qty}`);
+  if (S.online){ S.sending = true; render(); setTimeout(()=>{ S.sending=false; S.lastSync=Date.now(); if (S.screen==="app") render(); }, 500); }
+  else render();
+}
+function goOnline(){
+  S.online = true;
+  if (S.screen!=="app"){ S.lastSync=Date.now(); render(); return; }
+  const n = S.queue.length, rem = S.remote.slice();
+  if (!n && !rem.length){ S.lastSync=Date.now(); render(); return; }
+  S.sending = true; render();
+  setTimeout(()=>{
+    S.queue.forEach(e=>e.state="sent"); S.queue = [];
+    let txt = n ? `${n} change${n===1?"":"s"} sent to the server.` : "";
+    rem.forEach(r=>{
+      const l = D.lines.find(x=>x.id===r.id); const old=l.qty; l.qty = Math.max(0, l.qty + r.d);
+      D.log.push({text:`${l.item}, ${locName(l.loc)}: ${old} → ${l.qty}`, who:"Ben Sample (on another computer)", time:r.time, state:"sent", remote:true});
+      txt += ` While you were offline, Ben took ${-r.d} × ${l.item} from ${locName(l.loc)} on another computer. Both changes count, yours and his: it's now ${l.qty}.`;
+    });
+    if (rem.length) emit("merged");
+    if (n) emit("queuedSent");
+    S.remote = []; S.sending = false; S.lastSync = Date.now();
+    S.banner = {c:"okb", t:txt.trim()};
+    render();
+  }, 900);
+}
+function benChange(){
+  const l = D.lines.find(x=>x.id==="L1");
+  if (S.online){
+    const old=l.qty; l.qty = Math.max(0,l.qty-2);
+    D.log.push({text:`${l.item}, ${locName(l.loc)}: ${old} → ${l.qty}`, who:"Ben Sample (on another computer)", time:nowLabel(Date.now()), state:"sent", remote:true});
+    if (S.screen==="app"){ toast(`Ben took 2 × ${l.item} from ${locName(l.loc)} on another computer. It shows here straight away.`); render(); }
+  } else {
+    S.remote.push({id:"L1", d:-2, time:nowLabel(Date.now())});
+    if (S.screen==="app"){ toast("Ben changed something on another computer. You'll see it when your internet is back."); }
+  }
+}
+
+// ----- the world -----
+let toastT;
+function toast(t, kind){
+  const go = ()=>{ const box = $("#toasts", root); if (!box) return; const el=document.createElement("div"); el.className="toast "+(kind||""); el.textContent=t; box.appendChild(el); setTimeout(()=>el.remove(), 3600); };
+  setTimeout(go, 0);
+}
+function reopen(){
+  const wasUser = S.user, keep = S.remember;
+  S.screen = "splash"; S.splashText = S.online ? "Opening…" : "Opening… no internet"; S.drawer=false; S.pop=null; S.q=""; S.banner=null; render();
+  setTimeout(()=>{
+    if (wasUser && keep){
+      S.screen = "app"; S.view = "home";
+      if (!S.online){ S.banner = {c:"off", t:`Opened without internet. You're seeing the stock as of the last sync at ${nowLabel(S.lastSync)}. Changes are kept on this computer${S.queue.length?` (${S.queue.length} waiting)`:""} and sent when the internet is back.`}; emit("offlineOpen"); }
+    } else { S.user = null; S.screen = "signin"; }
+    render();
+  }, 900);
+}
+function update(){
+  const was = S.screen;
+  S.screen = "splash"; S.splashText = "Installing version 1.1…"; render();
+  setTimeout(()=>{
+    S.version = "1.1"; S.screen = (S.user ? "app" : "signin");
+    S.banner = {c:"info", t:`Updated to version 1.1. Your data was carried over: ${D.lines.length} stock lines, ${D.log.length} activity entries${S.queue.length?`, ${S.queue.length} changes still waiting to send`:""}. Nothing was replaced.`};
+    if (S.screen==="signin"){ toast("Updated to 1.1. Your data was carried over."); }
+    emit("versionCarried"); render();
+  }, 1100);
+}
+
+// ======================= Tour (right column) =======================
+const TOUR = {
+  F1:{title:"Window, menu and search", june:"J1",
+    steps:[
+      "Sign in as anyone (left), then click around the menu: Home, Overview, Store and bags. Menu items for later batches show where they'll come.",
+      "Switch the screen to <b>Phone</b> (top left). Tap ☰ to open the menu, pick a screen, tap outside to close it.",
+      "Type in the search box. Try <code>gauze</code>, then something odd like <code>&lt;b&gt;Gauze&lt;/b&gt;</code> <button type=\"button\" class=\"inline\" data-do=\"odd\">type it for me</button>.",
+      "On Home, read today's date. In Overview, Glucose gel in Bag 2 says <b>Expires tomorrow</b>. Press <b>Leave it open overnight</b>."
+    ],
+    checks:[
+      {ev:"phoneMenu", b:"B5", now:"On a phone the menu opens with ☰", was:"June: on a phone the menu vanished, with no way back"},
+      {ev:"escaped", b:"B4", now:"Odd characters show as plain text", was:"June: typed text could run as code, and a quote broke buttons"},
+      {ev:"dayRolled", b:"B7", now:"The date moves on while the app stays open", was:"June: \"today\" froze when the page opened, so statuses were a day old by morning"}
+    ],
+    real:["The menu is on the left on a computer, and behind ☰ on a phone or small window.","The search at the top finds staff and stock from any screen. Click a result to go there.","The logo or Home takes you to the start page."]},
+  F2:{title:"Sign-in and roles", june:"J1 “Acting as”",
+    steps:[
+      "Sign in as <b>Anna</b> (nurse, Staff). Open <b>Settings</b> at the bottom of the menu.",
+      "Click your name (top right) and <b>Sign out</b>. Sign in as <b>Cara</b> (Admin). Open Settings › People and access.",
+      "Try to <b>archive Cara</b> (yourself).",
+      "Try to change <b>Cara's role</b> to Manager while she's the only Admin.",
+      "Optional: make Ben Admin first, then Cara can step down."
+    ],
+    checks:[
+      {ev:"roleLimited", b:"B12", now:"A Staff member can't open Settings, and there's no switch to become Admin", was:"June: anyone could pick Admin in “Acting as”"},
+      {ev:"selfArchive", b:"B23", now:"You can't archive yourself", was:"June: archiving yourself kept your rights and left the menu wrong"},
+      {ev:"lastAdmin", b:"B14", now:"The only Admin can't be demoted or archived", was:"June: that locked Settings for good"}
+    ],
+    real:["Everyone signs in with their own REACH account, the same one as in EDP.","Your role (Staff, Manager, Admin) comes with your account. Admins change roles in Settings.","Tick “Stay signed in on this computer” on your own machine, so the program also opens without internet."]},
+  F3:{title:"Works without internet", june:"new",
+    steps:[
+      "Sign in as Anna or Cara. The light top right says <b>Up to date</b>.",
+      "Turn <b>Internet: off</b>. In <b>Store and bags</b>, press + or − a few times. The light shows how many changes are waiting. Click the light to see them.",
+      "Press <b>Ben changes Gauze in Bag 1</b> (someone else, on another computer, while you're offline).",
+      "Turn the internet back on. Your changes are sent, and Ben's is added: nothing is lost.",
+      "Internet off again, then <b>Close and reopen the program</b>. It opens straight in, with the last data.",
+      "Sign out while offline and try <b>Ben</b>: he has never signed in on this computer.",
+      "Set <b>storage full: yes</b> and press + once. Then set it back, and press <b>Install a new version</b>."
+    ],
+    checks:[
+      {ev:"queuedSent", now:"Changes made offline are kept and sent later", was:"new: the June app had no server"},
+      {ev:"merged", now:"Two people changing the same thing: both changes kept and shown", was:"new"},
+      {ev:"offlineOpen", now:"The program opens with no internet", was:"your Stage 3 note: “App also needs to Open without Internet.”"},
+      {ev:"offlineFirst", now:"A first sign-in on a new computer needs internet once", was:"new: explained, not a silent failure"},
+      {ev:"saveFailed", b:"B22", now:"A failed save is shown, and nothing pretends to be saved", was:"June: saves failed silently and were gone after reload"},
+      {ev:"versionCarried", b:"B3", now:"A new version carries the data over", was:"June: a new version replaced all data with the built-in list"}
+    ],
+    real:["The light top right: green = up to date, amber = offline (with the number of changes waiting), red = not saved.","Keep working when the internet drops. Everything waits on your computer and goes to the server by itself.","If two people change the same stock line, both changes count. Counts and the drug register get their own rules in batch 3."]}
+};
+let tab = "F1";
+const tabsEl = document.getElementById("tabs"), tourEl = document.getElementById("tour");
+function paintTabs(){
+  tabsEl.innerHTML = Object.keys(TOUR).map(k=>{
+    const n = TOUR[k].checks.filter(c=>seen[c.ev]).length;
+    return `<button type="button" class="tab" role="tab" data-tab="${k}" aria-selected="${k===tab}"><span class="fid">${k}</span>${esc(TOUR[k].title)}<span class="cnt">${n}/${TOUR[k].checks.length}</span></button>`;
+  }).join("");
+  tabsEl.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{ tab=b.dataset.tab; paintTour(); });
+}
+function paintTour(){
+  paintTabs();
+  const t = TOUR[tab];
+  const keepNote = tourEl.querySelector("textarea");
+  if (keepNote && document.activeElement===keepNote){ // don't redraw over typing; only refresh ticks
+    tourEl.querySelectorAll(".chk").forEach(el=>el.classList.toggle("seen", !!seen[el.dataset.ev]));
+    return;
+  }
+  tourEl.innerHTML = `<div class="card">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="fid">${tab}</span><h2>${esc(t.title)}</h2><span class="small muted">from June: ${esc(t.june)}</span></div>
+      <span class="k">Try it in the demo</span>
+      <ol>${t.steps.map(s=>`<li>${s}</li>`).join("")}</ol>
+    </div>
+    <div class="card"><span class="k">What the demo must show (ticks itself)</span>
+      <div class="checks">${t.checks.map(c=>`<div class="chk ${seen[c.ev]?"seen":""}" data-ev="${c.ev}"><span class="box">✓</span><span>${c.b?`<span class="bid">${c.b}</span> `:""}${esc(c.now)}<span class="was">${esc(c.was)}</span></span></div>`).join("")}</div>
+    </div>
+    <div class="card"><span class="k">How to use it, in the real app</span><ul>${t.real.map(r=>`<li>${esc(r)}</li>`).join("")}</ul></div>
+    <div class="review" data-part="${tab.toLowerCase()}"></div>`;
+  tourEl.querySelectorAll("[data-do=odd]").forEach(b=>b.onclick=()=>{
+    if (!S.user){ toast("Sign in first (left)."); return; }
+    S.q = "<b>Gauze</b>"; render(); emit("escaped"); const q=$("#q",root); if(q) q.focus();
+  });
+  setupStrip(tourEl.querySelector(".review"));
+}
+
+// ======================= World buttons =======================
+document.querySelectorAll("[data-dev]").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("[data-dev]").forEach(x=>x.setAttribute("aria-pressed", x===b?"true":"false"));
+  document.getElementById("devframe").classList.toggle("phone", b.dataset.dev==="phone");
+  S.drawer = false; render();
+});
+const netB = document.getElementById("w-net"), diskB = document.getElementById("w-disk");
+netB.onclick = ()=>{
+  if (S.online){ S.online=false; S.banner = S.screen==="app" ? {c:"off", t:"No internet. Keep working: changes stay on this computer and are sent when it's back."} : null; render(); }
+  else { goOnline(); }
+  netB.setAttribute("aria-pressed", S.online?"false":"true"); netB.textContent = "Internet: "+(S.online?"on":"off");
+};
+diskB.onclick = ()=>{ S.disk = !S.disk; diskB.setAttribute("aria-pressed", S.disk?"false":"true"); diskB.textContent = "Computer's storage full: "+(S.disk?"no":"yes"); };
+document.getElementById("w-ben").onclick = benChange;
+document.getElementById("w-reopen").onclick = reopen;
+document.getElementById("w-night").onclick = ()=>{
+  S.dayOffset += 1; if (S.screen==="app"){ toast("Next morning. The program was open all night."); render(); } emit("dayRolled");
+};
+document.getElementById("w-update").onclick = update;
+document.getElementById("w-reset").onclick = ()=>{
+  fresh(); netB.setAttribute("aria-pressed","false"); netB.textContent="Internet: on"; diskB.setAttribute("aria-pressed","false"); diskB.textContent="Computer's storage full: no"; render();
+};
+
+// ======================= Review strips (db collection "batch1") =======================
+const state = {}; let db = null;
+function setupStrip(el){
+  if (!el) return;
+  const part = el.dataset.part, fin = !!el.dataset.final;
+  el.innerHTML = `<span class="q">${fin ? "Is the foundation right, all three together?" : `Is ${part.toUpperCase()} right?`}</span>
+    <span class="btns"><button type="button" class="yes" aria-pressed="false">${fin ? "Yes, batch 1 is right" : "Right"}</button>
+    <button type="button" class="no" aria-pressed="false">${fin ? "Not yet" : "Not right"}</button></span>
+    <textarea placeholder="${fin ? "Anything missing or wrong? (optional)" : "What's wrong or missing? (optional)"}"></textarea>
+    <span class="state">Not answered yet.</span>`;
+  el.querySelector(".yes").onclick = ()=>pick(part,"right");
+  el.querySelector(".no").onclick = ()=>pick(part,"not");
+  let t; el.querySelector("textarea").addEventListener("input",e=>{ state[part]=Object.assign({},state[part],{note:e.target.value}); clearTimeout(t); t=setTimeout(()=>save(part),800); });
+  paintStrip(part);
+}
+function stripEl(part){ return document.querySelector(`.review[data-part="${part}"]`); }
+function paintStrip(part){
+  const el = stripEl(part); if (!el) return; const s = state[part] || {};
+  el.querySelector(".yes").setAttribute("aria-pressed", s.verdict==="right"?"true":"false");
+  el.querySelector(".no").setAttribute("aria-pressed", s.verdict==="not"?"true":"false");
+  const ta = el.querySelector("textarea"); if (document.activeElement!==ta && typeof s.note==="string") ta.value = s.note;
+  if (s.at) el.querySelector(".state").textContent = s.saved===false ? s.msg : "Saved for Claude · "+new Date(s.at).toLocaleString();
+}
+function msg(part, text){ const el=stripEl(part); if (el) el.querySelector(".state").textContent = text; }
+function pick(part, v){ state[part] = Object.assign({}, state[part], {verdict:v}); paintStrip(part); save(part); }
+async function save(part){
+  const s = state[part] || {};
+  const rec = {part, verdict:s.verdict||null, note:s.note||"", at:new Date().toISOString(), seen:Object.keys(seen).filter(k=>seen[k])};
+  state[part] = rec;
+  if (!db){ msg(part, "Shown here, but can't be saved in this view. Open the page from its link, or tell Claude in chat."); return; }
+  try{ await db.collection("batch1").doc(part).set(rec); msg(part, "Saved for Claude · "+new Date(rec.at).toLocaleTimeString()); }
+  catch(e){ msg(part, "Not saved ("+(e && e.code || "error")+"). Tell Claude in chat instead."); }
+}
+
+// ======================= Start =======================
+fresh(); render(); paintTour(); setupStrip(document.querySelector('.review[data-part="overall"]'));
+(async function(){
+  try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : null); }catch(e){ db = null; }
+  if (!db) return;
+  db.collection("batch1").onSnapshot(snap=>{
+    (snap.docs || []).forEach(d=>{
+      const r = typeof d.data === "function" ? d.data() : d.data;
+      if (!r || !r.part) return;
+      state[r.part] = r; paintStrip(r.part);
+    });
+  }, ()=>{});
+})();
+})();
+</script>

@@ -470,22 +470,23 @@ const Q = [
     const html = sel.length ? `<div class="devrow">${sel.map(k=>small(...map[k])).join("")}</div>` : `<div class="devrow"><div>${app({device:"phone"})}<div class="devlabel" style="color:var(--bad)">Today on a phone: no menu, no way back</div></div></div>`;
     return {cap: sel.length ? "Each picked device gets its own layout" : "Pick devices to see them", html};
   }},
-{ id:"Q4", title:"What does \"a real app\" mean for the Inventory?",
-  what:"How people get it and open it: an icon on the home screen that works offline (an installable web app), an App Store app, a Mac app in the Dock, or just a web page.",
-  why:"Today it is a web page without an install option, so it doesn't work without internet. App Store apps need Apple review, signing and uploads for every change, and your team has no registered devices yet. An installable web app runs on iPhone, iPad, Mac and Windows from one code base and updates itself.",
-  proposed:"a", multi:false,
+{ id:"Q4", title:"Q4 again: how does the app get onto the doctor's Mac and the nurses' Windows PCs?",
+  what:"Your note: a real app on Mac and on Windows, depending on whose computer it is, all sharing one stock through a server. In Q3 you also picked iPhone, iPad and Android. The question is how the app reaches each of these machines, and how much work every update costs.",
+  why:"EDP, the first app in the family, is already planned this way: one set of program code; first it runs as an app you install from a link, later as a real desktop program for Mac and Windows, then iPhone and iPad. If the medical app follows the same path, both apps share the server, the people list and the code underneath (your Q6 answer). Writing a separate program for each computer type would mean 3 to 5 programs to build and keep in step.",
+  proposed:"b", multi:false,
   opts:[
-    {k:"a", t:"Installable web app (icon on home screen, works offline)", e:"One app for every device. Updates arrive by themselves; no App Store review."},
-    {k:"b", t:"Native iPhone and iPad app from the App Store", e:"Most \"app-like\". Apple-only, review for every update, signing work for you in Xcode."},
-    {k:"c", t:"Mac desktop app", e:"Good for admin work; doesn't help in the field."},
-    {k:"d", t:"A website is enough", e:"Like today. Needs internet every time."}],
+    {k:"a", t:"Installable from a link only", e:"Open a link once, click \"Install\": it gets its own icon and window on Mac, Windows, iPad, iPhone, Android, and works offline. Updates arrive by themselves. No installer files, no App Store. Limit: it never becomes a .exe or .dmg program."},
+    {k:"b", t:"Same code: installable from a link first, real Mac + Windows programs next", e:"Start like A (fastest for the nurses). Then the same code is packed as a real program: a .dmg for the Mac, an .exe for Windows, with its own icon and auto-update. Phones and iPad keep the installed-from-link version until store apps are worth it. Matches EDP's plan."},
+    {k:"c", t:"A separate native program per computer type", e:"One program for Mac, another for Windows, others for phones. Most \"native\" feel, but 3 to 5 programs to build, test and update for every change."}],
   mock(v){
-    let html;
-    if(v==="b") html = `<div class="dev phone"><div class="bar"><span>App Store</span></div><div class="ct" style="align-items:center;text-align:center;padding:20px 8px"><div style="width:54px;height:54px;border-radius:14px;background:var(--accent);display:grid;place-items:center;color:#fff;font-size:22px">+</div><b style="font-size:12px">REACH Inventory</b><span class="muted">Medical</span><span class="chip hl" style="background:var(--accent);color:#fff;border:none">GET</span><span class="muted" style="font-size:9px">every update: Xcode → upload → Apple review</span></div></div>`;
-    else if(v==="c") html = `<div class="hl">${app({url:"REACH Inventory.app"})}</div><div class="devlabel">its own window, icon in the Dock</div>`;
-    else if(v==="d") html = app({right:`<span class="chip">needs internet</span>`}).replace('class="bar"','class="bar hl"');
-    else html = `<div class="dev phone"><div class="bar"><span>9:41</span><span>no signal</span></div><div class="ct" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:16px 10px">${["Mail","Maps","Notes","EDP"].map(n=>`<div style="text-align:center"><div style="width:36px;height:36px;margin:0 auto;border-radius:10px;background:var(--line-2)"></div><span style="font-size:8.5px">${n}</span></div>`).join("")}<div style="text-align:center" class="hl"><div style="width:36px;height:36px;margin:0 auto;border-radius:10px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700">+</div><span style="font-size:8.5px">Inventory</span></div></div><div class="ct"><span class="chip" style="text-align:center">opens without signal</span></div></div>`;
-    return {cap: v ? "How it is opened" : "Proposed: home-screen icon, works offline", html};
+    const w = (os,lbl,note,col)=>`<div style="text-align:center"><div class="dev ${os==='mac'||os==='win'?'pad':'phone'}" style="${os==='mac'||os==='win'?'max-width:200px;min-width:180px':'width:120px'}"><div class="bar"><span>${os==='win'?'■ □ ×':'● ● ●'}</span><span class="url">${lbl}</span></div><div class="ct" style="align-items:center;padding:12px 6px"><div style="width:30px;height:30px;border-radius:8px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700">+</div><b style="font-size:10px">REACH Medical</b><span class="chip" style="${col}">${note}</span></div></div></div>`;
+    let row;
+    if(v==="a") row = w("mac","installed from link","icon + offline","")+w("win","installed from link","icon + offline","")+w("phone","home-screen icon","offline","");
+    else if(v==="c") row = w("mac","Mac program","code base 1","background:var(--bad-soft);color:var(--bad)")+w("win","Windows program","code base 2","background:var(--bad-soft);color:var(--bad)")+w("phone","phone app","code base 3+","background:var(--bad-soft);color:var(--bad)");
+    else if(v==="b") row = w("mac","REACH Medical.dmg","step 2: program","background:var(--ok-soft);color:var(--ok)")+w("win","REACH Medical.exe","step 2: program","background:var(--ok-soft);color:var(--ok)")+w("phone","home-screen icon","step 1: from link","");
+    else row = w("mac","doctor's Mac","?","")+w("win","nurses' Windows PC","?","")+w("phone","phone / iPad","?","");
+    const base = `<div style="margin-top:10px;text-align:center"><span class="callout" style="background:${v==='c'?'var(--bad)':'var(--accent)'}">${v==='c'?'3–5 separate programs':'one code base · one server · same as EDP'}</span></div>`;
+    return {cap:"How it arrives on each machine", html:`<div class="devrow hl" style="padding:8px">${row}</div>${base}`};
   }},
 { id:"Q5", title:"Should everyone see the same stock?",
   what:"When a medic takes 2 ampoules out of MAMA's Bag on their iPhone, should the iPad at the base show that straight away?",

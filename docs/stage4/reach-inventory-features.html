@@ -1,0 +1,609 @@
+<title>REACH Inventory Features</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Stage 4, part 1: the feature list. Same colours as the Stage 3 page (Graphite Indigo from docs/foundation/tokens.css), not restyled. Review strips save to db collection "stage4". */
+:root{
+  --bg:#F4F4F6; --surface:#FFFFFF; --surface-2:#FAFAFB; --sidebar:#F0F0F3;
+  --border:#E4E4EA; --border-strong:#D2D2DA;
+  --text:#1B1B23; --muted:#6B6B78; --faint:#9B9BA6;
+  --accent:#4F46E5; --accent-soft:#EEEDFD; --accent-border:#C9C6F7; --on-accent:#FFFFFF;
+  --ok:#1E9E62; --ok-soft:#E7F5EE; --warn:#C77A12; --warn-soft:#F8EFDF; --bad:#D14343; --bad-soft:#FAEAEA;
+  --edp:#0F6E8C; --edp-soft:#E3F1F5;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --sidebar:#17171E;
+  --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A;
+  --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C;
+  --edp:#5BBAD6; --edp-soft:#14303A; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --sidebar:#17171E;
+  --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A;
+  --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C;
+  --edp:#5BBAD6; --edp-soft:#14303A; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1040px;margin:0 auto}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:30px;font-weight:700;letter-spacing:-.4px}
+h2{font-size:21px;font-weight:700;letter-spacing:-.2px}
+h3{font-size:15px;font-weight:600}
+p{margin:0;max-width:68ch}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:13px} .mono{font-family:var(--mono);font-size:12.5px}
+header.top{padding-block:36px 8px;display:flex;flex-direction:column;gap:12px}
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;border-bottom:1px solid var(--border);display:flex;gap:6px;overflow-x:auto;margin-top:16px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+nav.toc a{flex:none;font-size:13px;color:var(--muted);text-decoration:none;padding:5px 10px;border-radius:8px}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--accent-soft);color:var(--accent);outline:none}
+section{padding-block:40px 8px;display:flex;flex-direction:column;gap:18px;scroll-margin-top:56px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media (max-width:860px){.grid4{grid-template-columns:1fr 1fr}}
+@media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+@media (max-width:520px){.grid4{grid-template-columns:1fr}}
+.grid2>*,.grid3>*,.grid4>*{min-width:0}
+
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;padding:2px 8px;border-radius:6px;vertical-align:middle;white-space:nowrap}
+.tag.june{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)}
+.tag.new{background:var(--ok-soft);color:var(--ok)}
+.tag.edp{background:var(--edp-soft);color:var(--edp)}
+.tag.later{background:var(--warn-soft);color:var(--warn)}
+.tag.r1{background:var(--accent);color:var(--on-accent)}
+.tag.r2{background:var(--surface-2);color:var(--text);border:1px solid var(--border-strong)}
+.fid{font-family:var(--mono);font-size:12px;font-weight:500;padding:1px 6px;border-radius:5px;background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text);white-space:nowrap}
+.bid{font-family:var(--mono);font-size:11.5px;padding:1px 6px;border-radius:5px;background:var(--bad-soft);color:var(--bad);white-space:nowrap;cursor:help}
+
+/* Stage stepper */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:640px){.steps{grid-template-columns:1fr}}
+.stp{padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;gap:4px;font-size:13.5px}
+.stp .n{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--faint)}
+.stp.here{border:2px solid var(--accent)} .stp.here .n{color:var(--accent)}
+
+/* App window mock (June menu) */
+.win{border:1px solid var(--border-strong);border-radius:12px;overflow:hidden;background:var(--surface);box-shadow:0 8px 28px rgba(20,20,40,.08)}
+.win .bar{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--sidebar);border-bottom:1px solid var(--border);font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+.win .dot{width:10px;height:10px;border-radius:50%;background:var(--border-strong)}
+.win .bar .ttl{margin-left:8px;font-weight:600;color:var(--text)}
+.barbtn{all:unset;cursor:pointer;font-size:12px;border:1px solid var(--border);background:var(--surface);border-radius:7px;padding:2px 9px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.barbtn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.barbtn i{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block}
+.barbtn.sp{margin-left:auto}
+.barbtn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.win .body{display:grid;grid-template-columns:210px 1fr;min-height:420px}
+@media (max-width:700px){.win .body{grid-template-columns:1fr}}
+.side{background:var(--sidebar);border-right:1px solid var(--border);padding:10px;display:flex;flex-direction:column;gap:2px}
+@media (max-width:700px){.side{flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--border)}}
+.side .grp{font-size:10.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--faint);padding:10px 8px 4px}
+@media (max-width:700px){.side .grp{width:100%;padding:4px 4px 2px}}
+.side button{all:unset;cursor:pointer;font-size:13.5px;padding:6px 8px;border-radius:7px;color:var(--text);display:flex;align-items:center;gap:8px}
+.side button:hover{background:var(--surface)}
+.side button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.side button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.side button .t{margin-left:auto;display:flex;gap:3px}
+.side button.dim{color:var(--faint)}
+.side button.out{opacity:.45}
+.main{padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.fcard{border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
+.fcard .hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fcard .hd h3{font-size:16px}
+.fcard ul{margin:0;padding-left:18px;font-size:13.5px}
+.fcard .row{display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:12.5px;color:var(--muted)}
+.june-line{font-size:12.5px;padding:6px 10px;border-radius:8px;background:var(--accent-soft);color:var(--text);border:1px solid var(--accent-border)}
+.june-line b{color:var(--accent)}
+.new-line{font-size:12.5px;padding:6px 10px;border-radius:8px;background:var(--ok-soft);color:var(--text)}
+.new-line b{color:var(--ok)}
+
+/* Tables */
+.scroll{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--faint);text-align:left;font-weight:600;padding:6px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
+.tbl td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+.tbl tr.grp td{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--accent);background:var(--surface-2);padding-top:10px}
+.tbl tbody tr.f{cursor:pointer}
+.tbl tbody tr.f:hover td{background:var(--surface-2)}
+.tbl tbody tr.f.sel td{background:var(--accent-soft)}
+.tbl .ids{display:flex;flex-wrap:wrap;gap:3px}
+
+/* Coverage */
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.bcell{display:flex;align-items:center;gap:6px;font-size:12.5px;padding:6px 8px;border-radius:8px;background:var(--surface);border:1px solid var(--border)}
+.bcell .arr{color:var(--faint)}
+.count{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13px;padding:4px 10px;border-radius:999px}
+.count.good{background:var(--ok-soft);color:var(--ok)} .count.badc{background:var(--bad-soft);color:var(--bad)}
+
+/* Batches */
+.batch{border-radius:12px;padding:14px;background:var(--surface);border:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.batch .n{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.batch ul{margin:0;padding-left:18px;font-size:13.5px}
+
+/* Question */
+.qwrap{display:grid;grid-template-columns:240px 1fr;gap:16px;align-items:start}
+@media (max-width:760px){.qwrap{grid-template-columns:1fr}}
+.qwrap>*{min-width:0}
+.qmenu{border:1px solid var(--border-strong);border-radius:12px;overflow:hidden;background:var(--sidebar)}
+.qmenu .bar{font-size:12px;padding:7px 10px;border-bottom:1px solid var(--border);color:var(--muted);font-weight:600}
+.qmenu .side{border:0;outline:2px dashed var(--accent);outline-offset:-6px;border-radius:10px}
+@media (max-width:700px){.qmenu .side{flex-direction:column}}
+.tline{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:640px){.tline{grid-template-columns:1fr}}
+.rel{border-radius:12px;padding:12px;border:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;gap:6px;min-height:120px}
+.rel h3{font-size:14px}
+.rel.one{border:2px solid var(--accent)}
+.rel .lst{display:flex;flex-wrap:wrap;gap:4px}
+.rel .when{font-size:12px;color:var(--muted)}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:12px;border:1px solid var(--border-strong);background:var(--surface)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt[aria-pressed="true"]{border:2px solid var(--accent);background:var(--accent-soft);padding:11px 13px}
+.opt .l{font-weight:600;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.opt .d{font-size:13px;color:var(--muted)}
+.prop{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--ok);color:var(--on-accent)}
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:760px){.why{grid-template-columns:1fr}}
+.why .panel{display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.why .k{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.cmp{width:100%;border-collapse:collapse;font-size:13px}
+.cmp th,.cmp td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+.cmp th{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--faint)}
+.cmp td.on{background:var(--accent-soft)}
+
+/* Review strip */
+.review{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--border-strong)}
+.review .q{font-size:13.5px;font-weight:600;flex:1 1 220px}
+.review .btns{display:flex;gap:6px}
+.review button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.review button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.review button[aria-pressed="true"].yes{background:var(--ok);border-color:var(--ok);color:var(--on-accent)}
+.review button[aria-pressed="true"].no{background:var(--warn);border-color:var(--warn);color:var(--on-accent)}
+.review textarea{flex:1 1 100%;min-height:58px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);resize:vertical}
+.review .state{font-size:12px;color:var(--faint);flex:1 1 100%}
+.final{border:2px solid var(--accent);background:var(--accent-soft)}
+.final .q{font-size:16px}
+footer{padding-block:32px 0;font-size:12.5px;color:var(--faint)}
+@media (prefers-reduced-motion:no-preference){.side button,.review button,.opt{transition:background .15s,color .15s}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Stage 4 · Demo Version · part 1 of 3</div>
+  <h1>REACH Inventory: the feature list</h1>
+  <p class="muted">Before any demo gets made, this is the list of everything the new app does. Each item has an ID (F1, F2, …) that the demos, the Master Checklist and later the build all use. The screens are the June ones. Each feature says what stays, what changes underneath, and which June mistakes it must not repeat.</p>
+  <div class="steps" aria-label="Stage 4 steps">
+    <div class="stp here"><span class="n">1 · now</span><b>Feature list</b><span class="muted small">this page: is the list right and complete?</span></div>
+    <div class="stp"><span class="n">2 · next</span><b>Demos</b><span class="muted small">one clickable demo per feature, built on the June screens, in 4 batches, each with a short "how to use it"</span></div>
+    <div class="stp"><span class="n">3 · last</span><b>Master Checklist</b><span class="muted small">every feature's tests; all 26 June mistakes become tests</span></div>
+  </div>
+  <p class="small muted">The page holds no real stock or staff data. The bug lines are short summaries of <span class="mono">BUGS.md</span>.</p>
+</header>
+
+<nav class="toc" aria-label="Sections">
+  <a href="#map">The features</a><a href="#list">Full list</a><a href="#cover">Nothing lost</a><a href="#batches">Demo order</a><a href="#q12">Question Q12</a><a href="#overall">Your answer</a>
+</nav>
+
+<!-- MAP -->
+<section id="map">
+  <div class="eyebrow">The features</div>
+  <h2>18 features, placed in the June app's window</h2>
+  <p class="muted">Click a menu item, or the search, sign-in or sync button in the top bar, to see which features live there. The <span class="tag june">June</span> mark means the June app already has that screen. <span class="tag new">New</span> means it wasn't in the June app.</p>
+  <div class="win">
+    <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="ttl">REACH Inventory</span>
+      <button type="button" class="barbtn sp" data-v="search" aria-pressed="false">Search everything…</button>
+      <button type="button" class="barbtn" data-v="signin" aria-pressed="false">Signed in: Nurse A</button>
+      <button type="button" class="barbtn" data-v="sync" aria-pressed="false"><i></i>Up to date</button>
+    </div>
+    <div class="body">
+      <div class="side" role="group" aria-label="App menu" id="side1"></div>
+      <div class="main" id="detail" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="review" data-part="map"></div>
+</section>
+
+<!-- LIST -->
+<section id="list">
+  <div class="eyebrow">Full list</div>
+  <h2>All features in one table</h2>
+  <p class="muted">The same 18 features as a list. Click a row to show it in the window above. <b>Rules</b> are the June mistakes (B1–B26) the feature must not repeat; hover or tap an ID to read it. <b>Batch</b> is the demo round it's shown in.</p>
+  <div class="scroll"><table class="tbl" id="ftable">
+    <thead><tr><th>ID</th><th>Feature</th><th>From June</th><th>Rules</th><th>Batch</th><th>Release</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+  <div class="review" data-part="list"></div>
+</section>
+
+<!-- COVERAGE -->
+<section id="cover">
+  <div class="eyebrow">Nothing lost</div>
+  <h2>Every June feature and every June mistake has a home</h2>
+  <p class="muted">Two checks the page runs for itself, so a gap shows up here and not later in the app.</p>
+  <div class="grid2">
+    <div class="panel" style="display:flex;flex-direction:column;gap:10px">
+      <h3>June features J1–J14 → new features</h3>
+      <div id="jcount"></div>
+      <div class="scroll"><table class="tbl" id="jtable"><thead><tr><th>June</th><th>What it was</th><th>Now</th></tr></thead><tbody></tbody></table></div>
+      <p class="small muted">The June features were called F1–F14 in the stock-take. They are renamed <b>J1–J14</b> here so they can't be confused with the new F-numbers.</p>
+    </div>
+    <div class="panel" style="display:flex;flex-direction:column;gap:10px">
+      <h3>June mistakes B1–B26 → the feature that tests them</h3>
+      <div id="bcount"></div>
+      <div class="bgrid" id="bgrid"></div>
+    </div>
+  </div>
+  <div class="review" data-part="cover"></div>
+</section>
+
+<!-- BATCHES -->
+<section id="batches">
+  <div class="eyebrow">Demo order</div>
+  <h2>The demos come in 4 batches, foundation first</h2>
+  <p class="muted">Each batch is one page of clickable demos built on the June screens, with made-up data and a short "how to use it" per feature. You approve a batch before the next one starts. The foundation comes first because every other screen stands on it: signing in, the menu, and working without internet.</p>
+  <div class="grid4" id="bwrap"></div>
+  <p class="small muted">F17 and F18 get no demo now. Each one gets its own run through the stages when its time comes: F17 when EDP and the server are ready, F18 when patients come in.</p>
+  <div class="review" data-part="batches"></div>
+</section>
+
+<!-- Q12 -->
+<section id="q12">
+  <div class="eyebrow">Question Q12 · the one open question</div>
+  <h2>What goes into the first release?</h2>
+  <div class="why">
+    <div class="panel"><span class="k">What it's about</span><p>The <b>first release</b> is the first version the nurses and doctors install on their Macs and Windows PCs and do real counts with. Everything on this list gets demoed and built. This question only decides what they get on day one and what follows in the second version.</p></div>
+    <div class="panel"><span class="k">Why it matters</span><p>More in release 1 means they get it later. The <b>roster</b> is the tricky part. You said EDP's dispatcher needs it, but EDP can only read it once the shared server and EDP's side exist. Before then it's a duty plan for the medical team only. Leave out the people side and the app has a sign-in but no Staff screens. The June app had them.</p></div>
+    <div class="panel"><span class="k">What each answer changes</span><p>Pick an answer below. The menu shows what's in release 1 (solid) and what comes in release 2 (faded). The three boxes show what lands when.</p></div>
+  </div>
+  <div class="qwrap">
+    <div class="qmenu"><div class="bar">The app on day one</div><div class="side" id="side2" aria-label="Menu in release 1"></div></div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="opts" id="opts"></div>
+      <div class="tline" id="tline"></div>
+      <div class="scroll"><table class="cmp" id="cmp"></table></div>
+      <div class="review" data-part="q12" data-q="1"></div>
+    </div>
+  </div>
+</section>
+
+<!-- OVERALL -->
+<section id="overall">
+  <div class="eyebrow">Your answer</div>
+  <h2>Is this the feature list?</h2>
+  <p class="muted">If you say yes, the list goes into <span class="mono">PLAN.md</span> as the fixed feature list, and batch 1 of the demos starts after your GO. Anything marked "Not right" gets fixed first and shown to you again.</p>
+  <div class="review final" data-part="overall" data-final="1"></div>
+</section>
+
+<footer>REACH Inventory · Stage 4 part 1 · feature list draft, 27 Nov 2026 · source <span class="mono">docs/stage4/reach-inventory-features.html</span></footer>
+</div>
+
+<script>
+(function(){
+  const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+  // ---------- June mistakes (short form of BUGS.md) ----------
+  const B = {
+    B1:"A bag holding exactly its required amount showed \"Low\": at the required amount now counts as ready",
+    B2:"Import emptied Inventory until reload: it now refreshes properly",
+    B3:"A new version silently replaced all data with the built-in list: data is carried over, never replaced",
+    B4:"Typed text could run as code, and a quote broke buttons: all text is shown as plain text",
+    B5:"On a phone there was no menu and no way back: the menu works on phones too",
+    B6:"Stock-list errors (bad dates, duplicates, spelling): the medics clean the list before it's loaded",
+    B7:"\"Today\" froze when the page opened: the date moves on while the app stays open",
+    B8:"Settings text boxes were unstyled: they look like every other box",
+    B9:"Real stock and staff names were in the public code: real data only comes in through import, never built in",
+    B10:"The Store had no reorder levels: Store items get reorder levels",
+    B11:"The EDP hook went to zero without a warning and counted a message twice: overuse is flagged, each message counts once",
+    B12:"Anyone could switch to Admin: everyone signs in as themselves",
+    B13:"Dates were off by a day (time zones): dates follow the base's own time zone",
+    B14:"Archiving the only Admin locked Settings for good: the last Admin is protected",
+    B15:"Import replaced everything without asking: it shows a preview and asks first",
+    B16:"Count stock lost typed numbers, and an empty box saved 0: typed numbers are kept, empty means not counted",
+    B17:"Restock/Dispense quietly changed bad amounts: wrong amounts are refused with a message",
+    B18:"Permanent deletes left no trace: every delete is logged",
+    B19:"Edits logged no old → new number: the log shows old → new",
+    B20:"An expired certificate could not be renewed: it can be",
+    B21:"Deleting a department re-filed archived records: you can't delete one that's still in use",
+    B22:"Failed saves were silent: a failed save is shown",
+    B23:"Archiving yourself kept your rights: not allowed",
+    B24:"A stock line couldn't move to another bag: lines can be moved",
+    B25:"A bag with no required amounts showed \"Ready\": it shows \"not set up\"",
+    B26:"Small slips: wrong renewal date after 31 Jan, courses offered to archived staff, archived staff in counts"
+  };
+
+  // ---------- June features ----------
+  const J = {
+    J1:"Shell: menu, Home, search, \"Acting as\"", J2:"Personnel", J3:"Training and courses", J4:"Inventory overview",
+    J5:"Inventory by location", J6:"Item page", J7:"Restock / Dispense", J8:"Count stock", J9:"Stock takes",
+    J10:"Settings", J11:"Backup export / import", J12:"Activity log", J13:"Dispatch hook applyDispense()",
+    J14:"Placeholders: Patient Archive, Roster, Calendar, Library, Dispatch"
+  };
+  const Jnot = {J14:"Dispatch → EDP; Calendar, Library → shared REACH tools (to decide)"};
+
+  // ---------- The feature list ----------
+  // where = the menu spot in the window mock; rel: 1 | 2 | later (default answer A of Q12)
+  const F = [
+    {id:"F1", g:"Foundation", n:"Program window, menu and search", where:["home","search"], june:["J1"], batch:1,
+      keep:"Side menu, Home cards, search across staff and stock", change:["Menu works on a phone or tablet screen too","The date moves on while the app stays open","Everything typed is shown as plain text"], bugs:["B4","B5","B7"]},
+    {id:"F2", g:"Foundation", n:"Sign-in and roles", where:["signin"], june:["J1"], batch:1,
+      keep:"Roles Staff / Manager / Admin", change:["Replaces \"Acting as\": everyone signs in as themselves, from the shared REACH people list","The last Admin can't be archived or demoted","You can't archive yourself"], bugs:["B12","B14","B23"]},
+    {id:"F3", g:"Foundation", n:"Works without internet", where:["sync"], june:[], isNew:true, batch:1,
+      keep:"", change:["Opens with no internet, showing the stock as of the last sync","Changes are saved on the computer first and sent when coverage returns","Sync light in the top bar; two people changing the same line is shown, not lost","A failed save is shown; a new version carries the data over"], bugs:["B3","B22"]},
+    {id:"F4", g:"Foundation", n:"Activity log", where:["log"], june:["J12"], batch:4,
+      keep:"Who did what, when", change:["One REACH-wide log, shared with EDP","Shows old → new for every change","Deletes are logged"], bugs:["B18","B19"]},
+    {id:"F5", g:"Foundation", n:"Settings and country settings", where:["settings"], june:["J10"], batch:4,
+      keep:"Departments, courses, inventory categories, bags", change:["Country settings: base name, time zone, date style, which drugs count as controlled","Dates follow the base's time zone","Something still in use can't be deleted"], bugs:["B8","B13","B21"]},
+    {id:"F6", g:"Inventory", n:"Inventory overview", where:["overview"], june:["J4"], batch:2,
+      keep:"Totals, the \"needs attention\" strip, bag readiness, soonest to expire", change:["At the required amount counts as ready","A bag with no required amounts shows \"not set up\"","The Store gets reorder levels"], bugs:["B1","B10","B25"]},
+    {id:"F7", g:"Inventory", n:"Store and bags (by location)", where:["where"], june:["J5"], batch:2,
+      keep:"Filters, sort, CSV export", change:["No change in what you see"], bugs:[]},
+    {id:"F8", g:"Inventory", n:"Item page", where:["items"], june:["J6"], batch:2,
+      keep:"Stock per location; add, edit, archive and delete items and lines", change:["A stock line can be moved to another bag or the Store"], bugs:["B24"]},
+    {id:"F9", g:"Inventory", n:"Restock and dispense", where:["items"], june:["J7"], batch:2,
+      keep:"The + and − buttons on a stock line", change:["A wrong amount (0, negative, decimal, empty) is refused with a message"], bugs:["B17"]},
+    {id:"F10", g:"Inventory", n:"Count stock", where:["count"], june:["J8"], batch:3,
+      keep:"Type all quantities, then save", change:["Typed numbers survive search, filter and sort","An empty box means \"not counted\", not 0","Leaving with unsaved counts asks first"], bugs:["B16"]},
+    {id:"F11", g:"Inventory", n:"Stock takes", where:["takes"], june:["J9"], batch:3,
+      keep:"Frozen, dated snapshots; then vs. now", change:["Kept on the server, so a new version can't wipe them"], bugs:[]},
+    {id:"F12", g:"Inventory", n:"Controlled-drug register", where:["cd"], june:[], isNew:true, batch:3,
+      keep:"", change:["Every movement of a controlled drug: reason, witness, running balance (Q8)","Lines can't be edited, only corrected by a new line"], bugs:[]},
+    {id:"F13", g:"Inventory", n:"Backup, export and import", where:["settings"], june:["J11"], batch:3,
+      keep:"Backup file export", change:["The server keeps the data and the backups","Import (a backup or the Excel lists) shows a preview and asks first","The real stock is loaded only by import, after the medics clean the list"], bugs:["B2","B6","B9","B15"]},
+    {id:"F14", g:"People", n:"Staff", where:["staff"], june:["J2"], batch:4,
+      keep:"Directory, profile, add, edit, archive", change:["People come from the one shared REACH list (also used by EDP)"], bugs:[]},
+    {id:"F15", g:"People", n:"Training and certificates", where:["staff"], june:["J3"], batch:4,
+      keep:"Courses, mark complete, expiry badges", change:["An expired certificate can be renewed","Renewal dates are right after month-ends","Archived staff aren't offered courses or counted"], bugs:["B20","B26"]},
+    {id:"F16", g:"People", n:"Duty roster", where:["roster"], june:["J14"], isNew:true, batch:4,
+      keep:"", change:["Who of the nurses and doctors is on duty when","EDP reads it, so the dispatcher can only assign someone on duty (Stage 3)"], bugs:[]},
+    {id:"F17", g:"Later", n:"\"Used on a case\" from EDP", where:["overview"], june:["J13"], batch:0, later:true,
+      keep:"", change:["EDP F79 sends the message; this app takes the stock off","Each message counts once; overuse is flagged, never silently zero","Waits for EDP and the server; not built yet"], bugs:["B11"]},
+    {id:"F18", g:"Later", n:"Patient File and Patient Archive", where:["patients"], june:["J14"], batch:0, later:true,
+      keep:"", change:["One file per patient (from EDP or added by hand), growing over the years, kept in the Patient Archive","Later; stricter access"], bugs:[]}
+  ];
+  const byId = Object.fromEntries(F.map(f=>[f.id,f]));
+
+  // ---------- Q12 options ----------
+  const Q = {
+    A:{label:"Everything the June app had, plus the new foundation and the register", d:"Release 1: F1–F15. Release 2: the roster (F16), together with EDP reading it.",
+       r1:["F1","F2","F3","F4","F5","F6","F7","F8","F9","F10","F11","F12","F13","F14","F15"], r2:["F16"]},
+    B:{label:"Also the roster in release 1", d:"Release 1: F1–F16. The medics plan duties from day one; EDP reads it once its side is ready.",
+       r1:["F1","F2","F3","F4","F5","F6","F7","F8","F9","F10","F11","F12","F13","F14","F15","F16"], r2:[]},
+    C:{label:"Inventory first, people second", d:"Release 1: foundation and inventory (F1–F13). Release 2: Staff, training and roster (F14–F16). Fastest to install, but no Staff screens on day one.",
+       r1:["F1","F2","F3","F4","F5","F6","F7","F8","F9","F10","F11","F12","F13"], r2:["F14","F15","F16"]}
+  };
+  const PROPOSED = "A";
+  let q12 = PROPOSED; // what the mock shows; the saved answer comes from the strip
+  function relOf(id, opt){ const f = byId[id]; if (f.later) return "later"; return Q[opt].r1.includes(id) ? 1 : 2; }
+
+  // ---------- Menu (same items as the Stage 3 page) ----------
+  const MENU = [
+    {v:"home", t:"Home", june:true},
+    {grp:"Inventory"},
+    {v:"overview", t:"Overview", june:true}, {v:"where", t:"Store and bags", june:true}, {v:"items", t:"Item list", june:true},
+    {v:"count", t:"Count a bag", june:true}, {v:"takes", t:"Stock takes", june:true}, {v:"cd", t:"Controlled drugs"},
+    {v:"log", t:"Activity", june:true},
+    {grp:"Team"},
+    {v:"staff", t:"Staff and training", june:true}, {v:"roster", t:"Roster"},
+    {grp:"Later"},
+    {v:"patients", t:"Patients", dim:true},
+    {grp:"Admin"},
+    {v:"settings", t:"Settings", june:true}
+  ];
+  const BARNAME = {search:"Search (top bar)", signin:"Sign-in (top bar)", sync:"Sync light (top bar)"};
+
+  function featsAt(v){ return F.filter(f=>f.where.includes(v)); }
+  function menuHTML(mode){
+    return MENU.map(m=>{
+      if (m.grp) return `<div class="grp">${esc(m.grp)}</div>`;
+      const ids = featsAt(m.v).map(f=>f.id);
+      let cls = m.dim ? "dim" : "", tags = "";
+      if (mode === "map"){
+        tags = (m.june ? `<span class="tag june">June</span>` : (m.v==="patients" ? `<span class="tag later">Later</span>` : `<span class="tag new">New</span>`));
+      } else {
+        const rels = ids.map(id=>relOf(id, q12));
+        const in1 = rels.includes(1);
+        if (!in1){ cls += " out"; }
+        tags = in1 ? `<span class="tag r1">R1</span>` : (rels.includes(2) ? `<span class="tag r2">R2</span>` : `<span class="tag later">Later</span>`);
+        if (rels.includes(1) && rels.includes(2)) tags = `<span class="tag r1">R1</span><span class="tag r2">R2</span>`;
+      }
+      return `<button type="button" data-v="${m.v}" class="${cls.trim()}" ${mode==="map"?'aria-pressed="false"':''}>${esc(m.t)}<span class="t">${tags}</span></button>`;
+    }).join("");
+  }
+
+  // ---------- Map: window + detail ----------
+  const side1 = document.getElementById("side1"), detail = document.getElementById("detail");
+  side1.innerHTML = menuHTML("map");
+  function fcard(f){
+    const jl = f.june.length
+      ? `<div class="june-line"><b>From the June app (${f.june.map(esc).join(", ")}):</b> ${esc(f.keep || J[f.june[0]])}</div>`
+      : `<div class="new-line"><b>New:</b> not in the June app.</div>`;
+    const bugs = f.bugs.length ? f.bugs.map(b=>`<span class="bid" title="${esc(B[b])}" tabindex="0">${b}</span>`).join("") : `<span>none of the 26</span>`;
+    const rel = f.later ? `<span class="tag later">Later</span>` : (relOf(f.id,"A")===1 ? `<span class="tag r1">Release 1</span>` : `<span class="tag r2">Release 2</span>`);
+    return `<div class="fcard">
+      <div class="hd"><span class="fid">${f.id}</span><h3>${esc(f.n)}</h3>${f.isNew?'<span class="tag new">New</span>':''}${f.later?'':''}</div>
+      ${jl}
+      <ul>${f.change.map(c=>`<li>${esc(c)}</li>`).join("")}</ul>
+      <div class="row"><span>Rules:</span>${bugs}</div>
+      <div class="row"><span>Demo:</span>${f.batch?`<span>batch ${f.batch}</span>`:`<span>none now (own stages later)</span>`}<span>·</span><span>Proposed:</span>${rel}</div>
+    </div>`;
+  }
+  function showSpot(v){
+    document.querySelectorAll("#side1 button, .win .barbtn").forEach(b=>b.setAttribute("aria-pressed", b.dataset.v===v?"true":"false"));
+    const fs = featsAt(v);
+    const m = MENU.find(x=>x.v===v);
+    const title = BARNAME[v] || (m ? m.t : v);
+    detail.innerHTML = `<div class="small muted">In the window: <b>${esc(title)}</b> · ${fs.length} feature${fs.length===1?"":"s"}</div>` + fs.map(fcard).join("");
+    hlRows(fs.map(f=>f.id));
+  }
+  side1.addEventListener("click", e=>{ const b=e.target.closest("button[data-v]"); if(b) showSpot(b.dataset.v); });
+  document.querySelectorAll(".win .barbtn").forEach(b=>b.addEventListener("click",()=>showSpot(b.dataset.v)));
+
+  // ---------- Full table ----------
+  const tb = document.querySelector("#ftable tbody");
+  let lastG = "";
+  tb.innerHTML = F.map(f=>{
+    let g = "";
+    if (f.g !== lastG){ lastG = f.g; g = `<tr class="grp"><td colspan="6">${esc(f.g === "Later" ? "Later (own stages, no demo now)" : f.g)}</td></tr>`; }
+    const rel = f.later ? `<span class="tag later">Later</span>` : (relOf(f.id,"A")===1 ? `<span class="tag r1">R1</span>` : `<span class="tag r2">R2</span>`);
+    return g + `<tr class="f" data-id="${f.id}"><td><span class="fid">${f.id}</span></td><td>${esc(f.n)}${f.isNew?' <span class="tag new">New</span>':''}</td>
+      <td class="mono">${f.june.length?f.june.join(", "):"—"}</td>
+      <td><span class="ids">${f.bugs.map(b=>`<span class="bid" title="${esc(B[b])}" tabindex="0">${b}</span>`).join("")||'<span class="muted">—</span>'}</span></td>
+      <td>${f.batch||"—"}</td><td>${rel}</td></tr>`;
+  }).join("");
+  function hlRows(ids){ tb.querySelectorAll("tr.f").forEach(r=>r.classList.toggle("sel", ids.includes(r.dataset.id))); }
+  tb.addEventListener("click", e=>{
+    const r = e.target.closest("tr.f"); if (!r) return;
+    const f = byId[r.dataset.id];
+    showSpot(f.where[0]);
+    document.getElementById("map").scrollIntoView({behavior:"smooth", block:"start"});
+  });
+  // tap on a bug ID shows its text (phones have no hover)
+  const tip = document.createElement("div");
+  tip.id = "bugtip"; tip.setAttribute("role","status");
+  tip.style.cssText = "position:fixed;z-index:50;max-width:min(320px,calc(100vw - 32px));font-size:13px;line-height:1.45;padding:10px 12px;border-radius:10px;background:var(--surface);color:var(--text);border:1px solid var(--bad);box-shadow:0 10px 30px rgba(0,0,0,.18);display:none";
+  document.body.appendChild(tip);
+  function showTip(b){
+    tip.textContent = b.textContent + ": " + B[b.textContent];
+    tip.style.display = "block";
+    const r = b.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+    const left = Math.max(16, Math.min(r.left, window.innerWidth - w - 16));
+    const top = (r.bottom + 6 + h > window.innerHeight) ? r.top - h - 6 : r.bottom + 6;
+    tip.style.left = left + "px"; tip.style.top = Math.max(8, top) + "px";
+  }
+  document.addEventListener("click", e=>{
+    const b = e.target.closest(".bid");
+    if (!b){ tip.style.display = "none"; return; }
+    e.stopPropagation(); showTip(b);
+  }, true);
+  document.addEventListener("keydown", e=>{
+    const b = e.target.closest && e.target.closest(".bid");
+    if (b && (e.key==="Enter" || e.key===" ")){ e.preventDefault(); showTip(b); }
+    if (e.key==="Escape") tip.style.display = "none";
+  });
+  window.addEventListener("scroll", ()=>{ tip.style.display = "none"; }, {passive:true});
+
+  // ---------- Coverage ----------
+  const jt = document.querySelector("#jtable tbody");
+  let jMissing = 0;
+  jt.innerHTML = Object.keys(J).map(j=>{
+    const to = F.filter(f=>f.june.includes(j)).map(f=>f.id);
+    if (!to.length && !Jnot[j]) jMissing++;
+    return `<tr><td class="mono">${j}</td><td>${esc(J[j])}</td><td>${to.map(id=>`<span class="fid">${id}</span>`).join(" ")}${Jnot[j]?`<div class="small muted">${esc(Jnot[j])}</div>`:""}</td></tr>`;
+  }).join("");
+  document.getElementById("jcount").innerHTML = jMissing
+    ? `<span class="count badc">${jMissing} June feature(s) without a home</span>`
+    : `<span class="count good">14 of 14 June features have a home</span>`;
+  const owner = {}; const dup = [];
+  F.forEach(f=>f.bugs.forEach(b=>{ if (owner[b]) dup.push(b); owner[b]=f.id; }));
+  const ids = Object.keys(B);
+  const missing = ids.filter(b=>!owner[b]);
+  document.getElementById("bgrid").innerHTML = ids.map(b=>`<div class="bcell"><span class="bid" title="${esc(B[b])}" tabindex="0">${b}</span><span class="arr">→</span>${owner[b]?`<span class="fid">${owner[b]}</span>`:'<b style="color:var(--bad)">none</b>'}</div>`).join("");
+  document.getElementById("bcount").innerHTML = (missing.length||dup.length)
+    ? `<span class="count badc">${missing.length} without a feature, ${dup.length} twice</span>`
+    : `<span class="count good">26 of 26 covered, each exactly once</span>`;
+
+  // ---------- Batches ----------
+  const BN = {1:"Foundation", 2:"Inventory: looking and changing", 3:"Counting and records", 4:"People, settings, log"};
+  const BW = {1:"Everything else stands on these.", 2:"The screens used every day.", 3:"Where stock gets checked and recorded.", 4:"The rest of the June app, and the roster."};
+  document.getElementById("bwrap").innerHTML = [1,2,3,4].map(n=>`<div class="batch"><span class="n">Batch ${n}</span><b>${esc(BN[n])}</b><span class="small muted">${esc(BW[n])}</span>
+    <ul>${F.filter(f=>f.batch===n).map(f=>`<li><span class="fid">${f.id}</span> ${esc(f.n)}</li>`).join("")}</ul></div>`).join("");
+
+  // ---------- Q12 ----------
+  const side2 = document.getElementById("side2"), opts = document.getElementById("opts"), tline = document.getElementById("tline"), cmp = document.getElementById("cmp");
+  opts.innerHTML = Object.keys(Q).map(k=>`<button type="button" class="opt" data-o="${k}" aria-pressed="false"><span class="l">${k} · ${esc(Q[k].label)}${k===PROPOSED?' <span class="prop">Proposed</span>':''}</span><span class="d">${esc(Q[k].d)}</span></button>`).join("");
+  cmp.innerHTML = `<thead><tr><th></th>${Object.keys(Q).map(k=>`<th data-c="${k}">${k}${k===PROPOSED?" (proposed)":""}</th>`).join("")}</tr></thead><tbody>
+    <tr><td>Features on day one</td>${Object.keys(Q).map(k=>`<td data-c="${k}">${Q[k].r1.length} of 16</td>`).join("")}</tr>
+    <tr><td>Staff screens on day one</td>${Object.keys(Q).map(k=>`<td data-c="${k}">${Q[k].r1.includes("F14")?"yes":"no (sign-in only)"}</td>`).join("")}</tr>
+    <tr><td>Roster on day one</td>${Object.keys(Q).map(k=>`<td data-c="${k}">${Q[k].r1.includes("F16")?"yes, medics only until EDP reads it":"no: comes with EDP reading it"}</td>`).join("")}</tr>
+    <tr><td>First install</td>${Object.keys(Q).map(k=>`<td data-c="${k}">${k==="C"?"soonest":(k==="B"?"latest":"middle")}</td>`).join("")}</tr></tbody>`;
+  function paintQ(){
+    side2.innerHTML = menuHTML("q");
+    opts.querySelectorAll(".opt").forEach(b=>b.setAttribute("aria-pressed", b.dataset.o===q12?"true":"false"));
+    cmp.querySelectorAll("[data-c]").forEach(c=>c.classList.toggle("on", c.dataset.c===q12));
+    const o = Q[q12];
+    const chip = id => `<span class="fid" title="${esc(byId[id].n)}">${id}</span>`;
+    tline.innerHTML = `
+      <div class="rel one"><h3>Release 1</h3><span class="when">first install, real counts</span><div class="lst">${o.r1.map(chip).join("")}</div></div>
+      <div class="rel"><h3>Release 2</h3><span class="when">next version</span><div class="lst">${o.r2.length?o.r2.map(chip).join(""):'<span class="small muted">nothing left over</span>'}</div></div>
+      <div class="rel"><h3>Later</h3><span class="when">own stages</span><div class="lst">${chip("F17")}${chip("F18")}</div><span class="small muted">EDP link and patients</span></div>`;
+  }
+  opts.addEventListener("click", e=>{ const b=e.target.closest(".opt"); if(!b) return; q12=b.dataset.o; paintQ(); pickChoice(b.dataset.o); });
+
+  // ---------- Review strips (saved to db collection "stage4") ----------
+  const strips = Array.from(document.querySelectorAll(".review"));
+  const state = {};
+  strips.forEach(el=>{
+    const part = el.dataset.part, fin = !!el.dataset.final, isQ = !!el.dataset.q;
+    if (isQ){
+      el.innerHTML = `<span class="q">Your answer to Q12: <span id="qchoice">not picked yet</span></span>
+        <span class="btns"><button type="button" class="no" id="n-${part}" aria-pressed="false">Not sure</button></span>
+        <textarea id="note-${part}" placeholder="Anything to add? (optional)"></textarea>
+        <span class="state" id="st-${part}">Pick A, B or C above. The menu shows the proposed answer until you pick.</span>`;
+      el.querySelector(".no").addEventListener("click",()=>{ state[part]=Object.assign({},state[part],{choice:"unsure"}); paintStrip(part); save(part); });
+    } else {
+      el.innerHTML = `<span class="q">${fin ? "Is this the feature list?" : "Is this part right?"}</span>
+        <span class="btns"><button type="button" class="yes" id="y-${part}" aria-pressed="false">${fin ? "Yes, that's it" : "Right"}</button>
+        <button type="button" class="no" id="n-${part}" aria-pressed="false">${fin ? "Not yet" : "Not right"}</button></span>
+        <textarea id="note-${part}" placeholder="${fin ? "Anything missing or wrong? (optional)" : "What's wrong or missing? (optional)"}"></textarea>
+        <span class="state" id="st-${part}">Not answered yet.</span>`;
+      el.querySelector(".yes").addEventListener("click",()=>pick(part,"right"));
+      el.querySelector(".no").addEventListener("click",()=>pick(part,"not"));
+    }
+    let t; el.querySelector("textarea").addEventListener("input",()=>{ clearTimeout(t); t=setTimeout(()=>save(part),800); });
+  });
+  function paintStrip(part){
+    const s = state[part] || {};
+    if (part === "q12"){
+      const qc = document.getElementById("qchoice");
+      qc.textContent = s.choice ? (s.choice==="unsure" ? "Not sure" : s.choice + " · " + Q[s.choice].label) : "not picked yet";
+      document.getElementById("n-q12").setAttribute("aria-pressed", s.choice==="unsure"?"true":"false");
+      if (s.choice && Q[s.choice] && q12 !== s.choice){ q12 = s.choice; paintQ(); }
+    } else {
+      const y = document.getElementById("y-"+part), n = document.getElementById("n-"+part);
+      if (!y) return;
+      y.setAttribute("aria-pressed", s.verdict==="right"?"true":"false");
+      n.setAttribute("aria-pressed", s.verdict==="not"?"true":"false");
+    }
+    const ta = document.getElementById("note-"+part);
+    if (ta && document.activeElement !== ta && typeof s.note === "string") ta.value = s.note;
+  }
+  function msg(part, text){ const e=document.getElementById("st-"+part); if(e) e.textContent=text; }
+  function pick(part, v){ state[part] = Object.assign({}, state[part], {verdict:v}); paintStrip(part); save(part); }
+  function pickChoice(k){ state.q12 = Object.assign({}, state.q12, {choice:k}); paintStrip("q12"); save("q12"); }
+  let db = null;
+  async function save(part){
+    const s = state[part] || {};
+    const rec = {part, verdict: s.verdict || null, note: document.getElementById("note-"+part).value, at: new Date().toISOString()};
+    if (part === "q12") rec.choice = s.choice || null;
+    state[part] = rec;
+    if (!db){ msg(part, "Shown here, but can't be saved in this view. Tell Claude in chat instead."); return; }
+    try{ await db.collection("stage4").doc(part).set(rec); msg(part, "Saved for Claude · "+new Date(rec.at).toLocaleTimeString()); }
+    catch(e){ msg(part, "Not saved ("+(e && e.code || "error")+"). Tell Claude in chat instead."); }
+  }
+
+  // ---------- Start ----------
+  showSpot("overview");
+  paintQ();
+  (async function(){
+    try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : null); }catch(e){ db = null; }
+    if (!db) return;
+    db.collection("stage4").onSnapshot(snap=>{
+      (snap.docs || []).forEach(d=>{
+        const r = typeof d.data === "function" ? d.data() : d.data;
+        if (!r || !r.part || !document.getElementById("st-"+r.part)) return;
+        state[r.part] = r; paintStrip(r.part);
+        if (r.verdict || r.note || r.choice) msg(r.part, "Saved for Claude · "+(r.at ? new Date(r.at).toLocaleString() : ""));
+      });
+    }, ()=>{});
+  })();
+})();
+</script>

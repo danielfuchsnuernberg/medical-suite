@@ -1,0 +1,603 @@
+<title>REACH Inventory Blueprint</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one long reading page, one section per part of the app; each section ends with a "right / not right" strip that saves for Claude. Colours: the medical prototype's Graphite Indigo (docs/foundation/tokens.css), not restyled. */
+:root{
+  --bg:#F4F4F6; --surface:#FFFFFF; --surface-2:#FAFAFB; --sidebar:#F0F0F3;
+  --border:#E4E4EA; --border-strong:#D2D2DA;
+  --text:#1B1B23; --muted:#6B6B78; --faint:#9B9BA6;
+  --accent:#4F46E5; --accent-soft:#EEEDFD; --accent-border:#C9C6F7; --on-accent:#FFFFFF;
+  --ok:#1E9E62; --ok-soft:#E7F5EE; --warn:#C77A12; --warn-soft:#F8EFDF; --bad:#D14343; --bad-soft:#FAEAEA;
+  --edp:#0F6E8C; --edp-soft:#E3F1F5;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --sidebar:#17171E;
+  --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A;
+  --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C;
+  --edp:#5BBAD6; --edp-soft:#14303A; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --sidebar:#17171E;
+  --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A;
+  --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C;
+  --edp:#5BBAD6; --edp-soft:#14303A; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1040px;margin:0 auto}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:30px;font-weight:700;letter-spacing:-.4px}
+h2{font-size:21px;font-weight:700;letter-spacing:-.2px}
+h3{font-size:15px;font-weight:600}
+p{margin:0;max-width:68ch}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:13px} .mono{font-family:var(--mono);font-size:12.5px}
+.stack{display:flex;flex-direction:column;gap:14px}
+header.top{padding-block:36px 8px;display:flex;flex-direction:column;gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-size:12.5px;padding:4px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--muted)}
+.chip b{color:var(--text);font-weight:600}
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;padding:2px 8px;border-radius:6px;vertical-align:middle}
+.tag.now{background:var(--ok-soft);color:var(--ok)} .tag.later{background:var(--warn-soft);color:var(--warn)}
+.tag.edp{background:var(--edp-soft);color:var(--edp)} .tag.june{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)}
+.june-line{font-size:12.5px;padding:6px 10px;border-radius:8px;background:var(--accent-soft);color:var(--text);border:1px solid var(--accent-border)}
+.june-line b{color:var(--accent)}
+.st{font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:6px;white-space:nowrap}
+.st.kept{background:var(--ok-soft);color:var(--ok)} .st.changed{background:var(--warn-soft);color:var(--warn)} .st.out{background:var(--surface-2);color:var(--muted);border:1px solid var(--border-strong)}
+.mini{font:inherit;font-size:12px;padding:2px 8px;border-radius:6px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text)}
+.searchmock{font-size:12px;color:var(--faint);border:1px solid var(--border);background:var(--surface);border-radius:7px;padding:2px 10px;margin-left:12px}
+@media (max-width:560px){.searchmock{display:none}} .tag.ex{background:var(--surface-2);color:var(--faint);border:1px dashed var(--border-strong)}
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;border-bottom:1px solid var(--border);display:flex;gap:6px;overflow-x:auto;margin-top:16px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+nav.toc a{flex:none;font-size:13px;color:var(--muted);text-decoration:none;padding:5px 10px;border-radius:8px}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--accent-soft);color:var(--accent);outline:none}
+section{padding-block:40px 8px;display:flex;flex-direction:column;gap:18px;scroll-margin-top:56px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+.grid2>*,.grid3>*{min-width:0}
+
+/* Big picture */
+.big{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:0;align-items:stretch}
+.big .col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.big .link{display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:12px;padding:8px}
+@media (max-width:820px){.big{grid-template-columns:1fr}.big .link{transform:none}}
+.dev{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--border)}
+.dev.later{border-style:dashed;background:transparent;color:var(--muted)}
+.dev svg{flex:none;width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:1.6}
+.dev .who{font-size:12.5px;color:var(--muted)}
+.appbox{border:2px solid var(--accent);border-radius:14px;background:var(--surface);padding:14px;display:flex;flex-direction:column;gap:10px}
+.appbox .menuline{display:flex;flex-wrap:wrap;gap:6px}
+.appbox .menuline span{font-size:12.5px;padding:3px 9px;border-radius:7px;background:var(--accent-soft);color:var(--accent);font-weight:500}
+.appbox .menuline span.dim{background:var(--surface-2);color:var(--faint);border:1px dashed var(--border-strong)}
+.serverbox{border-radius:14px;padding:14px;background:var(--surface-2);border:1px solid var(--border-strong);display:flex;flex-direction:column;gap:8px}
+.serverbox ul{margin:0;padding-left:18px;font-size:13.5px}
+.edpbox{border-radius:12px;padding:12px;background:var(--edp-soft);color:var(--text);border:1px solid var(--edp)}
+.edpbox b{color:var(--edp)}
+.arrow{font-size:20px;color:var(--faint);text-align:center;line-height:1}
+.h-arrow{display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--faint);padding:0 6px}
+@media (max-width:820px){.h-arrow{transform:rotate(90deg);padding:4px 0}}
+
+/* App window mock */
+.win{border:1px solid var(--border-strong);border-radius:12px;overflow:hidden;background:var(--surface);box-shadow:0 8px 28px rgba(20,20,40,.08)}
+.win .bar{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--sidebar);border-bottom:1px solid var(--border);font-size:12.5px;color:var(--muted)}
+.win .dot{width:10px;height:10px;border-radius:50%;background:var(--border-strong)}
+.win .bar .ttl{margin-left:8px;font-weight:600;color:var(--text)}
+.win .bar .sync{margin-left:auto;display:flex;align-items:center;gap:6px}
+.win .bar .sync i{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block}
+.win .body{display:grid;grid-template-columns:200px 1fr;min-height:380px}
+@media (max-width:700px){.win .body{grid-template-columns:1fr}}
+.side{background:var(--sidebar);border-right:1px solid var(--border);padding:10px;display:flex;flex-direction:column;gap:2px}
+@media (max-width:700px){.side{flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--border)}}
+.side .grp{font-size:10.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--faint);padding:10px 8px 4px}
+@media (max-width:700px){.side .grp{width:100%;padding:4px 4px 2px}}
+.side button{all:unset;cursor:pointer;font-size:13.5px;padding:6px 8px;border-radius:7px;color:var(--text);display:flex;align-items:center;gap:8px}
+.side button:hover{background:var(--surface)}
+.side button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.side button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.side button .t{margin-left:auto}
+.side button.later{color:var(--faint)}
+.main{padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.main .what{font-size:13.5px;color:var(--muted);border-left:3px solid var(--accent-border);padding-left:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--faint);text-align:left;font-weight:600;padding:6px 8px;border-bottom:1px solid var(--border)}
+.tbl td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+.tbl td.n{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:12.5px}
+.scroll{overflow-x:auto}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.grey{background:var(--surface-2);color:var(--muted);border:1px solid var(--border)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.bagc{border:1px solid var(--border);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:4px;font-size:13px}
+.bagc b{font-size:13.5px}
+
+/* Flows */
+.flow{display:flex;gap:0;align-items:stretch;overflow-x:auto;padding-bottom:4px}
+.step{flex:1 0 150px;min-width:150px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.step .who{font-size:11.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.step.edp{border-color:var(--edp);background:var(--edp-soft)} .step.edp .who{color:var(--edp)}
+.step.inv .who{color:var(--accent)} .step.warnb{border-color:var(--warn)} .step.warnb .who{color:var(--warn)}
+.flow .to{flex:none;display:flex;align-items:center;padding:0 6px;color:var(--faint);font-size:18px}
+.msg{font-family:var(--mono);font-size:11.5px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:6px 8px;line-height:1.5;overflow-wrap:anywhere}
+
+/* Timeline */
+.tl{display:grid;grid-template-columns:70px 1fr 1fr;gap:0;font-size:13.5px}
+.tl .h{font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--faint);padding:6px 8px;border-bottom:1px solid var(--border)}
+.tl .c{padding:10px 8px;border-bottom:1px solid var(--border);min-width:0}
+.tl .time{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.off{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--warn-soft);color:var(--warn)}
+.on{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--ok-soft);color:var(--ok)}
+@media (max-width:560px){.tl{grid-template-columns:52px 1fr 1fr;font-size:12.5px}}
+
+/* Rules */
+.rule{display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:12px;background:var(--surface);border:1px solid var(--border)}
+.rule .ids{display:flex;flex-wrap:wrap;gap:4px}
+.rule .ids span{font-family:var(--mono);font-size:11.5px;padding:1px 6px;border-radius:5px;background:var(--bad-soft);color:var(--bad)}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12.5px}
+.ba div{padding:8px;border-radius:8px}
+.ba .before{background:var(--bad-soft)} .ba .after{background:var(--ok-soft)}
+.ba .lbl{display:block;font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-bottom:2px}
+.ba .before .lbl{color:var(--bad)} .ba .after .lbl{color:var(--ok)}
+
+/* Review strip */
+.review{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--border-strong)}
+.review .q{font-size:13.5px;font-weight:600;flex:1 1 220px}
+.review .btns{display:flex;gap:6px}
+.review button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.review button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.review button[aria-pressed="true"].yes{background:var(--ok);border-color:var(--ok);color:var(--on-accent)}
+.review button[aria-pressed="true"].no{background:var(--warn);border-color:var(--warn);color:var(--on-accent)}
+.review textarea{flex:1 1 100%;min-height:58px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);resize:vertical}
+.review .state{font-size:12px;color:var(--faint);flex:1 1 100%}
+.final{border:2px solid var(--accent);background:var(--accent-soft)}
+.final .q{font-size:16px}
+footer{padding-block:32px 0;font-size:12.5px;color:var(--faint)}
+@media (prefers-reduced-motion:no-preference){.side button,.review button{transition:background .15s,color .15s}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Stage 3 · Explain it back · 26 Nov 2026</div>
+  <h1>The new REACH Inventory, in one picture</h1>
+  <p class="muted"><b>The screens stay the June Medical Suite's, which work well. The new work is underneath:</b> server, sign-in, offline, the drug register and the 26 bug fixes. Every June feature is marked <span class="tag june">June</span> and listed in the part “From the June app”.</p>
+  <p class="june-line"><b>Updated after your answers (26 Nov):</b> the duty roster lives in this app and EDP reads it; the program also starts with no internet; Patients means one Patient File per patient, kept in the Patient Archive (later).</p>
+  <p class="muted">This is what I understood from your eleven answers. Nothing here is built yet. Read it part by part and tick <b>Right</b> or <b>Not right</b> under each one. If something is missing or wrong, write it in the box. When it all matches, press <b>Yes, that's it</b> at the bottom.</p>
+  <div class="chips">
+    <span class="chip"><b>Who:</b> a few medics and nurses, you as admin (Q2)</span>
+    <span class="chip"><b>What:</b> one medical app, Inventory first (Q6)</span>
+    <span class="chip"><b>How:</b> real Mac and Windows program (Q4)</span>
+    <span class="chip"><b>Data:</b> one shared stock on a server (Q5)</span>
+    <span class="chip"><b>Offline:</b> fully, syncs later (Q9)</span>
+    <span class="chip"><b>Controlled drugs:</b> full register (Q8)</span>
+  </div>
+  <p class="small muted">All item names, numbers and people on this page are made-up examples, marked <span class="tag ex">example</span>. No real stock or staff are shown.</p>
+</header>
+
+<nav class="toc" aria-label="Parts of this page">
+  <a href="#big">Big picture</a><a href="#inside">Inside the app</a><a href="#june">From the June app</a><a href="#people">One list of people</a><a href="#offline">No internet</a><a href="#cases">Used on a case</a><a href="#register">Controlled drugs</a><a href="#rules">June mistakes → rules</a><a href="#settings">Country settings</a><a href="#notin">Not in this app</a><a href="#done">Your answer</a>
+</nav>
+
+<!-- BIG PICTURE -->
+<section id="big">
+  <div class="eyebrow">Big picture</div>
+  <h2>Everyone works on the same stock, from their own computer</h2>
+  <p class="muted">The doctor changes something on her Mac, the nurses change something on their Windows PC, and both see each other's changes. The server in the middle is shared with EDP and the other REACH apps.</p>
+  <div class="big">
+    <div class="col">
+      <div class="small muted">Who uses it, on what</div>
+      <div class="dev"><svg viewBox="0 0 28 28"><rect x="4" y="6" width="20" height="13" rx="1.5"/><path d="M2 22h24"/></svg><div><b>Mac</b> <span class="tag now">first</span><div class="who">the doctor, you (admin)</div></div></div>
+      <div class="dev"><svg viewBox="0 0 28 28"><rect x="3" y="5" width="22" height="14" rx="1.5"/><path d="M10 23h8M14 19v4"/></svg><div><b>Windows PC</b> <span class="tag now">first</span><div class="who">the nurses at the base</div></div></div>
+      <div class="dev later"><svg viewBox="0 0 28 28"><rect x="8" y="3" width="12" height="22" rx="2.5"/><path d="M13 21h2"/></svg><div><b>iPhone · iPad · Android</b> <span class="tag later">later</span><div class="who">same app, same way as EDP gets them</div></div></div>
+    </div>
+    <div class="h-arrow" aria-hidden="true">⇄</div>
+    <div class="col">
+      <div class="small muted">The app (one program, installed, not a web page)</div>
+      <div class="appbox">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b>REACH Inventory</b><span class="small muted">name is a setting (Q10)</span></div>
+        <div class="menuline"><span>Inventory</span><span>Staff</span><span>Roster</span><span class="dim">Patients · later</span></div>
+        <p class="small muted">Downloaded and installed like any program. Not in the App Store. Works with no internet and catches up when it's back.</p>
+      </div>
+    </div>
+    <div class="h-arrow" aria-hidden="true">⇄</div>
+    <div class="col">
+      <div class="small muted">Shared by all REACH apps</div>
+      <div class="serverbox">
+        <b>REACH server</b>
+        <ul><li>the shared stock</li><li>one list of people, one sign-in</li><li>the activity log: who did what, when</li></ul>
+      </div>
+      <div class="arrow" aria-hidden="true">⇅</div>
+      <div class="edpbox small"><b>EDP</b> and the other REACH apps use the same server</div>
+    </div>
+  </div>
+  <div class="review" data-part="big"></div>
+</section>
+
+<!-- INSIDE -->
+<section id="inside">
+  <div class="eyebrow">Inside the app</div>
+  <h2>One app for the medical team: Inventory first, the rest grows in</h2>
+  <p class="muted">You said the nurses and doctors want one app with everything in it (Q6 = C). This is the June Medical Suite's menu, with its Inventory as the first part. Click through to see what each part holds, what it brings over from June, and where its data comes from.</p>
+  <div class="win" id="win">
+    <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="ttl">REACH Inventory</span><span class="searchmock">Search everything… <span class="tag june">June</span></span><span class="sync"><i></i>Up to date</span></div>
+    <div class="body">
+      <div class="side" role="group" aria-label="App menu">
+        <button data-v="home">Home <span class="tag june t">June</span></button>
+        <div class="grp">Inventory</div>
+        <button data-v="overview" aria-pressed="true">Overview <span class="tag june t">June</span></button>
+        <button data-v="where">Store and bags <span class="tag june t">June</span></button>
+        <button data-v="items">Item list <span class="tag june t">June</span></button>
+        <button data-v="count">Count a bag <span class="tag june t">June</span></button>
+        <button data-v="takes">Stock takes <span class="tag june t">June</span></button>
+        <button data-v="cd">Controlled drugs</button>
+        <button data-v="log">Activity <span class="tag june t">June</span></button>
+        <div class="grp">Team</div>
+        <button data-v="staff">Staff and training <span class="tag june t">June</span></button>
+        <button data-v="roster">Roster <span class="tag edp t">EDP reads</span></button>
+        <div class="grp">Later</div>
+        <button data-v="patients" class="later">Patients</button>
+        <div class="grp">Admin</div>
+        <button data-v="settings">Settings <span class="tag june t">June</span></button>
+      </div>
+      <div class="main" id="mainview" aria-live="polite"></div>
+    </div>
+  </div>
+  <div class="review" data-part="inside"></div>
+</section>
+
+<!-- JUNE -->
+<section id="june">
+  <div class="eyebrow">From the June app</div>
+  <h2>Every June feature, and what happens to it</h2>
+  <p class="muted">The June Medical Suite had 14 features (F1–F14 in PLAN.md). Nothing is left out by accident. <span class="st kept">Kept</span> means the same screen and job, with its bugs fixed. <span class="st changed">Changed</span> says what changes and why. <span class="st out">Not in this app</span> says where it goes.</p>
+  <div class="panel scroll">
+    <table class="tbl" style="min-width:680px">
+      <thead><tr><th>June</th><th>Feature</th><th></th><th>In the new app</th></tr></thead>
+      <tbody id="junetable"></tbody>
+    </table>
+  </div>
+  <div class="review" data-part="june"></div>
+</section>
+
+<!-- PEOPLE -->
+<section id="people">
+  <div class="eyebrow">One list of people</div>
+  <h2>Each person exists once, for every REACH app</h2>
+  <p class="muted">You asked whether one app can still share one list of people with EDP. Yes. The list lives on the shared server, not inside either app. EDP plans cases and crews. The duty roster lives here, and EDP reads it to see who is on duty.</p>
+  <div class="grid3">
+    <div class="panel stack"><span class="tag edp" style="align-self:flex-start">EDP owns</span><h3>Cases and dispatch</h3><p class="small muted">Which case, which aircraft, who is assigned. When the dispatcher assigns a nurse or doctor, EDP checks this app's roster and only offers people on duty at that time.</p></div>
+    <div class="panel stack" style="border:2px solid var(--accent)"><span class="tag now" style="align-self:flex-start">Shared foundation</span><h3>People, sign-in, activity log</h3><p class="small muted">One entry per person, with their qualifications (pilot, medic, nurse, …). One sign-in for every REACH app. Every change in every app goes into one log.</p></div>
+    <div class="panel stack"><span class="tag now" style="align-self:flex-start">This app owns</span><h3>Roster, items, stock, bags, training</h3><p class="small muted">The duty roster (which nurse or doctor works when), the item list, what's in the Store and in each bag, the controlled-drug register and staff training. EDP reads the roster for dispatch and the item list when a medic records medication.</p></div>
+  </div>
+  <div class="panel small"><b>Example:</b> a new nurse joins <span class="tag ex">example</span>. You add her once. She can sign in to this app, you put her on the roster here, her training shows here, and EDP's dispatcher can assign her whenever she is on duty. Nobody types her name twice.</div>
+  <div class="review" data-part="people"></div>
+</section>
+
+<!-- OFFLINE -->
+<section id="offline">
+  <div class="eyebrow">Working with no internet</div>
+  <h2>A day with patchy coverage</h2>
+  <p class="muted">Q9: it must work fully offline and sync later. Nothing typed may get lost, and the app always says whether it is up to date. The June app could lose saves without a word (B22).</p>
+  <div class="panel small"><span class="on" style="background:var(--warn-soft);color:var(--warn)">● Starts offline</span> The program also <b>opens</b> with no internet at all. It starts with the stock as it was at the last sync, and says so in the top bar.</div>
+  <div class="panel scroll">
+    <div class="tl" style="min-width:520px">
+      <div class="h">Time</div><div class="h">Nurse · Windows PC at the base</div><div class="h">Doctor · Mac in town</div>
+      <div class="c time">07:30</div><div class="c"><span class="off">● Offline</span><br>Counts Bag 3. The app saves it on her PC right away.</div><div class="c"><span class="on">● Online</span><br>Still sees yesterday's numbers for Bag 3, with “last synced from base: yesterday 17:10”.</div>
+      <div class="c time">08:15</div><div class="c"><span class="off">● Offline</span><br>Top bar: “4 changes waiting to send”.</div><div class="c">Restocks the Store with a delivery. Goes straight to the server.</div>
+      <div class="c time">10:40</div><div class="c"><span class="on">● Online again</span><br>The 4 changes go up by themselves. She now sees the doctor's delivery too.</div><div class="c">Bag 3 shows the new count, marked as done by the nurse at 07:30.</div>
+    </div>
+  </div>
+  <p class="small muted">What happens when two people change the same thing while offline is a detail for Stage 5 (how it's built). It gets shown to you there before anything is built.</p>
+  <div class="review" data-part="offline"></div>
+</section>
+
+<!-- CASES -->
+<section id="cases">
+  <div class="eyebrow">Medication used on a case</div>
+  <h2>The medic records it once in EDP, and it comes off stock here by itself <span class="tag later">built later</span></h2>
+  <p class="muted">This is EDP's feature F79. It isn't built now, but the new app is designed for it from day one, so it can be switched on later without rebuilding.</p>
+  <div class="flow">
+    <div class="step edp"><span class="who">EDP · patient file</span>Medic records: 1 ampoule of Adrenaline 1 mg/ml from Bag 3 <span class="tag ex">example</span></div>
+    <div class="to" aria-hidden="true">→</div>
+    <div class="step"><span class="who">The message</span><div class="msg">case · item · amount · lot · which bag · who gave it · when · its own unique number</div></div>
+    <div class="to" aria-hidden="true">→</div>
+    <div class="step"><span class="who">No coverage?</span>It waits on the device and goes out when coverage is back.</div>
+    <div class="to" aria-hidden="true">→</div>
+    <div class="step inv"><span class="who">REACH Inventory</span>Takes 1 off Bag 3, that lot. The same message arriving twice only counts once.</div>
+    <div class="to" aria-hidden="true">→</div>
+    <div class="step inv"><span class="who">If controlled</span>Also lands in the register, with the witness.</div>
+  </div>
+  <div class="grid2">
+    <div class="panel small"><span class="pill warn">Flag, not zero</span> If more was used than the app thought was there, it raises a flag for you to check. The June app quietly stopped at 0 (B11).</div>
+    <div class="panel small"><span class="pill grey">Correction</span> “Wrong drug recorded” is fixed with a correction that both apps show. Nothing is quietly edited away.</div>
+  </div>
+  <div class="review" data-part="cases"></div>
+</section>
+
+<!-- REGISTER -->
+<section id="register">
+  <div class="eyebrow">Controlled drugs</div>
+  <h2>A full register: reason, witness, running balance (Q8)</h2>
+  <p class="muted">For every controlled drug, every movement is one line that can't be changed afterwards. A mistake is fixed with a new correction line, so the history always adds up.</p>
+  <div class="panel scroll">
+    <div class="small muted" style="margin-bottom:8px">Morphine 10 mg/ml · Bag 3 <span class="tag ex">example</span></div>
+    <table class="tbl" style="min-width:620px">
+      <thead><tr><th>When</th><th>Movement</th><th>Reason</th><th>By</th><th>Witness</th><th style="text-align:right">Balance</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">02 Nov 09:10</td><td>+5 from Store</td><td>Restock to required amount</td><td>Nurse A</td><td>Nurse B</td><td class="n">5</td></tr>
+        <tr><td class="mono">14 Nov 16:42</td><td>−1</td><td>Used on case (from EDP)</td><td>Medic C</td><td>Pilot D</td><td class="n">4</td></tr>
+        <tr><td class="mono">15 Nov 08:05</td><td>−1</td><td>Broken ampoule, disposed</td><td>Nurse A</td><td>Doctor E</td><td class="n">3</td></tr>
+        <tr><td class="mono">20 Nov 07:30</td><td>Count: 3 found</td><td>Weekly check, matches</td><td>Nurse B</td><td>Nurse A</td><td class="n">3</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="small muted">Which drugs count as controlled is a country setting, because the law differs between PNG and Peru.</p>
+  <div class="review" data-part="register"></div>
+</section>
+
+<!-- RULES -->
+<section id="rules">
+  <div class="eyebrow">June mistakes become rules</div>
+  <h2>All 26 bugs from the June app, as nine rules the new app keeps</h2>
+  <p class="muted">Every bug from the bug hunt (BUGS.md) is under one of these rules. In Stage 4 each one becomes a test the new app must pass.</p>
+  <div class="grid3" id="rulegrid"></div>
+  <div class="review" data-part="rules"></div>
+</section>
+
+<!-- SETTINGS -->
+<section id="settings">
+  <div class="eyebrow">Country settings</div>
+  <h2>PNG first, others later, and nothing country-specific is built in</h2>
+  <div class="grid2">
+    <div class="panel stack"><h3>Set per country or base</h3>
+      <table class="tbl"><tbody>
+        <tr><td>Time zone</td><td class="muted">dates and “expired” go by the base's own clock (B13)</td></tr>
+        <tr><td>Controlled-drug list</td><td class="muted">differs by law</td></tr>
+        <tr><td>Bags and Store</td><td class="muted">how many, their names, required amounts</td></tr>
+        <tr><td>Item categories and units</td><td class="muted">one spelling per unit</td></tr>
+        <tr><td>App name and logo</td><td class="muted">“REACH Inventory” for now (Q10), final with EDP's common look (F53)</td></tr>
+      </tbody></table>
+    </div>
+    <div class="panel stack"><h3>Example: same item, two bases <span class="tag ex">example</span></h3>
+      <table class="tbl"><thead><tr><th></th><th>PNG base</th><th>Peru base</th></tr></thead><tbody>
+        <tr><td>Expires</td><td>26 Nov</td><td>26 Nov</td></tr>
+        <tr><td>Shows “Expired” from</td><td>27 Nov 00:00 PNG time</td><td>27 Nov 00:00 Peru time</td></tr>
+        <tr><td>June app did</td><td><span class="pill bad">26 Nov 10:00</span></td><td><span class="pill bad">25 Nov evening</span></td></tr>
+      </tbody></table>
+    </div>
+  </div>
+  <div class="review" data-part="settings"></div>
+</section>
+
+<!-- NOT IN -->
+<section id="notin">
+  <div class="eyebrow">Not in this app</div>
+  <h2>Written down, built somewhere else</h2>
+  <div class="grid3">
+    <div class="panel stack"><span class="tag edp" style="align-self:flex-start">EDP</span><h3>Dispatch and cases</h3><p class="small muted">EDP assigns nurses and doctors to cases, using this app's roster to see who is on duty.</p></div>
+    <div class="panel stack"><span class="tag later" style="align-self:flex-start">Own app</span><h3>Pre-flight checklist builder</h3><p class="small muted">Stays its own app. Later it could read bag contents from here.</p></div>
+    <div class="panel stack"><span class="tag later" style="align-self:flex-start">With EDP F53</span><h3>The common REACH look</h3><p class="small muted">Medical apps keep their own colours. What ties the family together gets decided with EDP.</p></div>
+  </div>
+  <div class="review" data-part="notin"></div>
+</section>
+
+<!-- DONE -->
+<section id="done">
+  <div class="eyebrow">Your answer</div>
+  <h2>Is this the app you want?</h2>
+  <div class="panel small stack">
+    <b>Where each of your answers shows up</b>
+    <div class="scroll"><table class="tbl" style="min-width:520px"><tbody>
+      <tr><td class="mono">Q1</td><td>Old GitHub history left as is</td><td class="muted">no effect on the new app; it never holds real data in Git</td></tr>
+      <tr><td class="mono">Q2</td><td>A few medics and nurses, you as admin</td><td class="muted">Big picture</td></tr>
+      <tr><td class="mono">Q3</td><td>All five devices</td><td class="muted">Big picture: Mac and Windows first, phones and tablets later</td></tr>
+      <tr><td class="mono">Q4</td><td>Real installed program, no App Store</td><td class="muted">Big picture</td></tr>
+      <tr><td class="mono">Q5</td><td>One shared stock through a server</td><td class="muted">Big picture, No internet</td></tr>
+      <tr><td class="mono">Q6</td><td>C: one medical app, shared foundation</td><td class="muted">Inside the app, One list of people</td></tr>
+      <tr><td class="mono">Q7</td><td>Shared with EDP: people, items, bags ↔ aircraft, “used”, log</td><td class="muted">One list of people, Used on a case</td></tr>
+      <tr><td class="mono">Q8</td><td>Full controlled-drug register</td><td class="muted">Controlled drugs</td></tr>
+      <tr><td class="mono">Q9</td><td>Fully offline</td><td class="muted">No internet</td></tr>
+      <tr><td class="mono">Q10</td><td>“REACH Inventory”</td><td class="muted">Big picture, Country settings</td></tr>
+      <tr><td class="mono">Q11</td><td>Nobody uses the June app</td><td class="muted">June mistakes → rules (no patches, a fresh build)</td></tr>
+    </tbody></table></div>
+  </div>
+  <div class="review final" data-part="overall" data-final="1"></div>
+  <p class="small muted">After your “yes”: Stage 4. Each part gets its own small demo and a checklist of what “done” means. Still no real code.</p>
+</section>
+
+<footer>REACH Inventory · repo medical-suite · Stage 3 page · answers are saved for Claude to read back.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  // ---------- App-window mock ----------
+  const V = {
+    overview:{what:"The first screen: what needs attention today, at a glance.", html:`
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h3>Overview</h3><span class="tag ex">example numbers</span></div>
+      <div class="cards">
+        <div class="bagc"><b>Bag 1</b><span class="pill ok">Ready</span><span class="muted">all at required amount</span></div>
+        <div class="bagc"><b>Bag 2</b><span class="pill warn">2 low</span><span class="muted">2 lines below required</span></div>
+        <div class="bagc"><b>Bag 3</b><span class="pill bad">1 expired</span><span class="muted">replace before flight</span></div>
+        <div class="bagc"><b>Store</b><span class="pill warn">5 to reorder</span><span class="muted">below reorder level</span></div>
+        <div class="bagc"><b>Bag 4</b><span class="pill grey">Not set</span><span class="muted">no required amounts yet</span></div>
+      </div>
+      <p class="small muted">“Ready” means everything is at or above its required amount. A bag with no required amounts says “Not set”, never “Ready” (B1, B25).</p>`},
+    where:{what:"The Store and each MedEvac bag, with what's in them and what they should hold.", html:`
+      <h3>Bag 2 <span class="tag ex">example</span></h3>
+      <div class="scroll"><table class="tbl" style="min-width:420px"><thead><tr><th>Item</th><th>Lot</th><th>Expires</th><th style="text-align:right">Have</th><th style="text-align:right">Required</th><th></th></tr></thead><tbody>
+        <tr><td>Paracetamol 500 mg</td><td class="mono">PX2231</td><td class="mono">Mar 2027</td><td class="n">20</td><td class="n">20</td><td><span class="pill ok">OK</span></td></tr>
+        <tr><td>Ceftriaxone 1 g</td><td class="mono">CF0912</td><td class="mono">Jan 2027</td><td class="n">1</td><td class="n">2</td><td><span class="pill warn">Low</span></td></tr>
+        <tr><td>Sodium chloride 0.9% 500 ml</td><td class="mono">NS7781</td><td class="mono">Dec 2026</td><td class="n">3</td><td class="n">4</td><td><span class="pill warn">Low</span></td></tr>
+      </tbody></table></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="mini">+ Restock</span><span class="mini">− Dispense</span><span class="mini">Move to…</span><span class="mini">Export CSV</span></div>
+      <p class="small muted">Restock, Dispense, filters, sort and CSV export as in June. New: lines can be moved between bags and the Store (B24); amounts you type are checked, never quietly changed (B17).</p>`},
+    items:{what:"The one item list. EDP reads it when a medic records medication.", html:`
+      <h3>Item list <span class="tag ex">example</span></h3>
+      <div class="scroll"><table class="tbl" style="min-width:420px"><thead><tr><th>Item</th><th>Form</th><th>Unit</th><th>Controlled</th></tr></thead><tbody>
+        <tr><td>Adrenaline 1 mg/ml</td><td>ampoule</td><td>ampoule</td><td>no</td></tr>
+        <tr><td>Morphine 10 mg/ml</td><td>ampoule</td><td>ampoule</td><td><span class="pill warn">yes</span></td></tr>
+        <tr><td>Gauze swab 10×10</td><td>pack</td><td>pack</td><td>no</td></tr>
+      </tbody></table></div>
+      <p class="small muted">One spelling per unit, clear doses, no dates hiding in the lot field (B6).</p>`},
+    count:{what:"Counting a bag or the Store, by hand, line by line.", html:`
+      <h3>Count Bag 2 <span class="tag ex">example</span></h3>
+      <div class="scroll"><table class="tbl" style="min-width:380px"><thead><tr><th>Item</th><th style="text-align:right">App says</th><th style="text-align:right">You counted</th></tr></thead><tbody>
+        <tr><td>Paracetamol 500 mg</td><td class="n">20</td><td class="n">20</td></tr>
+        <tr><td>Ceftriaxone 1 g</td><td class="n">1</td><td class="n" style="color:var(--warn)">not counted yet</td></tr>
+      </tbody></table></div>
+      <p class="small muted">Typed counts are kept while you search or switch screens. An empty box means “not counted”, never 0 (B16).</p>`},
+    takes:{what:"Dated stock takes, frozen once saved, to compare then with now.", html:`
+      <h3>Stock takes <span class="tag ex">example</span></h3>
+      <table class="tbl"><tbody><tr><td class="mono">01 Nov 2026</td><td>Full stock take</td><td>signed by Nurse A</td></tr><tr><td class="mono">01 Oct 2026</td><td>Full stock take</td><td>signed by Nurse B</td></tr></tbody></table>
+      <p class="small muted">Kept on the server, so a new app version can never wipe them (B3).</p>`},
+    cd:{what:"The controlled-drug register (see the Controlled drugs part below).", html:`<h3>Controlled drugs</h3><p>Every movement: reason, who, witness, running balance. Lines can't be edited, only corrected.</p>`},
+    log:{what:"Who did what, when, across the whole app.", html:`
+      <h3>Activity <span class="tag ex">example</span></h3>
+      <table class="tbl"><tbody>
+        <tr><td class="mono">10:41</td><td>Nurse A changed Bag 2 · Ceftriaxone 1 g: <b>2 → 1</b></td></tr>
+        <tr><td class="mono">09:02</td><td>Doctor E deleted the item “Old swab” (kept in the log)</td></tr>
+      </tbody></table>
+      <p class="small muted">Old → new number on every change, deletes included (B18, B19).</p>`},
+    staff:{what:"The medical team's training and certificates. The people come from the shared REACH list.", html:`
+      <h3>Staff and training <span class="tag ex">example</span></h3>
+      <table class="tbl"><tbody>
+        <tr><td>Nurse A</td><td>Advanced life support</td><td><span class="pill bad">expired</span> <span class="small">renew</span></td></tr>
+        <tr><td>Nurse B</td><td>Advanced life support</td><td><span class="pill ok">valid to Aug 2027</span></td></tr>
+      </tbody></table>
+      <p class="small muted">An expired certificate can be renewed (B20).</p>`},
+    roster:{what:"Which nurse or doctor works when. Planned here; EDP reads it so the dispatcher only assigns someone who is on duty.", html:`
+      <h3>Roster <span class="tag edp">EDP reads this</span> <span class="tag ex">example</span></h3>
+      <table class="tbl"><thead><tr><th>Day</th><th>Day shift</th><th>Night shift</th></tr></thead><tbody><tr><td>Today</td><td>Nurse A, Doctor E</td><td>Nurse B</td></tr><tr><td>Tomorrow</td><td>Nurse B</td><td>Medic C</td></tr></tbody></table>
+      <p class="small muted">At 22:00 the dispatcher in EDP can pick Nurse B, not Nurse A.</p>`},
+    patients:{what:"Later, with stricter access. Not part of the first build.", html:`<h3>Patients <span class="tag later">later</span></h3><p class="muted">Every patient, whether from an EDP case or added by hand, gets one Patient File. It can be updated and grows over the years. All Patient Files are kept in the Patient Archive. Both come after Inventory, once who may see patient data is decided.</p>`},
+    settings:{what:"For you as admin: bags, categories, country settings, who has which role.", html:`
+      <h3>Settings</h3>
+      <table class="tbl"><tbody><tr><td>Base</td><td>PNG · time zone Port Moresby</td></tr><tr><td>Bags</td><td>8</td></tr><tr><td>Admins</td><td>at least one, always (B14)</td></tr></tbody></table>`}
+  };
+  V.home = {what:"The start screen with a card for each part, as in June.", html:`
+      <h3>Home</h3>
+      <div class="cards">
+        <div class="bagc"><b>Inventory</b><span class="muted">3 bags need attention</span></div>
+        <div class="bagc"><b>Staff</b><span class="muted">1 certificate expired</span></div>
+        <div class="bagc"><b>Roster</b><span class="muted">2 on duty today</span></div>
+        <div class="bagc" style="border-style:dashed"><b>Patients</b><span class="muted">later</span></div>
+      </div><span class="tag ex" style="align-self:flex-start">example</span>`};
+  const JL = {
+    home:"F1 Home cards, side menu and search. <b>Kept.</b> The “Acting as” switcher becomes a real sign-in.",
+    overview:"F4 Inventory overview. <b>Kept</b>, with readiness fixed (B1, B25).",
+    where:"F5 Inventory by location and F7 Restock / Dispense. <b>Kept.</b>",
+    items:"F6 Item page. <b>Kept.</b> Deletes now leave a trace (B18).",
+    count:"F8 Count stock. <b>Kept</b>, and typed counts are no longer lost (B16).",
+    takes:"F9 Stock takes. <b>Kept</b>, now stored on the server (B3).",
+    cd:"<b>New</b> (Q8). Not in the June app.",
+    log:"F12 Activity log. <b>Changed:</b> one log shared by all REACH apps, with old → new (B19).",
+    staff:"F2 Personnel and F3 Training. <b>Changed:</b> same screens, but the people come from the shared REACH list (Q6).",
+    roster:"F14 placeholder. <b>Changed:</b> becomes the real duty roster, kept in this app; EDP reads who is on duty.",
+    patients:"F14 placeholder. <b>Later:</b> Patient Files in a Patient Archive, with stricter access.",
+    settings:"F10 Settings and F11 Backup. <b>Kept</b>, plus country settings. Import shows what will change and asks first (B2, B15)."
+  };
+  const main = document.getElementById("mainview");
+  function show(k){
+    const v = V[k]; main.innerHTML = '<div class="june-line"><b>From the June app:</b> '+JL[k]+'</div><div class="what">'+v.what+'</div>'+v.html;
+    document.querySelectorAll(".side button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.v===k ? "true":"false"));
+  }
+  document.querySelectorAll(".side button").forEach(b=>b.addEventListener("click",()=>show(b.dataset.v)));
+  show("overview");
+
+  // ---------- June conformance table (F1–F14, same as CHANGELOG.md) ----------
+  const J = [
+    ["F1","Shell: side menu, Home cards, global search","kept","Same menu, Home and search, also working on small screens (B5)."],
+    ["F1","“Acting as” switcher","changed","Replaced by a real sign-in per person, so nobody can switch to Admin (B12, B23)."],
+    ["F2","Personnel: directory, profile, add, edit, archive","changed","Same screens; the people come from the one shared REACH list (Q6 = C)."],
+    ["F3","Training and courses, expiry badges","kept","Expired certificates can be renewed (B20)."],
+    ["F4","Inventory overview: totals, attention, bag readiness, expiring soon","kept","Readiness tells the truth (B1, B25); the Store gets reorder levels (B10)."],
+    ["F5","Inventory by location: filters, sort, CSV export","kept","Unchanged."],
+    ["F6","Item page: stock per place, add, edit, archive, delete","kept","Lines can move between bags (B24); deletes are logged (B18)."],
+    ["F7","Restock / Dispense (+ / −)","kept","Wrong amounts are refused with a message (B17)."],
+    ["F8","Count stock","kept","Counts survive searching and switching; empty means not counted (B16)."],
+    ["F9","Stock takes (frozen, then vs now)","kept","Stored on the server, so updates can't wipe them (B3)."],
+    ["F10","Settings: departments, courses, categories, bags","kept","Plus country settings (time zone, controlled-drug list)."],
+    ["F11","Backup export / import (file)","changed","The server keeps the data and its backups. Export to a file stays. Import (backup or the Excel lists) shows what will change and asks first (B2, B15)."],
+    ["F12","Activity log","changed","One log shared by all REACH apps, with old → new on every change (B19)."],
+    ["F13","Dispatch hook (code only)","changed","Becomes EDP's “used on a case” message (EDP F79), built later, never below zero silently (B11)."],
+    ["F14","Patient Archive placeholder","changed","A later part of this app, with stricter access: one Patient File per patient (from EDP or added by hand), growing over the years, kept in the Patient Archive."],
+    ["F14","Roster placeholder","changed","Becomes the real duty roster, kept in this app. EDP reads it so the dispatcher only assigns a nurse or doctor who is on duty."],
+    ["F14","Dispatch placeholder","out","EDP."],
+    ["F14","Calendar, Library placeholders","out","Shared REACH tools, to decide later (PLAN.md › Belongs elsewhere)."]
+  ];
+  const SL = {kept:"Kept", changed:"Changed", out:"Not in this app"};
+  document.getElementById("junetable").innerHTML = J.map(r=>`<tr><td class="mono">${r[0]}</td><td>${r[1]}</td><td><span class="st ${r[2]}">${SL[r[2]]}</span></td><td class="muted">${r[3]}</td></tr>`).join("");
+
+  // ---------- Rules (every B1–B26 exactly once) ----------
+  const R = [
+    {t:"Status tells the truth", ids:["B1","B7","B10","B25"], b:"A full bag shows “Low”; nothing ever “Ready”.", a:"At the required amount = Ready. No required amount = “Not set”. The Store has reorder levels."},
+    {t:"Nothing disappears without asking", ids:["B2","B3","B15","B16","B22"], b:"An import or a new version wipes all stock; a full disk loses saves silently.", a:"Import asks first and shows what changes. Updates never touch data. A failed save is shown."},
+    {t:"Every change leaves a trace", ids:["B18","B19","B21"], b:"Deletes vanish; edits don't say what the number was.", a:"Every change and delete is in the log, with old → new."},
+    {t:"What you type is what gets saved", ids:["B11","B17"], b:"−5 becomes 1, 2.7 becomes 2, overuse quietly stops at 0.", a:"Wrong input is refused with a message. Overuse raises a flag."},
+    {t:"Real sign-in and roles", ids:["B12","B14","B23"], b:"Anyone can switch to Admin; removing the last Admin locks everyone out.", a:"Each person signs in. There is always at least one Admin."},
+    {t:"Dates follow the base's clock", ids:["B13","B26"], b:"Items expire a day early in Peru; training dates overflow.", a:"Time zone is a country setting. Date maths is tested."},
+    {t:"Works on every screen, safely", ids:["B4","B5","B8"], b:"No menu on a phone; a quote in a name breaks buttons.", a:"Every screen size works. Typed text is only ever text."},
+    {t:"Everyday jobs are possible", ids:["B20","B24"], b:"Lines can't move between bags; expired certificates can't be renewed.", a:"Move lines, rename freely, renew certificates."},
+    {t:"Real data is private and clean", ids:["B6","B9"], b:"Real stock and staff on a public page; messy spreadsheet data.", a:"Real data only on the server, never in Git. Data is cleaned before import."}
+  ];
+  const seen = new Set(); R.forEach(r=>r.ids.forEach(i=>seen.add(i)));
+  if (seen.size !== 26) console.error("Rule mapping does not cover 26 bugs:", seen.size);
+  document.getElementById("rulegrid").innerHTML = R.map(r=>`
+    <div class="rule"><h3>${r.t}</h3><div class="ids">${r.ids.map(i=>"<span>"+i+"</span>").join("")}</div>
+    <div class="ba"><div class="before"><span class="lbl">June app</span>${r.b}</div><div class="after"><span class="lbl">New app</span>${r.a}</div></div></div>`).join("");
+
+  // ---------- Review strips (saved to db collection "stage3") ----------
+  const strips = Array.from(document.querySelectorAll(".review"));
+  const state = {};
+  strips.forEach(el=>{
+    const part = el.dataset.part, fin = !!el.dataset.final;
+    el.innerHTML = `<span class="q">${fin ? "Is this the app you want?" : "Is this part right?"}</span>
+      <span class="btns"><button type="button" class="yes" id="y-${part}" aria-pressed="false">${fin ? "Yes, that's it" : "Right"}</button>
+      <button type="button" class="no" id="n-${part}" aria-pressed="false">${fin ? "Not yet" : "Not right"}</button></span>
+      <textarea id="note-${part}" placeholder="${fin ? "Anything missing or wrong? (optional)" : "What's wrong or missing? (optional)"}"></textarea>
+      <span class="state" id="st-${part}">Not answered yet.</span>`;
+    el.querySelector(".yes").addEventListener("click",()=>pick(part,"right"));
+    el.querySelector(".no").addEventListener("click",()=>pick(part,"not"));
+    let t; el.querySelector("textarea").addEventListener("input",()=>{ clearTimeout(t); t=setTimeout(()=>save(part),800); });
+  });
+  function paint(part){
+    const s = state[part] || {};
+    const y = document.getElementById("y-"+part), n = document.getElementById("n-"+part);
+    if (!y) return;
+    y.setAttribute("aria-pressed", s.verdict==="right"?"true":"false");
+    n.setAttribute("aria-pressed", s.verdict==="not"?"true":"false");
+    const ta = document.getElementById("note-"+part);
+    if (document.activeElement !== ta && typeof s.note === "string") ta.value = s.note;
+  }
+  function msg(part, text){ const e=document.getElementById("st-"+part); if(e) e.textContent=text; }
+  function pick(part, v){ state[part] = Object.assign({}, state[part], {verdict:v}); paint(part); save(part); }
+  let db = null;
+  async function save(part){
+    const rec = {part, verdict:(state[part]||{}).verdict || null, note:document.getElementById("note-"+part).value, at:new Date().toISOString()};
+    state[part] = rec;
+    if (!db){ msg(part, "Shown here, but can't be saved in this view. Tell Claude in chat instead."); return; }
+    try{ await db.collection("stage3").doc(part).set(rec); msg(part, "Saved for Claude · "+new Date(rec.at).toLocaleTimeString()); }
+    catch(e){ msg(part, "Not saved ("+(e && e.code || "error")+"). Tell Claude in chat instead."); }
+  }
+  (async function(){
+    try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : null); }catch(e){ db = null; }
+    if (!db) return;
+    db.collection("stage3").onSnapshot(snap=>{
+      (snap.docs || []).forEach(d=>{
+        const r = typeof d.data === "function" ? d.data() : d.data;
+        if (!r || !r.part) return;
+        state[r.part] = r; paint(r.part);
+        if (r.verdict || r.note) msg(r.part, "Saved for Claude · "+(r.at ? new Date(r.at).toLocaleString() : ""));
+      });
+    }, ()=>{});
+  })();
+})();
+</script>

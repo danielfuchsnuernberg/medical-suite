@@ -1,0 +1,1027 @@
+<title>REACH Inventory Demo 3</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Stage 4 demo batch 3: F10 count stock, F11 stock takes, F12 controlled-drug register, F13 backup and import. Same base styles as batches 1 and 2 (outer page with dark mode; the app inside keeps the June look, light only, scoped to .app). */
+:root{
+  --bg:#F4F4F6; --surface:#FFFFFF; --surface-2:#FAFAFB;
+  --border:#E4E4EA; --border-strong:#D2D2DA;
+  --text:#1B1B23; --muted:#6B6B78; --faint:#9B9BA6;
+  --accent:#4F46E5; --accent-soft:#EEEDFD; --accent-border:#C9C6F7; --on-accent:#FFFFFF;
+  --ok:#1E9E62; --ok-soft:#E7F5EE; --warn:#C77A12; --warn-soft:#F8EFDF; --bad:#D14343; --bad-soft:#FAEAEA;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A;
+  --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A;
+  --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:64px}
+.wrap{max-width:1240px;margin:0 auto}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:28px;font-weight:700;letter-spacing:-.4px}
+h2{font-size:19px;font-weight:700}
+h3{font-size:14.5px;font-weight:600}
+p{margin:0;max-width:72ch}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:13px}
+.mono{font-family:var(--mono);font-size:12.5px}
+header.top{padding-block:32px 18px;display:flex;flex-direction:column;gap:10px}
+.fid{font-family:var(--mono);font-size:12px;font-weight:500;padding:1px 6px;border-radius:5px;background:var(--surface-2);border:1px solid var(--border-strong);white-space:nowrap}
+.bid{font-family:var(--mono);font-size:11.5px;padding:1px 6px;border-radius:5px;background:var(--bad-soft);color:var(--bad);white-space:nowrap}
+
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:start}
+@media (max-width:1000px){.stage{grid-template-columns:1fr}}
+.left{display:flex;flex-direction:column;gap:12px;min-width:0}
+.right{display:flex;flex-direction:column;gap:14px;min-width:0}
+@media (min-width:1001px){.right{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding-bottom:8px}}
+
+.world{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.world .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.world .lbl{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--faint);margin-right:4px}
+.wbtn{font:inherit;font-size:13px;padding:6px 11px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.wbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.wbtn.off[aria-pressed="true"]{background:var(--warn);border-color:var(--warn)}
+.wbtn.danger[aria-pressed="true"]{background:var(--bad);border-color:var(--bad)}
+.wbtn:disabled{opacity:.45;cursor:not-allowed}
+.devwrap{display:flex;justify-content:center}
+.devframe{width:100%;transition:max-width .2s}
+.devframe.phone{max-width:390px;border:10px solid #1b1b23;border-radius:34px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.exnote{font-size:12px;color:var(--faint)}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{font:inherit;font-size:13.5px;padding:7px 12px;border-radius:9px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.tab[aria-selected="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tab .cnt{font-size:11px;font-family:var(--mono)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.card ol{margin:0;padding-left:20px;font-size:13.5px;display:flex;flex-direction:column;gap:6px}
+.card ul{margin:0;padding-left:18px;font-size:13.5px}
+.k{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.checks{display:flex;flex-direction:column;gap:6px}
+.chk{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:13px;padding:8px 10px;border-radius:9px;background:var(--surface-2);border:1px solid var(--border)}
+.chk .box{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border-strong);display:grid;place-items:center;font-size:13px;font-weight:700;color:transparent}
+.chk.seen{background:var(--ok-soft);border-color:transparent}
+.chk.seen .box{background:var(--ok);border-color:var(--ok);color:#fff}
+.chk .was{display:block;font-size:12px;color:var(--muted)}
+.inline{font:inherit;font-size:12px;padding:1px 8px;border-radius:6px;border:1px solid var(--border-strong);background:var(--surface);color:var(--accent);cursor:pointer;margin-left:4px}
+
+.review{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--border-strong)}
+.review .q{font-size:13.5px;font-weight:600;flex:1 1 200px}
+.review .btns{display:flex;gap:6px}
+.review button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.review button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.review button[aria-pressed="true"].yes{background:var(--ok);border-color:var(--ok);color:var(--on-accent)}
+.review button[aria-pressed="true"].no{background:var(--warn);border-color:var(--warn);color:var(--on-accent)}
+.review textarea{flex:1 1 100%;min-height:54px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);resize:vertical}
+.review .state{font-size:12px;color:var(--faint);flex:1 1 100%}
+.final{border:2px solid var(--accent);background:var(--accent-soft)}
+.final .q{font-size:15.5px}
+footer{padding-top:28px;font-size:12.5px;color:var(--faint)}
+
+/* =================== THE APP (June look, scoped) =================== */
+.app{
+  --bg:#F4F4F6; --surface:#FFFFFF; --surface-2:#FAFAFB; --sidebar:#F0F0F3;
+  --border:#E4E4EA; --border-strong:#D2D2DA;
+  --text:#1B1B23; --text-muted:#6B6B78; --text-faint:#9B9BA6;
+  --accent:#4F46E5; --accent-hover:#4338CA; --accent-soft:#EEEDFD; --accent-border:#C9C6F7;
+  --success:#1E9E62; --success-soft:#E7F5EE; --warning:#C77A12; --warning-soft:#F8EFDF; --danger:#D14343; --danger-soft:#FAEAEA;
+  --info:#2563EB; --info-soft:#E6EEFD;
+  --r-sm:6px; --r-md:10px; --r-lg:14px; --shadow-md:0 6px 18px -8px rgba(20,20,35,.18); --shadow-pop:0 14px 40px -12px rgba(20,20,35,.28);
+  --focus-ring:0 0 0 3px var(--accent-soft);
+  color-scheme:light;
+  container-type:inline-size;container-name:app;
+  position:relative;height:660px;overflow:hidden;border-radius:12px;border:1px solid var(--border-strong);
+  background:var(--bg);color:var(--text);font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:13.5px;line-height:1.45;
+}
+.devframe.phone .app{height:720px;border:0;border-radius:24px}
+.app *{box-sizing:border-box}
+.app button{font-family:inherit}
+.app svg{flex:none}
+.app .shell{display:grid;grid-template-columns:220px 1fr;height:100%}
+.app .side{background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 10px;overflow:auto;z-index:40}
+.app .logo{display:flex;align-items:center;gap:10px;padding:4px 8px 14px;cursor:pointer;background:none;border:0;text-align:left;color:var(--text)}
+.app .logo .mark{width:30px;height:30px;border-radius:8px;background:var(--accent);display:grid;place-items:center;color:#fff}
+.app .logo .name{font-weight:700;font-size:14.5px}
+.app .logo .name small{display:block;font-weight:500;font-size:11px;color:var(--text-muted)}
+.app .navlabel{font-size:10.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-faint);padding:12px 10px 5px}
+.app .nav{display:flex;flex-direction:column;gap:2px}
+.app .nav button{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-sm);color:var(--text-muted);background:none;border:none;font-size:13.5px;font-weight:500;cursor:pointer;text-align:left;position:relative}
+.app .nav button svg{width:17px;height:17px}
+.app .nav button:hover{background:color-mix(in srgb,var(--accent) 8%,transparent);color:var(--text)}
+.app .nav button.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.app .nav button.active::before{content:"";position:absolute;left:-10px;top:6px;bottom:6px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
+.app .nav button .ext{margin-left:auto;font-size:9.5px;font-weight:600;letter-spacing:.4px;color:var(--text-faint);border:1px solid var(--border-strong);padding:1px 5px;border-radius:4px}
+.app .side .bottom{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}
+.app .main{display:flex;flex-direction:column;min-width:0;overflow:hidden;position:relative}
+.app .topbar{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface);flex:none;flex-wrap:wrap;position:relative;z-index:20}
+.app .topbar .crumb{font-size:11px;color:var(--text-muted)}
+.app .topbar h1{font-size:18px;font-weight:700;margin:0}
+.app .hamb{display:none;width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surface);place-items:center;cursor:pointer;color:var(--text)}
+.app .search{margin-left:auto;display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:6px 14px;color:var(--text-muted);min-width:200px;position:relative}
+.app .search svg{width:15px;height:15px}
+.app .search input{border:none;background:none;outline:none;font:inherit;color:var(--text);width:100%;min-width:0}
+.app .results{position:absolute;top:calc(100% + 6px);right:0;width:340px;max-width:calc(100cqw - 24px);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:var(--shadow-pop);max-height:320px;overflow:auto;z-index:60;padding:6px}
+.app .results .r{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;cursor:pointer;width:100%;background:none;border:0;text-align:left;color:var(--text)}
+.app .results .r:hover{background:var(--accent-soft)}
+.app .results .grp{font-size:10.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--text-faint);padding:6px 10px 2px}
+.app .results .none{padding:10px;color:var(--text-muted);font-size:13px}
+.app .sync{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding:5px 11px;border-radius:999px;border:0;cursor:pointer;white-space:nowrap}
+.app .sync i{width:8px;height:8px;border-radius:50%;background:currentColor}
+.app .sync.ok{background:var(--success-soft);color:var(--success)}
+.app .sync.off{background:var(--warning-soft);color:var(--warning)}
+.app .sync.busy{background:var(--info-soft);color:var(--info)}
+.app .sync.err{background:var(--danger-soft);color:var(--danger)}
+.app .me{display:flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:3px 10px 3px 3px;cursor:pointer;color:var(--text)}
+.app .avatar{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:11.5px;font-weight:600;color:#fff;background:var(--accent)}
+.app .me .who{font-size:12.5px;font-weight:600;line-height:1.1;text-align:left}
+.app .me .who small{display:block;font-weight:500;color:var(--text-muted);font-size:11px}
+.app .pop{position:absolute;top:calc(100% + 6px);right:12px;width:280px;max-width:calc(100cqw - 24px);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:var(--shadow-pop);z-index:70;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.app .pop .line{display:flex;justify-content:space-between;gap:10px}
+.app .pop .wait{font-size:12.5px;padding:6px 8px;border-radius:7px;background:var(--warning-soft)}
+.app .banner{display:flex;gap:10px;align-items:flex-start;padding:10px 20px;font-size:12.5px;border-bottom:1px solid var(--border)}
+.app .banner.off{background:var(--warning-soft);color:#7a4a08}
+.app .banner.info{background:var(--info-soft);color:#1d3f8a}
+.app .banner.okb{background:var(--success-soft);color:#14663f}
+.app .banner button{margin-left:auto;background:none;border:0;cursor:pointer;color:inherit;font-weight:700}
+.app .content{padding:20px;overflow:auto;flex:1}
+.app .scrim{position:absolute;inset:0;background:rgba(20,20,35,.35);z-index:35}
+.app .btn{font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:var(--r-sm);border:1px solid transparent;cursor:pointer;white-space:nowrap}
+.app .btn svg{width:15px;height:15px}
+.app .btn-primary{background:var(--accent);color:#fff}
+.app .btn-primary:hover{background:var(--accent-hover)}
+.app .btn-ghost{background:var(--surface);color:var(--text);border-color:var(--border)}
+.app .btn-sm{padding:4px 9px;font-size:12.5px}
+.app .btn:disabled{opacity:.45;cursor:not-allowed}
+.app .btn:focus-visible,.app .nav button:focus-visible,.app .appcard:focus-visible,.app .me:focus-visible,.app .sync:focus-visible{outline:none;box-shadow:0 0 0 3px var(--accent-border)}
+.app .badge{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.app .badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.app .b-success{background:var(--success-soft);color:var(--success)}
+.app .b-warning{background:var(--warning-soft);color:var(--warning)}
+.app .b-danger{background:var(--danger-soft);color:var(--danger)}
+.app .b-muted{background:#EDEDF1;color:var(--text-muted)}
+.app .b-accent{background:var(--accent-soft);color:var(--accent)}
+.app .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;margin-bottom:16px}
+.app .panel-head{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.app .panel-head h2{font-size:14.5px;font-weight:700;margin:0}
+.app .panel-head .sub{font-size:12px;color:var(--text-muted);margin-left:auto}
+.app .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.app .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px}
+.app .stat .k{font-size:11.5px;color:var(--text-muted);font-weight:600;display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0}
+.app .stat .k svg{width:14px;height:14px;color:var(--accent)}
+.app .stat .v{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-top:4px}
+.app .stat .v small{font-size:12.5px;font-weight:500;color:var(--text-muted)}
+.app .attention{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.app .att{display:flex;align-items:center;gap:9px;padding:9px 13px;border-radius:var(--r-md);font-size:12.5px;font-weight:500;flex:1;min-width:180px}
+.app .att svg{width:16px;height:16px}
+.app .att-danger{background:var(--danger-soft);color:var(--danger)}
+.app .att-warning{background:var(--warning-soft);color:var(--warning)}
+.app .cards{padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.app .appcard{text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;cursor:pointer;display:flex;flex-direction:column;gap:4px;color:var(--text)}
+.app .appcard:hover{border-color:var(--accent-border);box-shadow:var(--shadow-md)}
+.app .appcard-ic{width:40px;height:40px;border-radius:var(--r-md);background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;margin-bottom:8px}
+.app .appcard-ic svg{width:20px;height:20px}
+.app .appcard-name{font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:8px}
+.app .appcard-tag{font-size:9.5px;font-weight:600;letter-spacing:.4px;color:var(--text-faint);border:1px solid var(--border-strong);padding:1px 5px;border-radius:4px}
+.app .appcard-desc{font-size:12.5px;color:var(--text-muted)}
+.app .home-hero{position:relative;text-align:center;padding:36px 18px 30px;margin-bottom:20px;border-radius:var(--r-lg);overflow:hidden;background:linear-gradient(180deg,var(--accent-soft) 0%,var(--surface) 100%);border:1px solid var(--border)}
+.app .home-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.app .home-title{font-size:28px;font-weight:700;letter-spacing:-.6px;margin:0}
+.app .home-sub{color:var(--text-muted);font-size:13.5px;margin:6px 0 0}
+.app .home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.app .train-item{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border)}
+.app .train-item:last-child{border-bottom:none}
+.app .train-item .ti{flex:1;min-width:0}
+.app .train-item .t{font-weight:600;font-size:13px}
+.app .train-item .d{font-size:11.5px;color:var(--text-muted);margin-top:2px}
+.app table{width:100%;border-collapse:collapse;font-size:13px}
+.app thead th{text-align:left;font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--text-faint);font-weight:600;padding:9px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+.app tbody td{padding:9px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.app tbody tr:last-child td{border-bottom:none}
+.app .tscroll{overflow-x:auto}
+.app .qty{display:inline-flex;align-items:center;gap:6px}
+.app .qty b{min-width:28px;text-align:center;font-variant-numeric:tabular-nums}
+.app .iconbtn{width:28px;height:28px;border-radius:7px;border:1px solid var(--border-strong);background:var(--surface);cursor:pointer;display:grid;place-items:center;color:var(--text)}
+.app .iconbtn:hover{color:var(--accent);border-color:var(--accent-border)}
+.app .iconbtn svg{width:14px;height:14px}
+.app .filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.app select{font:inherit;font-size:12.5px;padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--text);cursor:pointer}
+.app .placeholder{text-align:center;padding:56px 20px;color:var(--text-muted)}
+.app .placeholder svg{width:40px;height:40px;color:var(--text-faint);margin-bottom:12px}
+.app .placeholder h2{font-size:17px;color:var(--text);margin:0 0 6px}
+.app .feed .item{display:flex;gap:11px;padding:10px 16px;border-bottom:1px solid var(--border);align-items:flex-start}
+.app .feed .item:last-child{border-bottom:none}
+.app .feed .ic{width:28px;height:28px;border-radius:7px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+.app .feed .ic svg{width:15px;height:15px}
+.app .feed .tx{font-size:12.5px;flex:1;min-width:0}
+.app .feed .tx .src{display:block;font-size:11px;color:var(--text-faint);margin-top:2px}
+.app .note{font-size:11.5px;color:var(--text-faint);margin:-6px 0 14px}
+.app .lock{display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--border)}
+.app .lock svg{width:22px;height:22px;color:var(--text-faint)}
+.app .msg{font-size:12.5px;padding:8px 12px;border-radius:8px;margin:0 16px 12px}
+.app .msg.err{background:var(--danger-soft);color:var(--danger)}
+.app .msg.okm{background:var(--success-soft);color:var(--success)}
+/* sign-in */
+.app .signin{height:100%;display:grid;place-items:center;padding:20px;background:linear-gradient(180deg,var(--accent-soft),var(--bg) 60%);overflow:auto}
+.app .sbox{width:min(380px,100%);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-md);padding:24px;display:flex;flex-direction:column;gap:12px}
+.app .sbox .logo{padding:0 0 6px;cursor:default}
+.app .field label{font-size:12.5px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:5px}
+.app .field input{font:inherit;font-size:13.5px;width:100%;padding:8px 11px;background:var(--surface);color:var(--text);border:1px solid var(--border-strong);border-radius:var(--r-sm)}
+.app .field input:focus{outline:none;box-shadow:var(--focus-ring);border-color:var(--accent)}
+.app .remember{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--text-muted)}
+.app .demo-people{display:flex;flex-direction:column;gap:6px;padding-top:10px;border-top:1px dashed var(--border-strong)}
+.app .demo-people .lbl{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-faint)}
+.app .dp{display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);cursor:pointer;text-align:left;color:var(--text);font-size:12.5px}
+.app .dp:hover{border-color:var(--accent-border)}
+.app .dp small{display:block;color:var(--text-muted);font-size:11.5px}
+.app .splash{height:100%;display:grid;place-items:center;background:var(--sidebar);color:var(--text-muted);font-size:13px;text-align:center}
+.app .splash .mark{width:46px;height:46px;border-radius:12px;background:var(--accent);display:grid;place-items:center;color:#fff;margin:0 auto 10px}
+.app .toasts{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:90;width:max-content;max-width:calc(100% - 24px)}
+.app .toast{background:#1B1B23;color:#fff;padding:9px 14px;border-radius:var(--r-sm);font-size:12.5px;box-shadow:var(--shadow-md)}
+.app .toast.danger{background:var(--danger)} .app .toast.success{background:var(--success)}
+.app .exband{position:absolute;right:10px;bottom:8px;font-size:10px;color:var(--text-faint);z-index:5;pointer-events:none}
+/* Phone and small windows: the menu becomes a drawer (rule B5) */
+@container app (max-width:720px){
+  .app .shell{grid-template-columns:1fr}
+  .app .side{position:absolute;left:0;top:0;bottom:0;width:250px;transform:translateX(-105%);transition:transform .2s;box-shadow:var(--shadow-pop)}
+  .app .shell.drawer .side{transform:none}
+  .app .hamb{display:grid}
+  .app .topbar{padding:10px 12px;gap:8px}
+  .app .topbar h1{font-size:16px}
+  .app .search{order:5;flex:1 1 100%;margin-left:0;min-width:0}
+  .app .tb-right{margin-left:auto}
+  .app .me .who{display:none}
+  .app .me{padding:3px}
+  .app .content{padding:14px}
+  .app .stats{grid-template-columns:repeat(2,1fr)}
+  .app .home-grid{grid-template-columns:1fr}
+  .app .home-title{font-size:23px}
+  .app .banner{padding:9px 12px}
+  .app .hide-sm{display:none}
+}
+.app .tb-right{display:flex;align-items:center;gap:8px}
+@media (prefers-reduced-motion:reduce){.app *{transition:none!important}}
+/* ---- batch 2 additions (June item page, modal, list screens) ---- */
+.app .b-info{background:var(--info-soft);color:var(--info)}
+.app .badge.nodot::before{display:none}
+.app .att-ok{background:var(--success-soft);color:var(--success)}
+.app .att-info{background:var(--info-soft);color:var(--info)}
+.app .stat.click,.app .att.click{cursor:pointer}
+.app .stat.ring,.app .att.ring{box-shadow:var(--focus-ring);border-color:var(--accent)}
+.app .chkl{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-muted);cursor:pointer}
+.app .spacer{margin-left:auto}
+.app tbody tr.click{cursor:pointer}
+.app tbody tr.click:hover{background:color-mix(in srgb,var(--accent) 4%,transparent)}
+.app tr.archived-row,.app .train-item.archived-row{opacity:.55}
+.app .nm{font-weight:600}
+.app .em{font-size:11.5px;color:var(--text-muted)}
+.app .muted{color:var(--text-muted)}
+.app .acts-cell{text-align:right;white-space:nowrap}
+.app .acts-cell .iconbtn{display:inline-grid;margin-left:4px}
+.app .backlink{display:inline-flex;align-items:center;gap:6px;color:var(--text-muted);background:none;border:none;cursor:pointer;font-size:13px;font-weight:500;margin-bottom:14px;padding:0}
+.app .backlink:hover{color:var(--accent)}
+.app .backlink svg{width:16px;height:16px}
+.app .prof-head{display:flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:18px 20px;margin-bottom:16px;flex-wrap:wrap}
+.app .prof-head h2{font-size:19px;font-weight:700;margin:0}
+.app .prof-head .role{color:var(--text-muted);font-size:13.5px;margin-top:3px}
+.app .prof-head .badges{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.app .prof-head .acts{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.app .prof-grid{display:grid;grid-template-columns:1fr 280px;gap:16px;align-items:start}
+.app .line-acts{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.app .empty{text-align:center;padding:28px 16px;color:var(--text-faint);font-size:13px}
+.app .overlay{position:absolute;inset:0;background:rgba(20,20,35,.4);display:grid;place-items:center;padding:16px;z-index:100}
+.app .modal{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow-pop);width:min(460px,100%);max-height:100%;overflow:auto}
+.app .modal-head{display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border)}
+.app .modal-head h2{font-size:15.5px;font-weight:700;margin:0}
+.app .modal-body{padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.app .modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--border)}
+.app .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.app .form-grid .full{grid-column:1 / -1}
+.app .field select{width:100%;font-size:13px;padding:8px 11px}
+.app .field .hint{font-size:11px;color:var(--text-faint);margin-top:4px}
+.app .field input.bad{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-soft)}
+.app .ferr{font-size:12.5px;color:var(--danger);background:var(--danger-soft);padding:8px 10px;border-radius:8px}
+.app .csv{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11.5px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;white-space:pre;overflow:auto;max-height:180px}
+.app .junemode{background:#FFF4D6;color:#6b4a00}
+@container app (max-width:720px){
+  .app .prof-grid{grid-template-columns:1fr}
+  .app .prof-head .acts{margin-left:0}
+  .app .form-grid{grid-template-columns:1fr}
+  .app .hide-sm-col{display:none}
+}
+.openq{font-size:13px;padding:10px 12px;border-radius:10px;background:var(--warn-soft);color:var(--text);border:1px solid var(--warn)}
+.openq b{color:var(--warn)}
+/* ---- batch 3 additions ---- */
+.app .cnt-in{width:76px;font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--text)}
+.app .cnt-in.typed{border-color:var(--accent);background:var(--accent-soft)}
+.app .cnt-in.bad{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-soft)}
+.app .savebar{position:sticky;bottom:0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px;background:var(--surface);border:1px solid var(--accent-border);border-radius:var(--r-md);box-shadow:var(--shadow-md);margin-top:10px}
+.app .delta-p{color:var(--success);font-weight:600} .app .delta-m{color:var(--danger);font-weight:600}
+.app .navbadge{margin-left:auto;min-width:18px;height:18px;border-radius:9px;background:var(--danger);color:#fff;font-size:10.5px;font-weight:700;display:grid;place-items:center;padding:0 5px}
+.app tr.pend td{background:var(--warning-soft)}
+.app tr.emerg td{background:var(--danger-soft)}
+.app tr.corr td{background:var(--info-soft)}
+.app tr.refused td{opacity:.55;text-decoration:line-through}
+.app .ledger td{font-size:12.5px}
+.app .ledger .n{font-family:ui-monospace,"SF Mono",Menlo,monospace;text-align:right}
+.app .cdcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:14px}
+.app .cdcard{text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:4px;color:var(--text)}
+.app .cdcard[aria-pressed="true"]{border-color:var(--accent);box-shadow:var(--focus-ring)}
+.app .cdcard .bal{font-size:22px;font-weight:700}
+.app .req{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-bottom:1px solid var(--border)}
+.app .req:last-child{border-bottom:0}
+.app .req .acts{display:flex;gap:6px;flex-wrap:wrap}
+.app .seg{display:flex;gap:6px;flex-wrap:wrap}
+.app .seg button{font:inherit;font-size:12.5px;padding:6px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);cursor:pointer;color:var(--text)}
+.app .seg button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
+.app .box2{border:1px dashed var(--accent-border);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;background:var(--surface-2)}
+.app .flagrow td{background:var(--danger-soft)}
+.app .warnrow td{background:var(--warning-soft)}
+.app .diff td.n{text-align:right;font-variant-numeric:tabular-nums}
+.app .okm2{font-size:12.5px;padding:8px 10px;border-radius:8px;background:var(--success-soft);color:#14663f}
+.app .lockm{font-size:12.5px;padding:8px 10px;border-radius:8px;background:#EDEDF1;color:var(--text-muted)}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Stage 4 · Demo batch 3 of 4 · Counting and records</div>
+  <h1>Where stock gets checked and recorded</h1>
+  <p class="muted">Working demos of <span class="fid">F10</span> count stock, <span class="fid">F11</span> stock takes, <span class="fid">F12</span> the controlled-drug register (built on your answers Q8 and Q13–Q16), and <span class="fid">F13</span> backup and import. The screens are the June ones where June had them. The register and the import preview are new.</p>
+  <p class="small muted">Switch who is signed in at the top left: Anna (nurse), Ben (doctor), Cara (Admin). All people, drugs and numbers are made up. Nothing is saved, except your answers in the right-hand column.</p>
+</header>
+
+<div class="stage">
+  <div class="left">
+    <div class="world" aria-label="Demo controls">
+      <div class="row"><span class="lbl">Signed in</span>
+        <button type="button" class="wbtn" data-user="P1" aria-pressed="true">Anna · nurse</button>
+        <button type="button" class="wbtn" data-user="P2" aria-pressed="false">Dr Ben · doctor</button>
+        <button type="button" class="wbtn" data-user="P3" aria-pressed="false">Cara · Admin</button>
+      </div>
+      <div class="row"><span class="lbl">Screen</span>
+        <button type="button" class="wbtn" data-dev="win" aria-pressed="true">Computer window</button>
+        <button type="button" class="wbtn" data-dev="phone" aria-pressed="false">Phone</button>
+      </div>
+      <div class="row"><span class="lbl">Around it</span>
+        <button type="button" class="wbtn" id="w-ben">Ben counts Bag 1 on another computer</button>
+        <button type="button" class="wbtn" id="w-update">Install a new version</button>
+        <button type="button" class="wbtn" id="w-reset">Start the demo again</button>
+      </div>
+    </div>
+    <div class="devwrap"><div class="devframe" id="devframe"><div class="app" id="app" aria-label="REACH Inventory demo app"></div></div></div>
+    <p class="exnote">“Signed in” stands for different people on their own computers or phones. In the real app everyone only ever sees their own sign-in.</p>
+  </div>
+
+  <div class="right">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div id="tour"></div>
+    <div class="review final" data-part="overall" data-final="1"></div>
+  </div>
+</div>
+<footer>REACH Inventory · Stage 4 · demo batch 3 (F10, F11, F12, F13) · 27 Nov 2026 · source <span class="mono">docs/stage4/demo-batch3-records.html</span></footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $ = (sel, root=document) => root.querySelector(sel);
+const I = {
+  home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  box:'<path d="M21 8V21H3V8"/><rect x="1" y="3" width="22" height="5" rx="1"/><path d="M10 12h4"/>',
+  file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/>',
+  roster:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M7 14h3v3H7z"/>',
+  clock:'<path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/>',
+  settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>', filter:'<path d="M3 6h18M6 12h12M9 18h6"/>', check:'<path d="M20 6L9 17l-5-5"/>',
+  alertT:'<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+  alertC:'<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>',
+  menu:'<path d="M3 6h18M3 12h18M3 18h18"/>', search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>',
+  pill:'<rect x="2" y="8" width="20" height="8" rx="4"/><path d="M12 8v8"/>', count:'<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/>',
+  archive:'<rect x="2" y="4" width="20" height="5" rx="1"/><path d="M4 9v11h16V9M10 13h4"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
+  back:'<path d="M19 12H5M12 19l-7-7 7-7"/>', lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'
+};
+const svg = (n,sw=1.8)=>`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${I[n]}</svg>`;
+
+// ======================= Dates: always local, never UTC (rule B13) =======================
+const DAY = 86400000;
+function sod(t){ const d=new Date(t); d.setHours(0,0,0,0); return d.getTime(); }
+const TODAY = sod(Date.now());
+function ymd(t){ const d=new Date(t); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function dLabel(t){ return new Date(t).toLocaleDateString([], {day:"numeric", month:"short", year:"numeric"}); }
+function dtLabel(t){ return new Date(t).toLocaleString([], {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"}); }
+
+// ======================= Demo data (made up) =======================
+function freshData(){
+  const now = Date.now();
+  return {
+    people:[
+      {id:"P1", first:"Anna", last:"Example", job:"Nurse", role:"Staff", col:"#4F46E5", doc:false, pin:null},
+      {id:"P2", first:"Ben", last:"Sample", job:"Doctor", role:"Manager", col:"#0F6E8C", doc:true, pin:"1234"},
+      {id:"P3", first:"Cara", last:"Demo", job:"Base manager", role:"Admin", col:"#1E9E62", doc:false, pin:null},
+      {id:"P4", first:"Dina", last:"Test", job:"Nurse", role:"Staff", col:"#C77A12", doc:false, pin:null},
+      {id:"P5", first:"Eva", last:"Trial", job:"Doctor (new)", role:"Staff", col:"#8B3FD9", doc:false, pin:"5678"}
+    ],
+    locs:[{id:"STORE",n:"Store (main)",store:true},{id:"BG1",n:"Bag 1 (adult)"},{id:"BG2",n:"Bag 2 (child)"}],
+    lines:[
+      {id:"L1", item:"Gauze 10×10 cm", unit:"pack", loc:"BG1", qty:12, par:10},
+      {id:"L2", item:"Saline 0.9% 500 ml", unit:"bag", loc:"BG1", qty:4, par:4},
+      {id:"L3", item:"Paracetamol 500 mg", unit:"tab", loc:"BG1", qty:20, par:20},
+      {id:"L4", item:"Oxygen mask, adult", unit:"", loc:"BG1", qty:2, par:2},
+      {id:"L5", item:"IV cannula 22G", unit:"", loc:"BG2", qty:3, par:4},
+      {id:"L6", item:"Glucose gel 15 g", unit:"tube", loc:"BG2", qty:2, par:2},
+      {id:"L7", item:"Bandage 8 cm", unit:"roll", loc:"STORE", qty:40, par:25},
+      {id:"L8", item:"Gloves, size M", unit:"box", loc:"STORE", qty:6, par:10},
+      {id:"L9", item:"Saline 0.9% 500 ml", unit:"bag", loc:"STORE", qty:24, par:12},
+      {id:"L10", item:"Gauze 10×10 cm", unit:"pack", loc:"STORE", qty:30, par:20}
+    ],
+    cds:[
+      {id:"CD1", name:"Morphine 10 mg/ml (example)", unit:"amp", loc:"STORE"},
+      {id:"CD2", name:"Fentanyl 100 mcg (example)", unit:"amp", loc:"BG1"},
+      {id:"CD3", name:"Ketamine 200 mg (example)", unit:"vial", loc:"STORE"}
+    ],
+    reg:[
+      {id:"R1", cd:"CD1", at:now-7*DAY, kind:"in", qty:6, by:"P3", doctor:null, how:null, witness:"P1", reason:"Delivery from supplier, invoice 4471", status:"booked"},
+      {id:"R2", cd:"CD1", at:now-1*DAY, kind:"out", qty:1, by:"P1", doctor:"P2", how:"remote", witness:"P4", reason:"Pain relief · EDP case 2026-117", status:"booked"},
+      {id:"R3", cd:"CD2", at:now-9*DAY, kind:"in", qty:2, by:"P2", doctor:null, how:null, witness:"P3", reason:"Bag 1 filled from the Store", status:"booked"},
+      {id:"R4", cd:"CD3", at:now-12*DAY, kind:"in", qty:3, by:"P3", doctor:null, how:null, witness:"P2", reason:"Delivery from supplier, invoice 4402", status:"booked"}
+    ],
+    takes:[{id:"ST1", label:"Stock take, October", at:TODAY-27*DAY+16*3600000, by:"P3",
+      lines:[["L1",10],["L2",4],["L3",22],["L4",2],["L5",4],["L6",2],["L7",45],["L8",8],["L9",20],["L10",30]].map(([id,q])=>({id,q}))}],
+    log:[], backups:[1,2,3].map(n=>TODAY-n*DAY+2*3600000)
+  };
+}
+let D, S;
+function fresh(){
+  D = freshData();
+  S = {user:"P1", view:"count", drawer:false, cntLoc:"BG1", cntQ:"", drafts:{}, cntResult:null, take:null, cd:"CD1", modal:null, modalWire:null, seq:100, conflict:null, imported:null, version:"1.0"};
+}
+const person = id => D.people.find(p=>p.id===id);
+const nm = id => { const p=person(id); return p ? (/^Doctor/.test(p.job)?"Dr ":"")+p.first+" "+p.last : "—"; };
+const me = () => person(S.user);
+const locName = id => (D.locs.find(l=>l.id===id)||{}).n || id;
+const cd = id => D.cds.find(c=>c.id===id);
+function nowT(){ return Date.now(); }
+
+// ======================= Tour events =======================
+const seen = {};
+function emit(ev){ if (!seen[ev]){ seen[ev]=true; paintTour(); } }
+
+// ======================= Register maths =======================
+function counts(st){ return st==="booked" || st==="emergency"; }
+function ledger(cdId){
+  let bal = 0;
+  return D.reg.filter(r=>r.cd===cdId).sort((a,b)=>a.at-b.at).map(r=>{
+    if (counts(r.status)) bal += (r.kind==="in" ? r.qty : r.kind==="out" ? -r.qty : r.qty);
+    return Object.assign({}, r, {bal: counts(r.status) ? bal : null});
+  });
+}
+function balance(cdId){ const l = ledger(cdId).filter(r=>r.bal!==null); return l.length ? l[l.length-1].bal : 0; }
+function waitingForDoctor(){ return D.reg.filter(r=>r.status==="pending" || r.status==="emergency"); }
+
+// ======================= Render shell =======================
+const root = document.getElementById("app");
+const NAV = [
+  {v:"home", t:"Home", i:"home"}, {grp:"Inventory"},
+  {v:"overview", t:"Overview", i:"box"}, {v:"where", t:"Store and bags", i:"filter"}, {v:"items", t:"Item list", i:"file"},
+  {v:"count", t:"Count a bag", i:"count"}, {v:"takes", t:"Stock takes", i:"clock"}, {v:"cd", t:"Controlled drugs", i:"pill"}, {v:"log", t:"Activity", i:"clock"},
+  {grp:"Team"}, {v:"staff", t:"Staff and training", i:"users"}, {v:"roster", t:"Roster", i:"roster", ext:"R2"},
+  {grp:"Later"}, {v:"patients", t:"Patients", i:"file", ext:"LATER"}
+];
+const TITLES = {home:["Workspace","Home"], overview:["Inventory","Overview"], where:["Inventory","Store and bags"], items:["Inventory","Item list"], count:["Inventory","Count a bag"], takes:["Inventory","Stock takes"], cd:["Inventory","Controlled drugs"], log:["Inventory","Activity"], staff:["Team","Staff and training"], roster:["Team","Roster"], patients:["Later","Patients"], settings:["Admin","Settings"]};
+const LATER = {home:"Shown in demo batch 1.", overview:"Shown in demo batch 2.", items:"Shown in demo batch 2.", log:"F4: demo batch 4.", staff:"F14, F15: demo batch 4.", roster:"F16: release 2, demo batch 4.", patients:"F18: later."};
+function draftCount(){ return Object.values(S.drafts).filter(v=>String(v).trim()!=="").length; }
+
+function render(){
+  const u = me(); const [crumb, title] = TITLES[S.view];
+  const wait = u.doc ? waitingForDoctor().length : 0;
+  const nav = n => n.grp ? `<div class="navlabel">${esc(n.grp)}</div>` :
+    `<button type="button" data-view="${n.v}" class="${S.view===n.v?"active":""}">${svg(n.i)}${esc(n.t)}${n.v==="cd"&&wait?`<span class="navbadge" aria-label="${wait} waiting for a doctor">${wait}</span>`:n.ext?`<span class="ext">${esc(n.ext)}</span>`:""}</button>`;
+  root.innerHTML = `<div class="shell ${S.drawer?"drawer":""}">
+    <aside class="side" aria-label="Menu">
+      <button type="button" class="logo" data-view="count"><div class="mark">${svg("plus",2.4)}</div><div class="name">REACH Inventory<small>PNG base · medical</small></div></button>
+      <nav class="nav">${NAV.map(nav).join("")}</nav>
+      <div class="bottom"><nav class="nav">${nav({v:"settings",t:"Settings",i:"settings"})}</nav></div>
+    </aside>
+    ${S.drawer?`<div class="scrim" id="scrim"></div>`:""}
+    <div class="main">
+      <header class="topbar">
+        <button type="button" class="hamb" id="hamb" aria-label="Open the menu">${svg("menu",2)}${wait?`<span class="navbadge" style="position:absolute;margin:-22px 0 0 22px">${wait}</span>`:""}</button>
+        <div><div class="crumb">${esc(crumb)}</div><h1>${esc(title)}</h1></div>
+        <div class="tb-right" style="margin-left:auto">
+          <span class="sync ok" style="cursor:default"><i></i><span class="hide-sm">Up to date</span></span>
+          <span class="me" style="cursor:default"><span class="avatar" style="background:${u.col}">${esc(u.first[0]+u.last[0])}</span><span class="who">${esc(nm(u.id))}<small>${esc(u.job)} · ${esc(u.role)}</small></span></span>
+        </div>
+      </header>
+      ${S.conflict?`<div class="banner off"><span>${esc(S.conflict)}</span><button type="button" id="bx" aria-label="Close">×</button></div>`:""}
+      <div class="content" id="content"></div>
+    </div>
+  </div>${S.modal?`<div class="overlay">${S.modal}</div>`:""}<div class="toasts" id="toasts"></div><span class="exband">made-up example data</span>`;
+  const c = $("#content", root);
+  ({count:vCount, takes:vTakes, cd:vCD, settings:vSettings, where:vWhere}[S.view] || vLater)(c);
+  root.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>go(b.dataset.view));
+  $("#hamb",root).onclick = ()=>{ S.drawer=true; render(); };
+  const sc = $("#scrim",root); if (sc) sc.onclick = ()=>{ S.drawer=false; render(); };
+  const bx = $("#bx",root); if (bx) bx.onclick = ()=>{ S.conflict=null; render(); };
+  if (S.modal && S.modalWire) S.modalWire();
+}
+function go(v){
+  if (S.view==="count" && v!=="count" && draftCount()){
+    const n = draftCount();
+    modal(`<div class="modal"><div class="modal-head"><h2>${n} count${n===1?"":"s"} not saved</h2></div><div class="modal-body"><p style="margin:0">You typed ${n} count${n===1?"":"s"} that ${n===1?"isn't":"aren't"} saved yet. If you leave now, what should happen to ${n===1?"it":"them"}?</p></div>
+      <div class="modal-foot"><button type="button" class="btn btn-ghost" id="mcancel">Keep counting</button><button type="button" class="btn btn-ghost" id="mdrop">Throw them away</button><button type="button" class="btn btn-primary" id="msave">Save counts</button></div></div>`, ()=>{
+      $("#mdrop",root).onclick = ()=>{ S.drafts={}; closeModal(true); S.view=v; S.drawer=false; render(); };
+      $("#msave",root).onclick = ()=>{ closeModal(true); if (saveCounts()) { S.view=v; S.drawer=false; render(); } };
+    });
+    emit("leaveAsk"); return;
+  }
+  S.view=v; S.drawer=false; S.take=null; render(); const c=$("#content",root); if (c) c.scrollTop=0;
+}
+function toast(t, kind){ setTimeout(()=>{ const box=$("#toasts",root); if(!box) return; const el=document.createElement("div"); el.className="toast "+(kind||""); el.textContent=t; box.appendChild(el); setTimeout(()=>el.remove(),3400); },0); }
+function modal(html, wire){ S.modal=html; S.modalWire=()=>{ const cn=$("#mcancel",root); if (cn) cn.onclick=()=>closeModal(); wire(); }; render(); const f=root.querySelector(".modal input:not([disabled]), .modal select"); if (f) f.focus(); }
+function closeModal(silent){ S.modal=null; S.modalWire=null; if (!silent) render(); }
+function vLater(c){ c.innerHTML = `<div class="placeholder">${svg("box")}<h2>${esc(TITLES[S.view][1])}</h2><p>${esc(LATER[S.view]||"")}</p></div>`; }
+function whole(raw, {min=0, max=Infinity}={}){
+  const s = String(raw).trim(); if (s==="") return {empty:true};
+  if (!/^-?\d+([.,]\d+)?$/.test(s)) return {err:`“${s}” isn't a number`};
+  const n = Number(s.replace(",",".")); if (!Number.isInteger(n)) return {err:`${s}: whole numbers only`};
+  if (n<min) return {err:`${n}: can't be below ${min}`}; if (n>max) return {err:`${n}: only ${max} there`, tooMany:true};
+  return {n};
+}
+function addLog(text){ D.log.push({text, who:nm(S.user), at:nowT()}); }
+
+// ======================= F10 Count a bag =======================
+function vCount(c){
+  const q = S.cntQ.trim().toLowerCase();
+  const all = D.lines.filter(l=>l.loc===S.cntLoc);
+  const rows = all.filter(l=>!q || l.item.toLowerCase().includes(q));
+  const n = draftCount();
+  c.innerHTML = `
+    ${S.cntResult?`<div class="okm2" style="margin-bottom:12px">${esc(S.cntResult)}</div>`:""}
+    <div class="filters">
+      <select id="cLoc" aria-label="Location">${D.locs.map(l=>`<option value="${l.id}" ${S.cntLoc===l.id?"selected":""}>${esc(l.n)}</option>`).join("")}</select>
+      <div class="search" style="margin-left:0;min-width:180px;flex:1 1 180px;max-width:300px">${svg("search",2)}<input id="cQ" placeholder="Find in this list…" value="${esc(S.cntQ)}" aria-label="Find in this list"></div>
+    </div>
+    <div class="panel"><div class="panel-head"><h2>Count ${esc(locName(S.cntLoc))}</h2><span class="sub" style="margin-left:0">${all.length} lines · type what you find, leave a box empty if you didn't count it</span></div>
+      <div class="tscroll"><table><thead><tr><th>Item</th><th>Expected</th><th>Counted</th><th>Difference</th></tr></thead><tbody>
+      ${rows.length?rows.map(l=>{ const v=S.drafts[l.id]; const w = v===undefined ? {empty:true} : whole(v); const typed = v!==undefined && String(v).trim()!=="";
+        const diff = (typed && w.n!==undefined) ? w.n - l.qty : null;
+        return `<tr><td><b>${esc(l.item)}</b>${l.unit?` <span class="muted" style="font-size:11.5px">${esc(l.unit)}</span>`:""}</td><td>${l.qty}</td>
+          <td><input class="cnt-in ${typed?(w.err?"bad":"typed"):""}" data-cnt="${l.id}" inputmode="numeric" value="${v===undefined?"":esc(v)}" aria-label="Counted ${esc(l.item)}" placeholder="—">${w.err?`<div style="font-size:11px;color:var(--danger);margin-top:3px">${esc(w.err)}</div>`:""}</td>
+          <td>${diff===null?`<span class="muted">${typed?"":"not counted"}</span>`:diff===0?`<span class="muted">same</span>`:`<span class="${diff>0?"delta-p":"delta-m"}">${diff>0?"+":""}${diff}</span>`}</td></tr>`; }).join("")
+        : `<tr><td colspan="4"><div class="empty">Nothing in this list matches “${esc(S.cntQ)}”. Your typed counts are still kept.</div></td></tr>`}
+      </tbody></table></div></div>
+    ${n?`<div class="savebar"><b>${n} count${n===1?"":"s"} typed, not saved yet</b><span class="muted" style="font-size:12.5px">Search, switch location or come back: they stay.</span><span class="spacer"></span><button type="button" class="btn btn-ghost btn-sm" id="cDrop">Throw away</button><button type="button" class="btn btn-primary btn-sm" id="cSave">${svg("check",2.2)}Save counts</button></div>`:""}`;
+  const keepCheck = ()=>{ if (draftCount()) emit("kept"); };
+  $("#cLoc",c).onchange = e=>{ S.cntLoc=e.target.value; S.cntResult=null; keepCheck(); render(); };
+  const cq = $("#cQ",c); cq.oninput = ()=>{ S.cntQ=cq.value; const p=cq.selectionStart; keepCheck(); render(); const q2=$("#cQ",root); q2.focus(); q2.setSelectionRange(p,p); };
+  c.querySelectorAll("[data-cnt]").forEach(inp=>{
+    inp.oninput = ()=>{ S.drafts[inp.dataset.cnt]=inp.value; S.cntResult=null; };
+    inp.onchange = ()=>{ const id=inp.dataset.cnt; render(); const again=$(`[data-cnt="${id}"]`,root); };
+  });
+  const cs=$("#cSave",c); if (cs) cs.onclick = ()=>saveCounts();
+  const cd2=$("#cDrop",c); if (cd2) cd2.onclick = ()=>{ S.drafts={}; render(); };
+}
+function saveCounts(){
+  const bad = Object.entries(S.drafts).filter(([id,v])=>String(v).trim()!=="" && whole(v).err);
+  if (bad.length){ toast(`${bad.length} count${bad.length===1?" isn't":"s aren't"} a whole number. Fix the red box first. Nothing was saved.`, "danger"); render(); return false; }
+  let changed=0, same=0; const locs = new Set();
+  Object.entries(S.drafts).forEach(([id,v])=>{ if (String(v).trim()==="") return; const l=D.lines.find(x=>x.id===id); const n=whole(v).n; locs.add(l.loc);
+    if (n!==l.qty){ addLog(`Counted ${l.item}, ${locName(l.loc)}: ${l.qty} → ${n}`); l.lastCount={by:S.user, at:nowT(), n, was:l.qty}; l.qty=n; changed++; } else { l.lastCount={by:S.user, at:nowT(), n, was:l.qty}; same++; } });
+  const notCounted = D.lines.filter(l=>locs.has(l.loc) && (S.drafts[l.id]===undefined || String(S.drafts[l.id]).trim()==="")).length;
+  S.drafts = {};
+  S.cntResult = `Saved: ${changed} changed, ${same} the same${notCounted?`, ${notCounted} not counted (left as they were, not set to 0)`:""}.`;
+  if (notCounted) emit("emptyNotZero");
+  emit("countSaved"); render(); return true;
+}
+function benCounts(){
+  const l = D.lines.find(x=>x.id==="L1"), ben = 9;
+  if (l.lastCount && l.lastCount.by!=="P2"){
+    const mine = l.lastCount;
+    addLog(`Counted ${l.item}, ${locName(l.loc)}: ${l.qty} → ${ben} (Dr Ben Sample, other computer)`);
+    S.conflict = `Two counts of ${l.item} in ${locName(l.loc)} disagree: ${nm(mine.by)} counted ${mine.n} at ${new Date(mine.at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}, Dr Ben Sample counted ${ben} a few minutes later on another computer. The later count (${ben}) is used, both are kept in the history. Please check the bag.`;
+    l.qty = ben; l.lastCount = {by:"P2", at:nowT(), n:ben}; emit("countConflict");
+  } else {
+    addLog(`Counted ${l.item}, ${locName(l.loc)}: ${l.qty} → ${ben} (Dr Ben Sample, other computer)`); l.qty = ben; l.lastCount = {by:"P2", at:nowT(), n:ben};
+    toast(`Ben counted ${l.item} in Bag 1 on another computer: ${ben}. Count it here too, then press this button again to see two counts that disagree.`);
+  }
+  render();
+}
+
+// ======================= F11 Stock takes =======================
+function vTakes(c){
+  if (S.take){ return vTake(c); }
+  c.innerHTML = `<div class="panel"><div class="panel-head"><h2>Stock takes</h2><span class="sub" style="margin-left:0">frozen, dated counts</span><span class="spacer"></span><button type="button" class="btn btn-primary btn-sm" id="freeze">${svg("archive",2)}Freeze stock take now</button></div>
+    <p style="margin:0;padding:10px 16px 12px;color:var(--text-muted);font-size:12.5px">A stock take freezes every count with the date and who took it, like the monthly columns in the old spreadsheets. Live stock keeps moving; a stock take never changes. Kept on the server.</p>
+    ${D.takes.slice().reverse().map(s=>`<div class="train-item" data-take="${s.id}" style="cursor:pointer"><div class="ti"><div class="t">${esc(s.label)}</div><div class="d">${esc(dtLabel(s.at))} · ${esc(nm(s.by))} · ${s.lines.length} lines</div></div><span class="badge b-muted nodot">${esc(s.id)}</span></div>`).join("")}</div>`;
+  $("#freeze",c).onclick = ()=>{
+    const def = "Stock take, " + dLabel(TODAY);
+    modal(`<div class="modal"><div class="modal-head"><h2>Freeze a stock take</h2></div><div class="modal-body"><p style="margin:0;font-size:13px;color:var(--text-muted)">Captures all ${D.lines.length} stock lines (Store and bags) as a dated record that can't be changed.${draftCount()?` <b style="color:var(--warning)">${draftCount()} typed counts aren't saved yet and won't be in it.</b>`:""}</p>
+      <div class="field"><label for="slab">Label</label><input id="slab" value="${esc(def)}"></div></div>
+      <div class="modal-foot"><button type="button" class="btn btn-ghost" id="mcancel">Cancel</button><button type="button" class="btn btn-primary" id="mgo">Freeze it</button></div></div>`, ()=>{
+      $("#mgo",root).onclick = ()=>{ const id="ST"+(++S.seq); D.takes.push({id, label:$("#slab",root).value.trim()||def, at:nowT(), by:S.user, lines:D.lines.map(l=>({id:l.id, q:l.qty}))});
+        addLog(`Froze a stock take: ${D.lines.length} lines`); S.take=id; closeModal(true); render(); toast("Stock take frozen", "success"); emit("frozen"); };
+    });
+  };
+  c.querySelectorAll("[data-take]").forEach(r=>r.onclick=()=>{ S.take=r.dataset.take; render(); });
+}
+function vTake(c){
+  const s = D.takes.find(x=>x.id===S.take);
+  c.innerHTML = `<button type="button" class="backlink" id="back">${svg("back")}Back to stock takes</button>
+    <div class="prof-head"><div class="appcard-ic" style="width:52px;height:52px;margin:0">${svg("clock")}</div><div><h2>${esc(s.label)}</h2><div class="role">Frozen ${esc(dtLabel(s.at))} · by ${esc(nm(s.by))}</div><div class="badges"><span class="badge b-accent nodot">${s.lines.length} lines</span><span class="badge b-muted nodot">${svg("lock",2)} can't be changed</span></div></div>
+      <div class="acts"><button type="button" class="btn btn-ghost" id="scsv">${svg("download",2)}Export CSV</button></div></div>
+    <div class="panel"><div class="panel-head"><h2>Frozen counts</h2><span class="sub">“then” vs “now”: what's changed since</span></div><div class="tscroll"><table><thead><tr><th>Item</th><th>Location</th><th>Then</th><th>Now</th><th>Change</th></tr></thead><tbody>
+      ${s.lines.map(x=>{ const l=D.lines.find(y=>y.id===x.id); const now=l?l.qty:null; const d=now===null?null:now-x.q;
+        return `<tr><td>${esc(l?l.item:"(line removed)")}</td><td class="muted">${esc(l?locName(l.loc):"")}</td><td><b>${x.q}</b></td><td>${now===null?"—":now}</td><td>${d===null?'<span class="muted">line removed</span>':d===0?'<span class="muted">no change</span>':`<span class="badge ${d>0?"b-success":"b-danger"} nodot">${d>0?"+":""}${d}</span>`}</td></tr>`; }).join("")}
+    </tbody></table></div></div>`;
+  $("#back",c).onclick = ()=>{ S.take=null; render(); };
+  $("#scsv",c).onclick = ()=>{
+    const fname = `stock-take-${ymd(s.at)}.csv`;
+    const rows = ["Item,Location,Counted,Date"].concat(s.lines.map(x=>{const l=D.lines.find(y=>y.id===x.id); return `${l?l.item:"?"},${l?locName(l.loc):""},${x.q},${ymd(s.at)}`;}));
+    modal(`<div class="modal"><div class="modal-head"><h2>Export stock take</h2></div><div class="modal-body"><p style="margin:0;font-size:13px">File: <b>${esc(fname)}</b></p><div class="csv">${esc(rows.slice(0,7).join("\n"))}${rows.length>7?"\n…":""}</div><p style="margin:0;color:var(--text-muted);font-size:12.5px">In the real program this saves the file to your computer.</p></div><div class="modal-foot"><button type="button" class="btn btn-primary" id="mcancel">Done</button></div></div>`, ()=>{});
+    emit("takeCsv");
+  };
+  emit("thenNow");
+}
+
+// ======================= Store and bags (small, to see stock) =======================
+function vWhere(c){
+  c.innerHTML = `<p class="note">Simplified here (full screen in batch 2).</p>${S.imported?`<div class="okm2" style="margin-bottom:12px">${esc(S.imported)}</div>`:""}<div class="panel"><div class="tscroll"><table><thead><tr><th>Item</th><th>Location</th><th>On hand</th><th>Required</th></tr></thead><tbody>
+    ${D.lines.map(l=>`<tr><td><b>${esc(l.item)}</b></td><td class="muted">${esc(locName(l.loc))}</td><td>${l.qty}</td><td class="muted">${l.par}</td></tr>`).join("")}</tbody></table></div></div>`;
+  if (S.imported) emit("b2");
+}
+
+// ======================= F12 Controlled-drug register =======================
+function vCD(c){
+  const u = me(); const L = ledger(S.cd); const item = cd(S.cd);
+  const waits = waitingForDoctor();
+  const pendingHere = waits.filter(r=>r.cd===S.cd);
+  const docs = D.people.filter(p=>p.doc);
+  c.innerHTML = `
+    ${u.doc && waits.length ? `<div class="panel" style="border-color:var(--danger)"><div class="panel-head" style="background:var(--danger-soft)"><h2 style="color:var(--danger)">Waiting for a doctor (${waits.length})</h2><span class="sub">you're a doctor, so these come to you</span></div>
+      ${waits.map(r=>`<div class="req"><div><b>${esc(nm(r.by))}</b> ${r.status==="emergency"?"<b style=\"color:var(--danger)\">gave as an emergency</b>":"asks to take out"} <b>${r.qty} × ${esc(cd(r.cd).name)}</b> · ${esc(r.reason)}</div>
+        <div style="font-size:12px;color:var(--text-muted)">${esc(dtLabel(r.at))} · witness ${esc(nm(r.witness))}${r.status==="emergency"?" · already booked, waiting for approval afterwards":""}</div>
+        <div class="acts"><button type="button" class="btn btn-sm" style="background:var(--success);color:#fff" data-appr="${r.id}">Approve</button><button type="button" class="btn btn-ghost btn-sm" data-ask="${r.id}">Ask ${esc(person(r.by).first)}</button>${r.status==="pending"?`<button type="button" class="btn btn-ghost btn-sm" style="color:var(--danger);border-color:var(--danger)" data-refuse="${r.id}">Refuse</button>`:""}</div></div>`).join("")}</div>`:""}
+    <div class="cdcards">${D.cds.map(x=>`<button type="button" class="cdcard" data-cd="${x.id}" aria-pressed="${x.id===S.cd}"><span style="font-weight:700;font-size:13.5px">${esc(x.name)}</span><span class="bal">${balance(x.id)} <small style="font-size:12px;color:var(--text-muted);font-weight:500">${esc(x.unit)} · ${esc(locName(x.loc))}</small></span>${waits.some(r=>r.cd===x.id)?`<span class="badge b-danger">waiting for doctor</span>`:""}</button>`).join("")}</div>
+    <div class="panel"><div class="panel-head"><h2>Register: ${esc(item.name)}</h2><span class="sub" style="margin-left:0">balance ${balance(S.cd)} ${esc(item.unit)}</span><span class="spacer"></span>
+      <button type="button" class="btn btn-ghost btn-sm" id="rin">${svg("plus",2.2)}Receive</button><button type="button" class="btn btn-primary btn-sm" id="rout">${svg("minus",2.2)}Take out</button></div>
+      <div class="tscroll"><table class="ledger"><thead><tr><th>When</th><th>In / out</th><th class="n">Qty</th><th class="n">Balance</th><th>Taken out / in by</th><th>Doctor</th><th>Witness</th><th>Reason</th>${u.doc?"<th></th>":""}</tr></thead><tbody>
+      ${L.map(r=>`<tr class="${r.status==="pending"?"pend":r.status==="emergency"?"emerg":r.status==="refused"?"refused":r.kind==="corr"?"corr":""}">
+        <td>${esc(dtLabel(r.at))}</td><td>${r.kind==="in"?"In":r.kind==="out"?"Out":"Correction"}${r.status==="pending"?`<br><span class="badge b-warning nodot">waiting for doctor</span>`:r.status==="emergency"?`<br><span class="badge b-danger nodot">emergency · waiting for doctor</span>`:r.status==="refused"?`<br><span class="badge b-muted nodot">refused</span>`:""}</td>
+        <td class="n">${r.kind==="corr"?(r.qty>0?"+":"")+r.qty:r.qty}</td><td class="n">${r.bal===null?"—":r.bal}</td><td>${esc(nm(r.by))}</td>
+        <td>${r.doctor?esc(nm(r.doctor))+`<br><span class="muted" style="font-size:11px">${r.how==="pin"?"in the room (PIN)":r.how==="remote"?"from own device":r.how==="self"?(r.kind==="corr"?"made the correction":"took it out personally"):r.how==="after"?"approved afterwards":""}</span>`:r.kind==="in"?'<span class="muted">not needed</span>':"—"}</td>
+        <td>${esc(nm(r.witness))}</td><td style="max-width:200px">${esc(r.reason)}${r.ref?`<br><span class="muted" style="font-size:11px">corrects ${esc(r.ref)}</span>`:""}</td>
+        ${u.doc?`<td>${counts(r.status)&&r.kind!=="corr"?`<button type="button" class="btn btn-ghost btn-sm" data-corr="${r.id}">Correct</button>`:""}</td>`:""}</tr>`).join("")}
+      </tbody></table></div>
+      <p style="margin:0;padding:10px 16px;font-size:12px;color:var(--text-muted)">${svg("lock",2)} Lines can't be edited or deleted. A mistake is fixed by a doctor adding a correction line.</p></div>
+    <div class="panel"><div class="panel-head"><h2>Who may approve controlled drugs</h2><span class="sub">only a doctor can give this right, never to themselves</span></div>
+      <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px">
+        ${docs.map(p=>`<div style="display:flex;gap:8px;align-items:center"><span class="avatar" style="background:${p.col}">${esc(p.first[0]+p.last[0])}</span><b>${esc(nm(p.id))}</b><span class="muted" style="font-size:12px">${esc(p.job)}</span>${u.doc?`<button type="button" class="iconbtn" style="margin-left:auto;color:var(--danger)" data-revoke="${p.id}" title="Remove the right" aria-label="Remove ${esc(nm(p.id))}'s right to approve">✕</button>`:""}</div>`).join("")}
+        ${u.doc ? `<div class="box2"><label style="font-size:12.5px;font-weight:600;color:var(--text-muted)" for="grantSel">Give the right to another person</label><div style="display:flex;gap:8px;flex-wrap:wrap"><select id="grantSel">${D.people.filter(p=>!p.doc&&p.id!==u.id).map(p=>`<option value="${p.id}">${esc(p.first+" "+p.last)} · ${esc(p.job)}</option>`).join("")}</select><button type="button" class="btn btn-ghost btn-sm" id="grant">Give the right</button></div><span class="muted" style="font-size:11.5px">You're not in this list: nobody can give the right to themselves.</span></div>`
+          : `<div class="lockm">${svg("lock",2)} Only a doctor can change this list.${u.role==="Admin"?" Being Admin doesn't change that.":""}</div>`}
+      </div></div>`;
+  if (u.role==="Admin" && !u.doc) emit("adminNoRight");
+  c.querySelectorAll("[data-cd]").forEach(b=>b.onclick=()=>{ S.cd=b.dataset.cd; render(); });
+  $("#rout",c).onclick = ()=>openTakeOut();
+  $("#rin",c).onclick = ()=>openReceive();
+  c.querySelectorAll("[data-appr]").forEach(b=>b.onclick=()=>approve(b.dataset.appr));
+  c.querySelectorAll("[data-refuse]").forEach(b=>b.onclick=()=>{ const r=D.reg.find(x=>x.id===b.dataset.refuse); r.status="refused"; r.doctor=S.user; r.how="remote"; addLog(`Refused: ${r.qty} × ${cd(r.cd).name} for ${nm(r.by)}`); toast("Refused. Anna is told; nothing comes off the balance."); render(); });
+  c.querySelectorAll("[data-ask]").forEach(b=>b.onclick=()=>{ const r=D.reg.find(x=>x.id===b.dataset.ask); toast(`A message goes to ${nm(r.by)}: “Please call me about this request.” It stays waiting.`); });
+  c.querySelectorAll("[data-corr]").forEach(b=>b.onclick=()=>openCorrection(b.dataset.corr));
+  c.querySelectorAll("[data-revoke]").forEach(b=>b.onclick=()=>openRevoke(b.dataset.revoke));
+  const g=$("#grant",c); if (g) g.onclick = ()=>{ const p=person($("#grantSel",root).value); p.doc=true; if(!p.pin) p.pin="5678"; addLog(`${nm(S.user)} gave ${p.first} ${p.last} the right to approve controlled drugs`); toast(`${p.first} ${p.last} may now approve controlled drugs. Logged, and every doctor is told.`, "success"); render(); emit("grant"); };
+}
+function openRevoke(pid){
+  const p = person(pid), docs = D.people.filter(x=>x.doc);
+  if (docs.length===1){ modal(`<div class="modal"><div class="modal-head"><h2>Can't remove the last doctor</h2></div><div class="modal-body"><div class="ferr">${esc(nm(pid))} is the only person who can approve controlled drugs. Without them nobody could. Give the right to someone else first.</div></div><div class="modal-foot"><button type="button" class="btn btn-primary" id="mcancel">OK</button></div></div>`, ()=>{}); emit("revoke"); return; }
+  const self = pid===S.user;
+  modal(`<div class="modal"><div class="modal-head"><h2>Remove the right?</h2></div><div class="modal-body"><p style="margin:0">${self?"You will":esc(nm(pid))+" will"} no longer be able to approve controlled drugs. Requests already approved stay as they are in the register.</p><p style="margin:0;color:var(--text-muted);font-size:12.5px">Logged, and every doctor is told.</p></div><div class="modal-foot"><button type="button" class="btn btn-ghost" id="mcancel">Cancel</button><button type="button" class="btn btn-primary" id="mgo" style="background:var(--danger)">Remove</button></div></div>`, ()=>{
+    $("#mgo",root).onclick = ()=>{ p.doc=false; addLog(`${nm(S.user)} removed ${p.first} ${p.last}'s right to approve controlled drugs`); closeModal(true); render(); toast(`${p.first} ${p.last} can no longer approve controlled drugs.`, "success"); emit("revoke"); };
+  });
+}
+function witnessOptions(selected){ return `<option value="">Pick who saw it…</option>`+D.people.map(p=>`<option value="${p.id}" ${selected===p.id?"selected":""}>${esc(nm(p.id))}${p.id===S.user?" (you)":""}</option>`).join(""); }
+function openTakeOut(){
+  const u = me(), item = cd(S.cd), bal = balance(S.cd);
+  let mode = u.doc ? "self" : "here";
+  const draw = ()=>{
+    const docs = D.people.filter(p=>p.doc && p.id!==S.user);
+    const sec = u.doc ? `<div class="okm2">You're a doctor: you take it out yourself. A witness still signs.</div>` : `
+      <div class="box2"><span style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent)">Doctor's approval</span>
+        <div class="seg"><button type="button" data-mode="here" aria-pressed="${mode==="here"}">Doctor is here</button><button type="button" data-mode="ask" aria-pressed="${mode==="ask"}">Ask a doctor</button><button type="button" data-mode="emerg" aria-pressed="${mode==="emerg"}">Emergency, no doctor reachable</button></div>
+        ${mode==="here"?`<div class="form-grid"><div class="field"><label for="tdoc">Doctor</label><select id="tdoc">${docs.map(p=>`<option value="${p.id}">${esc(nm(p.id))}</option>`).join("")}</select></div><div class="field"><label for="tpin">Doctor types own PIN</label><input id="tpin" type="password" inputmode="numeric" placeholder="demo: Ben 1234"></div></div>`
+        : mode==="ask"?`<div class="field"><label for="tdoc">Send the request to</label><select id="tdoc">${docs.map(p=>`<option value="${p.id}">${esc(nm(p.id))}</option>`).join("")}</select><div class="hint">It pops up on the doctor's phone or Mac. Nothing comes off the balance until it's approved.</div></div>`
+        : `<div class="lockm" style="background:var(--danger-soft);color:var(--danger)">Booked straight away and flagged red “waiting for doctor” until a doctor approves or queries it. A reason and a witness are required.</div>`}
+      </div>`;
+    modal(`<div class="modal" style="width:min(520px,100%)"><div class="modal-head"><h2>Take out: ${esc(item.name)}</h2></div><div class="modal-body">
+      <p style="margin:0;font-size:13px;color:var(--text-muted)">${esc(locName(item.loc))} · balance <b style="color:var(--text)">${bal}</b> ${esc(item.unit)}</p>
+      <div class="form-grid"><div class="field"><label for="tqty">How many</label><input id="tqty" inputmode="numeric" value="1"></div>
+        <div class="field"><label for="twit">Witness (was there)</label><select id="twit">${witnessOptions("")}</select></div>
+        <div class="field full"><label for="trea">Reason / case</label><input id="trea" placeholder="e.g. pain relief · EDP case number"></div></div>
+      ${sec}<div id="terr"></div></div>
+      <div class="modal-foot"><button type="button" class="btn btn-ghost" id="mcancel">Cancel</button><button type="button" class="btn btn-primary" id="mgo">${u.doc?"Take out":mode==="ask"?"Send for approval":mode==="emerg"?"Book as emergency":"Take out"}</button></div></div>`, ()=>{
+      root.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{ const keep={q:$("#tqty",root).value, w:$("#twit",root).value, r:$("#trea",root).value}; mode=b.dataset.mode; draw(); $("#tqty",root).value=keep.q; $("#twit",root).value=keep.w; $("#trea",root).value=keep.r; });
+      $("#mgo",root).onclick = ()=>{
+        const err = m => { $("#terr",root).innerHTML = `<div class="ferr">${esc(m)} Nothing was booked.</div>`; };
+        const q = whole($("#tqty",root).value, {min:1, max:bal});
+        if (q.empty) return err("Type how many."); if (q.err) return err(q.err+".");
+        const w = $("#twit",root).value, reason = $("#trea",root).value.trim();
+        if (!w){ emit("witnessRule"); return err("A witness has to sign: someone who was there."); }
+        if (w===S.user){ emit("witnessRule"); return err("You can't be your own witness. Pick a second person."); }
+        if (!reason) return err("Give a reason or case.");
+        const base = {id:"R"+(++S.seq), cd:S.cd, at:nowT(), kind:"out", qty:q.n, by:S.user, witness:w, reason};
+        if (u.doc){
+          if (w===S.user) return;
+          D.reg.push(Object.assign(base, {doctor:S.user, how:"self", status:"booked"})); addLog(`Took out ${q.n} × ${item.name} (doctor, witness ${nm(w)})`);
+          closeModal(true); render(); toast("Booked. Balance now "+balance(S.cd), "success"); emit("doctorSelf"); return;
+        }
+        if (mode==="here"){
+          const d = person($("#tdoc",root).value);
+          if (!d) return err("No doctor listed.");
+          if (w===d.id){ emit("witnessRule"); return err("The approving doctor can't also be the witness. Pick a second person."); }
+          if ($("#tpin",root).value!==d.pin) return err(`That isn't ${nm(d.id)}'s PIN.`);
+          D.reg.push(Object.assign(base, {doctor:d.id, how:"pin", status:"booked"})); addLog(`Took out ${q.n} × ${item.name}, approved in the room by ${nm(d.id)}`);
+          closeModal(true); render(); toast("Approved in the room and booked. Balance now "+balance(S.cd), "success"); emit("approvedPin"); return;
+        }
+        if (mode==="ask"){
+          const d = person($("#tdoc",root).value);
+          if (w===d.id){ emit("witnessRule"); return err("The approving doctor can't also be the witness."); }
+          D.reg.push(Object.assign(base, {doctor:null, ask:d.id, how:null, status:"pending"})); addLog(`Asked ${nm(d.id)} to approve ${q.n} × ${item.name}`);
+          closeModal(true); render(); toast(`Sent to ${nm(d.id)}. Switch “Signed in” to Dr Ben to see it arrive.`); emit("requested"); return;
+        }
+        D.reg.push(Object.assign(base, {doctor:null, how:null, status:"emergency"})); addLog(`Emergency: took out ${q.n} × ${item.name}, waiting for a doctor`);
+        closeModal(true); render(); toast("Booked as an emergency. Flagged red until a doctor approves.", "danger"); emit("emergency");
+      };
+    });
+  };
+  draw();
+}
+function approve(id){
+  const r = D.reg.find(x=>x.id===id);
+  if (r.status==="pending"){ if (balance(r.cd) < r.qty){ toast("Not enough on the balance any more. Ask the nurse.", "danger"); return; } r.status="booked"; r.at=nowT(); r.doctor=S.user; r.how="remote"; emit("approvedRemote"); toast("Approved from your device. Booked.", "success"); }
+  else if (r.status==="emergency"){ r.status="booked"; r.doctor=S.user; r.how="after"; emit("emergencyApproved"); toast("Emergency approved afterwards. The red flag is gone.", "success"); }
+  addLog(`${nm(S.user)} approved ${r.qty} × ${cd(r.cd).name} for ${nm(r.by)}`); render();
+}
+function openReceive(){
+  const item = cd(S.cd);
+  modal(`<div class="modal"><div class="modal-head"><h2>Receive: ${esc(item.name)}</h2></div><div class="modal-body">
+    <div class="form-grid"><div class="field"><label for="iqty">How many</label><input id="iqty" inputmode="numeric" value="1"></div><div class="field"><label for="iwit">Witness</label><select id="iwit">${witnessOptions("")}</select></div>
+    <div class="field full"><label for="irea">From where</label><input id="irea" placeholder="e.g. delivery, invoice number"></div></div>
+    <p style="margin:0;font-size:12px;color:var(--text-muted)">Receiving needs a witness; no doctor's approval (your rule is about taking out).</p><div id="ierr"></div></div>
+    <div class="modal-foot"><button type="button" class="btn btn-ghost" id="mcancel">Cancel</button><button type="button" class="btn btn-primary" id="mgo">Receive</button></div></div>`, ()=>{
+    $("#mgo",root).onclick = ()=>{ const q=whole($("#iqty",root).value,{min:1}); const w=$("#iwit",root).value, r=$("#irea",root).value.trim();
+      const e = q.empty?"Type how many.":q.err?q.err+".":!w?"A witness has to sign.":w===S.user?"You can't be your own witness.":!r?"Say where it came from.":"";
+      if (e){ if (!w||w===S.user) emit("witnessRule"); $("#ierr",root).innerHTML=`<div class="ferr">${esc(e)} Nothing was booked.</div>`; return; }
+      D.reg.push({id:"R"+(++S.seq), cd:S.cd, at:nowT(), kind:"in", qty:q.n, by:S.user, doctor:null, how:null, witness:w, reason:r, status:"booked"}); addLog(`Received ${q.n} × ${item.name}`);
+      closeModal(true); render(); toast("Received. Balance now "+balance(S.cd), "success"); };
+  });
+}
+function openCorrection(refId){
+  const r = D.reg.find(x=>x.id===refId), item = cd(r.cd);
+  modal(`<div class="modal"><div class="modal-head"><h2>Correct a line</h2></div><div class="modal-body">
+    <p style="margin:0;font-size:13px">Line ${esc(refId)}: ${r.kind==="in"?"in":"out"} ${r.qty} × ${esc(item.name)}, ${esc(dtLabel(r.at))}. The line stays as it is. Your correction is added below it.</p>
+    <div class="form-grid"><div class="field"><label for="cqty">Change to the balance</label><input id="cqty" inputmode="numeric" placeholder="e.g. 1 or -1"><div class="hint">+ adds back, − takes off</div></div><div class="field"><label for="cwit">Witness</label><select id="cwit">${witnessOptions("")}</select></div>
+    <div class="field full"><label for="crea">What was wrong</label><input id="crea" placeholder="e.g. 1 ampoule broken, not given"></div></div><div id="cerr"></div></div>
+    <div class="modal-foot"><button type="button" class="btn btn-ghost" id="mcancel">Cancel</button><button type="button" class="btn btn-primary" id="mgo">Add correction</button></div></div>`, ()=>{
+    $("#mgo",root).onclick = ()=>{ const s=$("#cqty",root).value.trim(); const n=/^[+-]?\d+$/.test(s)?parseInt(s,10):NaN; const w=$("#cwit",root).value, why=$("#crea",root).value.trim();
+      const e = (!Number.isInteger(n)||n===0)?"Type a whole number other than 0, like 1 or -1.":(balance(r.cd)+n<0)?"That would take the balance below 0.":!w||w===S.user?"A second person has to witness.":!why?"Say what was wrong.":"";
+      if (e){ $("#cerr",root).innerHTML=`<div class="ferr">${esc(e)} Nothing was added.</div>`; return; }
+      D.reg.push({id:"R"+(++S.seq), cd:r.cd, at:nowT(), kind:"corr", qty:n, by:S.user, doctor:S.user, how:"self", witness:w, reason:why, ref:refId, status:"booked"}); addLog(`Correction on ${refId}: ${n>0?"+":""}${n}`);
+      closeModal(true); render(); toast("Correction added. The old line is unchanged.", "success"); emit("correction"); };
+  });
+}
+
+// ======================= F13 Settings › Backup and import =======================
+const FILES = {
+  june:{n:"medical-suite-backup-2026-06-25.json", d:"The June app's backup: people and courses, but no stock.", people:5, lines:0, takes:0, refuse:"This backup has no stock in it. Importing it would delete all 10 stock lines, the stock takes and the register. Refused: nothing was changed.", ev:"refusedOld"},
+  nopeople:{n:"reach-inventory-backup-2026-11-02.json", d:"A backup where the people list is empty.", people:0, lines:10, takes:1, refuse:"This backup has no people in it. Nobody could sign in afterwards. Refused: nothing was changed.", ev:"refusedNoPeople"},
+  good:{n:"reach-inventory-backup-2026-11-20.json", d:"A normal backup from a week ago.", people:5, lines:10, takes:1},
+  excel:{n:"Stock Take (example).xlsx", d:"The real stock list comes in like this, from the medics' spreadsheet (this one is a made-up example).", excel:true}
+};
+const XROWS = [
+  {item:"Gauze 10×10 cm", loc:"Store", qty:30, unit:"pack", exp:"2027-12-01"},
+  {item:"Saline 0.9% 500 ml", loc:"Store", qty:24, unit:"bag", exp:"2027-03-15"},
+  {item:"Needle  20G", loc:"Store", qty:50, unit:"", exp:"1900-01-05", flags:["date looks wrong (1900)","two spaces in the name, tidied to “Needle 20G”","no unit"], block:true},
+  {item:"Adrenaline 1 mg/ml (example)", loc:"Bag 1", qty:2, unit:"amp", exp:"2027-06-30"},
+  {item:"Adrenaline 1 mg/ml (example)", loc:"Bag 1", qty:0, unit:"amp", exp:"", flags:["same item twice in Bag 1"], block:true},
+  {item:"Bandage 8 cm", loc:"Store", qty:40, unit:"roll", exp:"2028-10-01"},
+  {item:"Gloves, size M", loc:"Store", qty:6, unit:"", exp:"", flags:["no unit"]},
+  {item:"Betadine 10% (example)", loc:"Store", qty:3, unit:"bottle", exp:"", lot:"2027-06-01", flags:["the lot number looks like a date: is it the expiry?"], block:true}
+];
+function vSettings(c){
+  const u = me();
+  if (u.role!=="Admin"){ c.innerHTML = `<div class="lock" style="display:flex;gap:12px;padding:16px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--border)">${svg("lock")}<div><b>Only Admins can import or restore backups.</b><div style="color:var(--text-muted);margin-top:4px">Switch “Signed in” to Cara (Admin) above the app.</div></div></div>`; return; }
+  c.innerHTML = `${S.imported?`<div class="okm2" style="margin-bottom:12px">${esc(S.imported)} <a href="#" id="seeit" style="color:inherit;font-weight:700">See Store and bags →</a></div>`:""}
+    <div class="panel"><div class="panel-head"><h2>Backups on the server</h2><span class="sub">made every night, the last 30 kept</span></div>
+      ${D.backups.map(t=>`<div class="train-item"><div class="ti"><div class="t">Automatic backup</div><div class="d">${esc(dtLabel(t))} · everything: stock, register, stock takes, people</div></div><span class="badge b-success nodot">kept</span></div>`).join("")}</div>
+    <div class="panel"><div class="panel-head"><h2>Backup file</h2><span class="sub">a copy on your own computer</span></div>
+      <div style="padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-ghost" id="exp">${svg("download",2)}Export backup</button></div></div>
+    <div class="panel"><div class="panel-head"><h2>Import</h2><span class="sub">a backup file, or the medics' Excel list</span></div>
+      <p style="margin:0;padding:10px 16px 4px;font-size:12.5px;color:var(--text-muted)">Demo: these stand in for picking a file on your computer. Nothing is replaced before you've seen a preview and said yes.</p>
+      ${Object.keys(FILES).map(k=>`<div class="train-item"><div class="ti"><div class="t">${esc(FILES[k].n)}</div><div class="d">${esc(FILES[k].d)}</div></div><button type="button" class="btn btn-ghost btn-sm" data-imp="${k}">${svg("upload",2)}Import…</button></div>`).join("")}</div>`;
+  $("#exp",c).onclick = ()=>{
+    modal(`<div class="modal"><div class="modal-head"><h2>Export backup</h2></div><div class="modal-body"><p style="margin:0;font-size:13px">File: <b>reach-inventory-backup-${ymd(TODAY)}.json</b></p>
+      <div class="csv">people: ${D.people.length}\nstock lines: ${D.lines.length}\ncontrolled-drug register lines: ${D.reg.length}\nstock takes: ${D.takes.length}\nactivity log: ${D.log.length}</div>
+      <p style="margin:0;font-size:12.5px;color:var(--text-muted)">In the real program this saves the file to your computer. Keep it somewhere safe: it holds real names and stock.</p></div><div class="modal-foot"><button type="button" class="btn btn-primary" id="mcancel">Done</button></div></div>`, ()=>{});
+    emit("exported");
+  };
+  const si=$("#seeit",c); if (si) si.onclick = e=>{ e.preventDefault(); go("where"); };
+  c.querySelectorAll("[data-imp]").forEach(b=>b.onclick=()=>openImport(b.dataset.imp));
+}
+function openImport(k){
+  const f = FILES[k];
+  if (f.excel){
+    const blocks = XROWS.filter(r=>r.block).length, warns = XROWS.filter(r=>r.flags && !r.block).length;
+    modal(`<div class="modal" style="width:min(620px,100%)"><div class="modal-head"><h2>Preview: ${esc(f.n)}</h2></div><div class="modal-body">
+      <p style="margin:0;font-size:13px">${XROWS.length} rows read. <b style="color:var(--danger)">${blocks} need fixing</b> in the spreadsheet before this can be imported; ${warns} warning${warns===1?"":"s"} only.</p>
+      <div class="tscroll" style="border:1px solid var(--border);border-radius:8px"><table><thead><tr><th>Item</th><th>Where</th><th>Qty</th><th>Expiry</th><th>Check</th></tr></thead><tbody>
+      ${XROWS.map(r=>`<tr class="${r.block?"flagrow":r.flags?"warnrow":""}"><td>${esc(r.item.replace(/ {2,}/g,"␣␣"))}</td><td>${esc(r.loc)}</td><td>${r.qty}</td><td>${esc(r.exp||"—")}</td><td style="font-size:11.5px">${r.flags?r.flags.map(esc).join("<br>"):"ok"}</td></tr>`).join("")}</tbody></table></div>
+      <div class="lockm">The real stock list only ever comes in through this door, from your own file. It's never built into the program, and it never goes into the public code on GitHub.</div></div>
+      <div class="modal-foot"><button type="button" class="btn btn-ghost" id="mcancel">Close</button><button type="button" class="btn btn-ghost" id="mlist">Copy the list for the medics</button><button type="button" class="btn btn-primary" disabled>Import (fix ${blocks} rows first)</button></div></div>`, ()=>{
+      $("#mlist",root).onclick = ()=>toast(`Copied: ${blocks} rows to fix, ${warns} to check. Send it to the medics.`);
+    });
+    emit("excelFlags"); emit("b9"); return;
+  }
+  if (f.refuse){
+    modal(`<div class="modal"><div class="modal-head"><h2>Can't import this file</h2></div><div class="modal-body"><p style="margin:0;font-size:13px"><b>${esc(f.n)}</b></p>
+      <div class="ferr">${esc(f.refuse)}</div>
+      <table class="diff"><thead><tr><th></th><th class="n">Now</th><th class="n">In the file</th></tr></thead><tbody>
+        <tr><td>People</td><td class="n">${D.people.length}</td><td class="n">${f.people}</td></tr><tr><td>Stock lines</td><td class="n">${D.lines.length}</td><td class="n">${f.lines}</td></tr><tr><td>Stock takes</td><td class="n">${D.takes.length}</td><td class="n">${f.takes}</td></tr></tbody></table></div>
+      <div class="modal-foot"><button type="button" class="btn btn-primary" id="mcancel">OK</button></div></div>`, ()=>{});
+    emit(f.ev); return;
+  }
+  modal(`<div class="modal"><div class="modal-head"><h2>Restore this backup?</h2></div><div class="modal-body"><p style="margin:0;font-size:13px"><b>${esc(f.n)}</b> replaces everything in the app with the state of 20 Nov.</p>
+    <table class="diff"><thead><tr><th></th><th class="n">Now</th><th class="n">After</th></tr></thead><tbody>
+      <tr><td>People</td><td class="n">${D.people.length}</td><td class="n">${f.people}</td></tr><tr><td>Stock lines</td><td class="n">${D.lines.length}</td><td class="n">${f.lines}</td></tr><tr><td>Stock takes</td><td class="n">${D.takes.length}</td><td class="n">${f.takes}</td></tr><tr><td>Changes since 20 Nov</td><td class="n">${D.log.length+3}</td><td class="n">lost</td></tr></tbody></table>
+    <div class="okm2">Before replacing, the app saves a backup of today, so this can be undone.</div>
+    <label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="mok"> I understand everything after 20 Nov is replaced.</label><div id="merr"></div></div>
+    <div class="modal-foot"><button type="button" class="btn btn-ghost" id="mcancel">Cancel</button><button type="button" class="btn btn-primary" id="mgo">Restore</button></div></div>`, ()=>{
+    $("#mgo",root).onclick = ()=>{
+      if (!$("#mok",root).checked){ $("#merr",root).innerHTML = `<div class="ferr">Tick the box first. Nothing was replaced.</div>`; return; }
+      D.backups.unshift(nowT());
+      D.lines.forEach(l=>{ if (l.id==="L8") l.qty=9; if (l.id==="L1") l.qty=11; });
+      D.takes = D.takes.slice(0,1); D.log = [{text:"Restored the backup of 20 Nov (a backup of today was saved first)", who:nm(S.user), at:nowT()}];
+      S.imported = "Restored the 20 Nov backup. Every screen shows it now, with no reload. A backup of today was saved first.";
+      closeModal(true); render(); toast("Restored", "success"); emit("imported");
+    };
+  });
+}
+
+// ======================= Tour =======================
+const TOUR = {
+  F10:{title:"Count stock", june:"J8",
+    steps:[
+      "<b>Count a bag</b> is open for Bag 1. Type counts in two or three boxes, and leave the others empty.",
+      "Now type in <b>Find in this list</b>, or switch the location, then come back. Your numbers are still there.",
+      "Click another menu item while counts are typed: the app asks what to do with them.",
+      "Press <b>Save counts</b>. Empty boxes stay as they were (not counted), they don't become 0.",
+      "Count <b>Gauze</b> in Bag 1 and save. Then press <b>Ben counts Bag 1 on another computer</b>."
+    ],
+    checks:[
+      {ev:"kept", b:"B16", now:"Typed counts survive search, filter and switching location", was:"June: any search, filter, sort or menu click wiped them"},
+      {ev:"emptyNotZero", b:"B16", now:"An empty box means “not counted” and changes nothing", was:"June: an empty box saved as 0, so the line went “Out of stock”"},
+      {ev:"leaveAsk", now:"Leaving with unsaved counts asks first", was:"June: gone without a word"},
+      {ev:"countConflict", now:"Two counts that disagree: the later one is used, both are kept, and it's flagged for checking", was:"new: two people, two computers"}
+    ],
+    real:["Pick the bag or the Store, then type what you actually find.","Leave a box empty if you didn't count that line. It stays as it was.","Save counts when you're done. Then freeze a stock take if it's the monthly count."]},
+  F11:{title:"Stock takes", june:"J9",
+    steps:[
+      "Open <b>Stock takes</b>. Open the October one: “then” vs “now” for every line.",
+      "Go back and press <b>Freeze stock take now</b>.",
+      "In a stock take, press <b>Export CSV</b>.",
+      "Press <b>Install a new version</b> (above the app). The stock takes are still there."
+    ],
+    checks:[
+      {ev:"thenNow", now:"Then vs now for every line", was:"June: same, kept"},
+      {ev:"frozen", now:"Freeze a stock take: dated, who, can't be changed", was:"June: same, kept"},
+      {ev:"takeCsv", now:"Export a stock take as a spreadsheet file", was:"new: like the monthly columns in the old sheets"},
+      {ev:"survived", now:"Kept on the server: a new version can't wipe them", was:"June: a version upload wiped them (B3, tested with F3)"}
+    ],
+    real:["Once a month (or after a big count), freeze a stock take.","It records every count with the date and your name, and can't be changed afterwards.","Open an old one to see what changed since, or export it for a report."]},
+  F12:{title:"Controlled-drug register", june:"new (Q8, Q13–Q16)",
+    steps:[
+      "As <b>Anna</b>: open <b>Controlled drugs</b>, Morphine. Press <b>Take out</b>, choose <b>Ask a doctor</b>, pick a witness and a reason, send.",
+      "Switch to <b>Dr Ben</b>: a red badge on the menu, the request at the top. <b>Approve</b> it.",
+      "Back as Anna: <b>Take out</b> with <b>Doctor is here</b> (Ben's demo PIN is 1234).",
+      "As Anna: <b>Emergency, no doctor reachable</b>. It's booked red. Then as Ben, approve it afterwards.",
+      "Try leaving the witness empty, or picking yourself.",
+      "As <b>Cara</b> (Admin): no Approve buttons, and the doctors' list is locked.",
+      "As <b>Ben</b>: press <b>Correct</b> on a line. Then give <b>Dr Eva</b> the right to approve."
+    ],
+    checks:[
+      {ev:"requested", now:"Q13: a nurse asks a doctor; nothing comes off until approved", was:"your answer A"},
+      {ev:"approvedRemote", now:"Q13: the doctor approves from their own device", was:"your answer A"},
+      {ev:"approvedPin", now:"Q13: the doctor approves in the room with their own PIN", was:"your answer A"},
+      {ev:"emergency", now:"Q14: an emergency is booked at once and flagged red", was:"your answer A"},
+      {ev:"emergencyApproved", now:"Q14: a doctor approves it afterwards and the flag goes", was:"your answer A"},
+      {ev:"witnessRule", now:"Q15: every line needs a witness, a second person who was there", was:"your answer A, and Q8"},
+      {ev:"adminNoRight", now:"Your rule: Admin can't approve or change who may", was:"your note on batch 2"},
+      {ev:"correction", now:"Lines can't be changed; a doctor adds a correction line", was:"Q8 / F12"},
+      {ev:"grant", now:"Q16: only a doctor gives the right to another person, never to themselves", was:"your answer B"},
+      {ev:"revoke", now:"A doctor removes someone's right with ✕ (logged, all doctors told); the last doctor can't be removed", was:"your note on batch 3"}
+    ],
+    real:["Controlled drugs have their own register: every ampoule in and out, with a reason, a witness and the running balance.","A nurse takes one out with a doctor's approval: the doctor types their PIN on the spot, or approves the request on their own phone or Mac.","In an emergency with no doctor reachable, book it as an emergency. It stays red until a doctor approves it."]},
+  F13:{title:"Backup and import", june:"J11",
+    steps:[
+      "Switch to <b>Cara</b> (Admin) and open <b>Settings</b>.",
+      "Press <b>Export backup</b>.",
+      "Import the <b>June backup</b>, then the one with <b>no people</b>: both refused, with the reason.",
+      "Import the <b>20 Nov backup</b>: preview, tick, restore. Then open Store and bags.",
+      "Import the <b>Excel list</b>: the problem rows are shown before anything is loaded."
+    ],
+    checks:[
+      {ev:"exported", now:"Backup file export, and nightly backups on the server", was:"June: export only, kept in the browser"},
+      {ev:"refusedOld", b:"B15", now:"A backup with no stock is refused", was:"June: it wiped all stock without asking"},
+      {ev:"refusedNoPeople", b:"B15", now:"A backup with no people is refused", was:"June: it locked everyone out"},
+      {ev:"b2", b:"B2", now:"After a restore every screen shows the new data at once", was:"June: Inventory showed “undefined” until reload"},
+      {ev:"excelFlags", b:"B6", now:"The Excel list shows its problems (bad dates, doubles, spacing) before loading", was:"June: loaded as it was, errors and all"},
+      {ev:"b9", b:"B9", now:"The real stock comes in only through import, never built into the program", was:"June: the real list sat in the public code"}
+    ],
+    real:["The server keeps everything and makes a backup every night.","Export a backup file if you want a copy on your own computer.","Import always shows a preview first and refuses files that would wipe stock or lock people out."]}
+};
+let tab = "F10";
+const tabsEl = document.getElementById("tabs"), tourEl = document.getElementById("tour");
+function paintTour(){
+  tabsEl.innerHTML = Object.keys(TOUR).map(k=>{ const n = TOUR[k].checks.filter(c=>seen[c.ev]).length;
+    return `<button type="button" class="tab" role="tab" data-tab="${k}" aria-selected="${k===tab}"><span class="fid">${k}</span>${esc(TOUR[k].title)}<span class="cnt">${n}/${TOUR[k].checks.length}</span></button>`; }).join("");
+  tabsEl.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{ tab=b.dataset.tab; paintTour(); });
+  const ta = tourEl.querySelector("textarea");
+  if (ta && document.activeElement===ta){ tourEl.querySelectorAll(".chk").forEach(el=>el.classList.toggle("seen", !!seen[el.dataset.ev])); return; }
+  const t = TOUR[tab];
+  tourEl.innerHTML = `<div class="card"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="fid">${tab}</span><h2>${esc(t.title)}</h2><span class="small muted">from June: ${esc(t.june)}</span></div>
+      <span class="k">Try it in the demo</span><ol>${t.steps.map(s=>`<li>${s}</li>`).join("")}</ol></div>
+    <div class="card"><span class="k">What the demo must show (ticks itself)</span>
+      <div class="checks">${t.checks.map(c=>`<div class="chk ${seen[c.ev]?"seen":""}" data-ev="${c.ev}"><span class="box">✓</span><span>${c.b?`<span class="bid">${c.b}</span> `:""}${esc(c.now)}<span class="was">${esc(c.was)}</span></span></div>`).join("")}</div></div>
+    <div class="card"><span class="k">How to use it, in the real app</span><ul>${t.real.map(r=>`<li>${esc(r)}</li>`).join("")}</ul></div>
+    <div class="review" data-part="${tab.toLowerCase()}"></div>`;
+  setupStrip(tourEl.querySelector(".review"));
+}
+
+// ======================= Controls =======================
+function paintUsers(){ document.querySelectorAll("[data-user]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.user===S.user?"true":"false")); }
+document.querySelectorAll("[data-user]").forEach(b=>b.onclick=()=>{ S.user=b.dataset.user; closeModal(true); paintUsers(); render(); });
+document.querySelectorAll("[data-dev]").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("[data-dev]").forEach(x=>x.setAttribute("aria-pressed", x===b?"true":"false"));
+  document.getElementById("devframe").classList.toggle("phone", b.dataset.dev==="phone"); S.drawer=false; render();
+});
+document.getElementById("w-ben").onclick = benCounts;
+document.getElementById("w-update").onclick = ()=>{ S.version="1.1"; toast(`Updated to version 1.1. Still here: ${D.takes.length} stock take${D.takes.length===1?"":"s"}, ${D.reg.length} register lines, all stock.`, "success"); if (D.takes.length) emit("survived"); render(); };
+document.getElementById("w-reset").onclick = ()=>{ fresh(); paintUsers(); render(); };
+
+// ======================= Review strips (db collection "batch3") =======================
+const state = {}; let db = null;
+function setupStrip(el){
+  if (!el) return;
+  const part = el.dataset.part, fin = !!el.dataset.final;
+  el.innerHTML = `<span class="q">${fin ? "Is batch 3 right, all four together?" : `Is ${part.toUpperCase()} right?`}</span>
+    <span class="btns"><button type="button" class="yes" aria-pressed="false">${fin ? "Yes, batch 3 is right" : "Right"}</button>
+    <button type="button" class="no" aria-pressed="false">${fin ? "Not yet" : "Not right"}</button></span>
+    <textarea placeholder="${fin ? "Anything missing or wrong? (optional)" : "What's wrong or missing? (optional)"}"></textarea>
+    <span class="state">Not answered yet.</span>`;
+  el.querySelector(".yes").onclick = ()=>pick(part,"right");
+  el.querySelector(".no").onclick = ()=>pick(part,"not");
+  let t; el.querySelector("textarea").addEventListener("input",e=>{ state[part]=Object.assign({},state[part],{note:e.target.value}); clearTimeout(t); t=setTimeout(()=>save(part),800); });
+  paintStrip(part);
+}
+function stripEl(part){ return document.querySelector(`.review[data-part="${part}"]`); }
+function paintStrip(part){
+  const el = stripEl(part); if (!el) return; const s = state[part] || {};
+  el.querySelector(".yes").setAttribute("aria-pressed", s.verdict==="right"?"true":"false");
+  el.querySelector(".no").setAttribute("aria-pressed", s.verdict==="not"?"true":"false");
+  const ta = el.querySelector("textarea"); if (document.activeElement!==ta && typeof s.note==="string") ta.value = s.note;
+  if (s.at) el.querySelector(".state").textContent = "Saved for Claude · "+new Date(s.at).toLocaleString();
+}
+function msg(part, text){ const el=stripEl(part); if (el) el.querySelector(".state").textContent = text; }
+function pick(part, v){ state[part] = Object.assign({}, state[part], {verdict:v}); paintStrip(part); save(part); }
+async function save(part){
+  const s = state[part] || {};
+  const rec = {part, verdict:s.verdict||null, note:s.note||"", at:new Date().toISOString(), seen:Object.keys(seen).filter(k=>seen[k])};
+  if (!db){ state[part] = Object.assign({}, rec, {at:null}); msg(part, "Shown here, but can't be saved in this view. Open the page from its link, or tell Claude in chat."); return; }
+  state[part] = rec;
+  try{ await db.collection("batch3").doc(part).set(rec); msg(part, "Saved for Claude · "+new Date(rec.at).toLocaleTimeString()); }
+  catch(e){ msg(part, "Not saved ("+(e && e.code || "error")+"). Tell Claude in chat instead."); }
+}
+
+// ======================= Start =======================
+fresh(); paintUsers(); render(); paintTour(); setupStrip(document.querySelector('.review[data-part="overall"]'));
+(async function(){
+  try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : null); }catch(e){ db = null; }
+  if (!db) return;
+  db.collection("batch3").onSnapshot(snap=>{
+    (snap.docs || []).forEach(d=>{ const r = typeof d.data === "function" ? d.data() : d.data; if (!r || !r.part) return; state[r.part] = r; paintStrip(r.part); });
+  }, ()=>{});
+})();
+})();
+</script>

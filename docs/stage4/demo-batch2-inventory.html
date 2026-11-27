@@ -1,0 +1,936 @@
+<title>REACH Inventory Demo 2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Stage 4 demo batch 2: F6 overview, F7 Store and bags, F8 item page, F9 restock/dispense. Same base styles as batch 1 (outer page with dark mode; the app inside keeps the June look, light only, scoped to .app). */
+:root{
+  --bg:#F4F4F6; --surface:#FFFFFF; --surface-2:#FAFAFB;
+  --border:#E4E4EA; --border-strong:#D2D2DA;
+  --text:#1B1B23; --muted:#6B6B78; --faint:#9B9BA6;
+  --accent:#4F46E5; --accent-soft:#EEEDFD; --accent-border:#C9C6F7; --on-accent:#FFFFFF;
+  --ok:#1E9E62; --ok-soft:#E7F5EE; --warn:#C77A12; --warn-soft:#F8EFDF; --bad:#D14343; --bad-soft:#FAEAEA;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A;
+  --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A;
+  --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:64px}
+.wrap{max-width:1240px;margin:0 auto}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:28px;font-weight:700;letter-spacing:-.4px}
+h2{font-size:19px;font-weight:700}
+h3{font-size:14.5px;font-weight:600}
+p{margin:0;max-width:72ch}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:13px}
+.mono{font-family:var(--mono);font-size:12.5px}
+header.top{padding-block:32px 18px;display:flex;flex-direction:column;gap:10px}
+.fid{font-family:var(--mono);font-size:12px;font-weight:500;padding:1px 6px;border-radius:5px;background:var(--surface-2);border:1px solid var(--border-strong);white-space:nowrap}
+.bid{font-family:var(--mono);font-size:11.5px;padding:1px 6px;border-radius:5px;background:var(--bad-soft);color:var(--bad);white-space:nowrap}
+
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:start}
+@media (max-width:1000px){.stage{grid-template-columns:1fr}}
+.left{display:flex;flex-direction:column;gap:12px;min-width:0}
+.right{display:flex;flex-direction:column;gap:14px;min-width:0}
+@media (min-width:1001px){.right{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding-bottom:8px}}
+
+.world{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.world .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.world .lbl{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--faint);margin-right:4px}
+.wbtn{font:inherit;font-size:13px;padding:6px 11px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.wbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.wbtn.off[aria-pressed="true"]{background:var(--warn);border-color:var(--warn)}
+.wbtn.danger[aria-pressed="true"]{background:var(--bad);border-color:var(--bad)}
+.wbtn:disabled{opacity:.45;cursor:not-allowed}
+.devwrap{display:flex;justify-content:center}
+.devframe{width:100%;transition:max-width .2s}
+.devframe.phone{max-width:390px;border:10px solid #1b1b23;border-radius:34px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.exnote{font-size:12px;color:var(--faint)}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{font:inherit;font-size:13.5px;padding:7px 12px;border-radius:9px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.tab[aria-selected="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tab .cnt{font-size:11px;font-family:var(--mono)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.card ol{margin:0;padding-left:20px;font-size:13.5px;display:flex;flex-direction:column;gap:6px}
+.card ul{margin:0;padding-left:18px;font-size:13.5px}
+.k{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.checks{display:flex;flex-direction:column;gap:6px}
+.chk{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:13px;padding:8px 10px;border-radius:9px;background:var(--surface-2);border:1px solid var(--border)}
+.chk .box{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border-strong);display:grid;place-items:center;font-size:13px;font-weight:700;color:transparent}
+.chk.seen{background:var(--ok-soft);border-color:transparent}
+.chk.seen .box{background:var(--ok);border-color:var(--ok);color:#fff}
+.chk .was{display:block;font-size:12px;color:var(--muted)}
+.inline{font:inherit;font-size:12px;padding:1px 8px;border-radius:6px;border:1px solid var(--border-strong);background:var(--surface);color:var(--accent);cursor:pointer;margin-left:4px}
+
+.review{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--border-strong)}
+.review .q{font-size:13.5px;font-weight:600;flex:1 1 200px}
+.review .btns{display:flex;gap:6px}
+.review button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.review button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.review button[aria-pressed="true"].yes{background:var(--ok);border-color:var(--ok);color:var(--on-accent)}
+.review button[aria-pressed="true"].no{background:var(--warn);border-color:var(--warn);color:var(--on-accent)}
+.review textarea{flex:1 1 100%;min-height:54px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);resize:vertical}
+.review .state{font-size:12px;color:var(--faint);flex:1 1 100%}
+.final{border:2px solid var(--accent);background:var(--accent-soft)}
+.final .q{font-size:15.5px}
+footer{padding-top:28px;font-size:12.5px;color:var(--faint)}
+
+/* =================== THE APP (June look, scoped) =================== */
+.app{
+  --bg:#F4F4F6; --surface:#FFFFFF; --surface-2:#FAFAFB; --sidebar:#F0F0F3;
+  --border:#E4E4EA; --border-strong:#D2D2DA;
+  --text:#1B1B23; --text-muted:#6B6B78; --text-faint:#9B9BA6;
+  --accent:#4F46E5; --accent-hover:#4338CA; --accent-soft:#EEEDFD; --accent-border:#C9C6F7;
+  --success:#1E9E62; --success-soft:#E7F5EE; --warning:#C77A12; --warning-soft:#F8EFDF; --danger:#D14343; --danger-soft:#FAEAEA;
+  --info:#2563EB; --info-soft:#E6EEFD;
+  --r-sm:6px; --r-md:10px; --r-lg:14px; --shadow-md:0 6px 18px -8px rgba(20,20,35,.18); --shadow-pop:0 14px 40px -12px rgba(20,20,35,.28);
+  --focus-ring:0 0 0 3px var(--accent-soft);
+  color-scheme:light;
+  container-type:inline-size;container-name:app;
+  position:relative;height:660px;overflow:hidden;border-radius:12px;border:1px solid var(--border-strong);
+  background:var(--bg);color:var(--text);font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:13.5px;line-height:1.45;
+}
+.devframe.phone .app{height:720px;border:0;border-radius:24px}
+.app *{box-sizing:border-box}
+.app button{font-family:inherit}
+.app svg{flex:none}
+.app .shell{display:grid;grid-template-columns:220px 1fr;height:100%}
+.app .side{background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 10px;overflow:auto;z-index:40}
+.app .logo{display:flex;align-items:center;gap:10px;padding:4px 8px 14px;cursor:pointer;background:none;border:0;text-align:left;color:var(--text)}
+.app .logo .mark{width:30px;height:30px;border-radius:8px;background:var(--accent);display:grid;place-items:center;color:#fff}
+.app .logo .name{font-weight:700;font-size:14.5px}
+.app .logo .name small{display:block;font-weight:500;font-size:11px;color:var(--text-muted)}
+.app .navlabel{font-size:10.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-faint);padding:12px 10px 5px}
+.app .nav{display:flex;flex-direction:column;gap:2px}
+.app .nav button{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-sm);color:var(--text-muted);background:none;border:none;font-size:13.5px;font-weight:500;cursor:pointer;text-align:left;position:relative}
+.app .nav button svg{width:17px;height:17px}
+.app .nav button:hover{background:color-mix(in srgb,var(--accent) 8%,transparent);color:var(--text)}
+.app .nav button.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.app .nav button.active::before{content:"";position:absolute;left:-10px;top:6px;bottom:6px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
+.app .nav button .ext{margin-left:auto;font-size:9.5px;font-weight:600;letter-spacing:.4px;color:var(--text-faint);border:1px solid var(--border-strong);padding:1px 5px;border-radius:4px}
+.app .side .bottom{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}
+.app .main{display:flex;flex-direction:column;min-width:0;overflow:hidden;position:relative}
+.app .topbar{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface);flex:none;flex-wrap:wrap;position:relative;z-index:20}
+.app .topbar .crumb{font-size:11px;color:var(--text-muted)}
+.app .topbar h1{font-size:18px;font-weight:700;margin:0}
+.app .hamb{display:none;width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surface);place-items:center;cursor:pointer;color:var(--text)}
+.app .search{margin-left:auto;display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:6px 14px;color:var(--text-muted);min-width:200px;position:relative}
+.app .search svg{width:15px;height:15px}
+.app .search input{border:none;background:none;outline:none;font:inherit;color:var(--text);width:100%;min-width:0}
+.app .results{position:absolute;top:calc(100% + 6px);right:0;width:340px;max-width:calc(100cqw - 24px);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:var(--shadow-pop);max-height:320px;overflow:auto;z-index:60;padding:6px}
+.app .results .r{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;cursor:pointer;width:100%;background:none;border:0;text-align:left;color:var(--text)}
+.app .results .r:hover{background:var(--accent-soft)}
+.app .results .grp{font-size:10.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--text-faint);padding:6px 10px 2px}
+.app .results .none{padding:10px;color:var(--text-muted);font-size:13px}
+.app .sync{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding:5px 11px;border-radius:999px;border:0;cursor:pointer;white-space:nowrap}
+.app .sync i{width:8px;height:8px;border-radius:50%;background:currentColor}
+.app .sync.ok{background:var(--success-soft);color:var(--success)}
+.app .sync.off{background:var(--warning-soft);color:var(--warning)}
+.app .sync.busy{background:var(--info-soft);color:var(--info)}
+.app .sync.err{background:var(--danger-soft);color:var(--danger)}
+.app .me{display:flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:3px 10px 3px 3px;cursor:pointer;color:var(--text)}
+.app .avatar{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:11.5px;font-weight:600;color:#fff;background:var(--accent)}
+.app .me .who{font-size:12.5px;font-weight:600;line-height:1.1;text-align:left}
+.app .me .who small{display:block;font-weight:500;color:var(--text-muted);font-size:11px}
+.app .pop{position:absolute;top:calc(100% + 6px);right:12px;width:280px;max-width:calc(100cqw - 24px);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:var(--shadow-pop);z-index:70;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.app .pop .line{display:flex;justify-content:space-between;gap:10px}
+.app .pop .wait{font-size:12.5px;padding:6px 8px;border-radius:7px;background:var(--warning-soft)}
+.app .banner{display:flex;gap:10px;align-items:flex-start;padding:10px 20px;font-size:12.5px;border-bottom:1px solid var(--border)}
+.app .banner.off{background:var(--warning-soft);color:#7a4a08}
+.app .banner.info{background:var(--info-soft);color:#1d3f8a}
+.app .banner.okb{background:var(--success-soft);color:#14663f}
+.app .banner button{margin-left:auto;background:none;border:0;cursor:pointer;color:inherit;font-weight:700}
+.app .content{padding:20px;overflow:auto;flex:1}
+.app .scrim{position:absolute;inset:0;background:rgba(20,20,35,.35);z-index:35}
+.app .btn{font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:var(--r-sm);border:1px solid transparent;cursor:pointer;white-space:nowrap}
+.app .btn svg{width:15px;height:15px}
+.app .btn-primary{background:var(--accent);color:#fff}
+.app .btn-primary:hover{background:var(--accent-hover)}
+.app .btn-ghost{background:var(--surface);color:var(--text);border-color:var(--border)}
+.app .btn-sm{padding:4px 9px;font-size:12.5px}
+.app .btn:disabled{opacity:.45;cursor:not-allowed}
+.app .btn:focus-visible,.app .nav button:focus-visible,.app .appcard:focus-visible,.app .me:focus-visible,.app .sync:focus-visible{outline:none;box-shadow:0 0 0 3px var(--accent-border)}
+.app .badge{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.app .badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.app .b-success{background:var(--success-soft);color:var(--success)}
+.app .b-warning{background:var(--warning-soft);color:var(--warning)}
+.app .b-danger{background:var(--danger-soft);color:var(--danger)}
+.app .b-muted{background:#EDEDF1;color:var(--text-muted)}
+.app .b-accent{background:var(--accent-soft);color:var(--accent)}
+.app .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;margin-bottom:16px}
+.app .panel-head{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.app .panel-head h2{font-size:14.5px;font-weight:700;margin:0}
+.app .panel-head .sub{font-size:12px;color:var(--text-muted);margin-left:auto}
+.app .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.app .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px}
+.app .stat .k{font-size:11.5px;color:var(--text-muted);font-weight:600;display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0}
+.app .stat .k svg{width:14px;height:14px;color:var(--accent)}
+.app .stat .v{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-top:4px}
+.app .stat .v small{font-size:12.5px;font-weight:500;color:var(--text-muted)}
+.app .attention{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.app .att{display:flex;align-items:center;gap:9px;padding:9px 13px;border-radius:var(--r-md);font-size:12.5px;font-weight:500;flex:1;min-width:180px}
+.app .att svg{width:16px;height:16px}
+.app .att-danger{background:var(--danger-soft);color:var(--danger)}
+.app .att-warning{background:var(--warning-soft);color:var(--warning)}
+.app .cards{padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.app .appcard{text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;cursor:pointer;display:flex;flex-direction:column;gap:4px;color:var(--text)}
+.app .appcard:hover{border-color:var(--accent-border);box-shadow:var(--shadow-md)}
+.app .appcard-ic{width:40px;height:40px;border-radius:var(--r-md);background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;margin-bottom:8px}
+.app .appcard-ic svg{width:20px;height:20px}
+.app .appcard-name{font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:8px}
+.app .appcard-tag{font-size:9.5px;font-weight:600;letter-spacing:.4px;color:var(--text-faint);border:1px solid var(--border-strong);padding:1px 5px;border-radius:4px}
+.app .appcard-desc{font-size:12.5px;color:var(--text-muted)}
+.app .home-hero{position:relative;text-align:center;padding:36px 18px 30px;margin-bottom:20px;border-radius:var(--r-lg);overflow:hidden;background:linear-gradient(180deg,var(--accent-soft) 0%,var(--surface) 100%);border:1px solid var(--border)}
+.app .home-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.app .home-title{font-size:28px;font-weight:700;letter-spacing:-.6px;margin:0}
+.app .home-sub{color:var(--text-muted);font-size:13.5px;margin:6px 0 0}
+.app .home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.app .train-item{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border)}
+.app .train-item:last-child{border-bottom:none}
+.app .train-item .ti{flex:1;min-width:0}
+.app .train-item .t{font-weight:600;font-size:13px}
+.app .train-item .d{font-size:11.5px;color:var(--text-muted);margin-top:2px}
+.app table{width:100%;border-collapse:collapse;font-size:13px}
+.app thead th{text-align:left;font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--text-faint);font-weight:600;padding:9px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+.app tbody td{padding:9px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.app tbody tr:last-child td{border-bottom:none}
+.app .tscroll{overflow-x:auto}
+.app .qty{display:inline-flex;align-items:center;gap:6px}
+.app .qty b{min-width:28px;text-align:center;font-variant-numeric:tabular-nums}
+.app .iconbtn{width:28px;height:28px;border-radius:7px;border:1px solid var(--border-strong);background:var(--surface);cursor:pointer;display:grid;place-items:center;color:var(--text)}
+.app .iconbtn:hover{color:var(--accent);border-color:var(--accent-border)}
+.app .iconbtn svg{width:14px;height:14px}
+.app .filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.app select{font:inherit;font-size:12.5px;padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--text);cursor:pointer}
+.app .placeholder{text-align:center;padding:56px 20px;color:var(--text-muted)}
+.app .placeholder svg{width:40px;height:40px;color:var(--text-faint);margin-bottom:12px}
+.app .placeholder h2{font-size:17px;color:var(--text);margin:0 0 6px}
+.app .feed .item{display:flex;gap:11px;padding:10px 16px;border-bottom:1px solid var(--border);align-items:flex-start}
+.app .feed .item:last-child{border-bottom:none}
+.app .feed .ic{width:28px;height:28px;border-radius:7px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+.app .feed .ic svg{width:15px;height:15px}
+.app .feed .tx{font-size:12.5px;flex:1;min-width:0}
+.app .feed .tx .src{display:block;font-size:11px;color:var(--text-faint);margin-top:2px}
+.app .note{font-size:11.5px;color:var(--text-faint);margin:-6px 0 14px}
+.app .lock{display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--border)}
+.app .lock svg{width:22px;height:22px;color:var(--text-faint)}
+.app .msg{font-size:12.5px;padding:8px 12px;border-radius:8px;margin:0 16px 12px}
+.app .msg.err{background:var(--danger-soft);color:var(--danger)}
+.app .msg.okm{background:var(--success-soft);color:var(--success)}
+/* sign-in */
+.app .signin{height:100%;display:grid;place-items:center;padding:20px;background:linear-gradient(180deg,var(--accent-soft),var(--bg) 60%);overflow:auto}
+.app .sbox{width:min(380px,100%);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-md);padding:24px;display:flex;flex-direction:column;gap:12px}
+.app .sbox .logo{padding:0 0 6px;cursor:default}
+.app .field label{font-size:12.5px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:5px}
+.app .field input{font:inherit;font-size:13.5px;width:100%;padding:8px 11px;background:var(--surface);color:var(--text);border:1px solid var(--border-strong);border-radius:var(--r-sm)}
+.app .field input:focus{outline:none;box-shadow:var(--focus-ring);border-color:var(--accent)}
+.app .remember{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--text-muted)}
+.app .demo-people{display:flex;flex-direction:column;gap:6px;padding-top:10px;border-top:1px dashed var(--border-strong)}
+.app .demo-people .lbl{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-faint)}
+.app .dp{display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);cursor:pointer;text-align:left;color:var(--text);font-size:12.5px}
+.app .dp:hover{border-color:var(--accent-border)}
+.app .dp small{display:block;color:var(--text-muted);font-size:11.5px}
+.app .splash{height:100%;display:grid;place-items:center;background:var(--sidebar);color:var(--text-muted);font-size:13px;text-align:center}
+.app .splash .mark{width:46px;height:46px;border-radius:12px;background:var(--accent);display:grid;place-items:center;color:#fff;margin:0 auto 10px}
+.app .toasts{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:90;width:max-content;max-width:calc(100% - 24px)}
+.app .toast{background:#1B1B23;color:#fff;padding:9px 14px;border-radius:var(--r-sm);font-size:12.5px;box-shadow:var(--shadow-md)}
+.app .toast.danger{background:var(--danger)} .app .toast.success{background:var(--success)}
+.app .exband{position:absolute;right:10px;bottom:8px;font-size:10px;color:var(--text-faint);z-index:5;pointer-events:none}
+/* Phone and small windows: the menu becomes a drawer (rule B5) */
+@container app (max-width:720px){
+  .app .shell{grid-template-columns:1fr}
+  .app .side{position:absolute;left:0;top:0;bottom:0;width:250px;transform:translateX(-105%);transition:transform .2s;box-shadow:var(--shadow-pop)}
+  .app .shell.drawer .side{transform:none}
+  .app .hamb{display:grid}
+  .app .topbar{padding:10px 12px;gap:8px}
+  .app .topbar h1{font-size:16px}
+  .app .search{order:5;flex:1 1 100%;margin-left:0;min-width:0}
+  .app .tb-right{margin-left:auto}
+  .app .me .who{display:none}
+  .app .me{padding:3px}
+  .app .content{padding:14px}
+  .app .stats{grid-template-columns:repeat(2,1fr)}
+  .app .home-grid{grid-template-columns:1fr}
+  .app .home-title{font-size:23px}
+  .app .banner{padding:9px 12px}
+  .app .hide-sm{display:none}
+}
+.app .tb-right{display:flex;align-items:center;gap:8px}
+@media (prefers-reduced-motion:reduce){.app *{transition:none!important}}
+/* ---- batch 2 additions (June item page, modal, list screens) ---- */
+.app .b-info{background:var(--info-soft);color:var(--info)}
+.app .badge.nodot::before{display:none}
+.app .att-ok{background:var(--success-soft);color:var(--success)}
+.app .att-info{background:var(--info-soft);color:var(--info)}
+.app .stat.click,.app .att.click{cursor:pointer}
+.app .stat.ring,.app .att.ring{box-shadow:var(--focus-ring);border-color:var(--accent)}
+.app .chkl{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-muted);cursor:pointer}
+.app .spacer{margin-left:auto}
+.app tbody tr.click{cursor:pointer}
+.app tbody tr.click:hover{background:color-mix(in srgb,var(--accent) 4%,transparent)}
+.app tr.archived-row,.app .train-item.archived-row{opacity:.55}
+.app .nm{font-weight:600}
+.app .em{font-size:11.5px;color:var(--text-muted)}
+.app .muted{color:var(--text-muted)}
+.app .acts-cell{text-align:right;white-space:nowrap}
+.app .acts-cell .iconbtn{display:inline-grid;margin-left:4px}
+.app .backlink{display:inline-flex;align-items:center;gap:6px;color:var(--text-muted);background:none;border:none;cursor:pointer;font-size:13px;font-weight:500;margin-bottom:14px;padding:0}
+.app .backlink:hover{color:var(--accent)}
+.app .backlink svg{width:16px;height:16px}
+.app .prof-head{display:flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:18px 20px;margin-bottom:16px;flex-wrap:wrap}
+.app .prof-head h2{font-size:19px;font-weight:700;margin:0}
+.app .prof-head .role{color:var(--text-muted);font-size:13.5px;margin-top:3px}
+.app .prof-head .badges{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.app .prof-head .acts{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.app .prof-grid{display:grid;grid-template-columns:1fr 280px;gap:16px;align-items:start}
+.app .line-acts{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.app .empty{text-align:center;padding:28px 16px;color:var(--text-faint);font-size:13px}
+.app .overlay{position:absolute;inset:0;background:rgba(20,20,35,.4);display:grid;place-items:center;padding:16px;z-index:100}
+.app .modal{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow-pop);width:min(460px,100%);max-height:100%;overflow:auto}
+.app .modal-head{display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border)}
+.app .modal-head h2{font-size:15.5px;font-weight:700;margin:0}
+.app .modal-body{padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.app .modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--border)}
+.app .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.app .form-grid .full{grid-column:1 / -1}
+.app .field select{width:100%;font-size:13px;padding:8px 11px}
+.app .field .hint{font-size:11px;color:var(--text-faint);margin-top:4px}
+.app .field input.bad{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-soft)}
+.app .ferr{font-size:12.5px;color:var(--danger);background:var(--danger-soft);padding:8px 10px;border-radius:8px}
+.app .csv{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11.5px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;white-space:pre;overflow:auto;max-height:180px}
+.app .junemode{background:#FFF4D6;color:#6b4a00}
+@container app (max-width:720px){
+  .app .prof-grid{grid-template-columns:1fr}
+  .app .prof-head .acts{margin-left:0}
+  .app .form-grid{grid-template-columns:1fr}
+  .app .hide-sm-col{display:none}
+}
+.openq{font-size:13px;padding:10px 12px;border-radius:10px;background:var(--warn-soft);color:var(--text);border:1px solid var(--warn)}
+.openq b{color:var(--warn)}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Stage 4 · Demo batch 2 of 4 · Inventory: looking and changing</div>
+  <h1>The inventory screens you use every day</h1>
+  <p class="muted">The June Inventory, rebuilt as a working demo for <span class="fid">F6</span> overview, <span class="fid">F7</span> Store and bags, <span class="fid">F8</span> item page and <span class="fid">F9</span> restock and dispense. The screens are the June ones. What's different is underneath. To see the difference, switch <b>Rules</b> to <b>June</b> at any time: the app then works out readiness the way the June app did.</p>
+  <p class="small muted">You're signed in as Cara (Admin), so every button shows. All items and numbers are made up. Nothing is saved, except your answers in the right-hand column.</p>
+</header>
+
+<div class="stage">
+  <div class="left">
+    <div class="world" aria-label="Demo controls">
+      <div class="row"><span class="lbl">Screen</span>
+        <button type="button" class="wbtn" data-dev="win" aria-pressed="true">Computer window</button>
+        <button type="button" class="wbtn" data-dev="phone" aria-pressed="false">Phone</button>
+      </div>
+      <div class="row"><span class="lbl">Rules</span>
+        <button type="button" class="wbtn" data-rules="new" aria-pressed="true">New app</button>
+        <button type="button" class="wbtn off" data-rules="june" aria-pressed="false">June (to compare)</button>
+        <button type="button" class="wbtn" id="w-reset">Start the demo again</button>
+      </div>
+    </div>
+    <div class="devwrap"><div class="devframe" id="devframe"><div class="app" id="app" aria-label="REACH Inventory demo app"></div></div></div>
+    <p class="exnote">“Rules: June” only changes how readiness and stock levels are worked out, so you can compare the two. The new app has no such switch.</p>
+  </div>
+
+  <div class="right">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div id="tour"></div>
+    <div class="openq"><b>Noted for batch 4:</b> who may archive and delete items (every role, as in June, or Managers and Admins only) is a question for F2 roles together with F14 Staff. It isn't decided here.</div>
+    <div class="review final" data-part="overall" data-final="1"></div>
+  </div>
+</div>
+<footer>REACH Inventory · Stage 4 · demo batch 2 (F6, F7, F8, F9) · 27 Nov 2026 · source <span class="mono">docs/stage4/demo-batch2-inventory.html</span></footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $ = (sel, root=document) => root.querySelector(sel);
+const I = {
+  home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  box:'<path d="M21 8V21H3V8"/><rect x="1" y="3" width="22" height="5" rx="1"/><path d="M10 12h4"/>',
+  file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/>',
+  roster:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M7 14h3v3H7z"/>',
+  clock:'<path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/>',
+  settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>',
+  filter:'<path d="M3 6h18M6 12h12M9 18h6"/>', check:'<path d="M20 6L9 17l-5-5"/>',
+  alertT:'<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+  alertC:'<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>',
+  menu:'<path d="M3 6h18M3 12h18M3 18h18"/>', search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>',
+  pill:'<rect x="2" y="8" width="20" height="8" rx="4"/><path d="M12 8v8"/>', count:'<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/>',
+  edit:'<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/>',
+  trash:'<path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/>',
+  archive:'<rect x="2" y="4" width="20" height="5" rx="1"/><path d="M4 9v11h16V9M10 13h4"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  back:'<path d="M19 12H5M12 19l-7-7 7-7"/>', refresh:'<path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/>',
+  move:'<path d="M5 12h14M13 6l6 6-6 6"/>'
+};
+const svg = (n,sw=1.8)=>`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${I[n]}</svg>`;
+
+// ======================= Demo data (made up) =======================
+const DAY = 86400000;
+function ymd(t){ const d=new Date(t); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); } // local date, never UTC (rule B13)
+function sod(t){ const d=new Date(t); d.setHours(0,0,0,0); return d.getTime(); }
+const TODAY = sod(Date.now());
+function freshData(){
+  const items = [
+    {id:"IT1", name:"Gauze 10×10 cm", cat:"Dressings", unit:"pack"},
+    {id:"IT2", name:"Saline 0.9% 500 ml", cat:"Fluids", unit:"bag"},
+    {id:"IT3", name:"Paracetamol 500 mg", cat:"Medication", unit:"tab"},
+    {id:"IT4", name:"IV cannula 18G", cat:"Airway and IV", unit:""},
+    {id:"IT5", name:"Glucose gel 15 g", cat:"Medication", unit:"tube"},
+    {id:"IT6", name:"Bandage 8 cm", cat:"Dressings", unit:"roll"},
+    {id:"IT7", name:"Gloves, size M", cat:"PPE", unit:"box"},
+    {id:"IT8", name:"Tourniquet", cat:"Trauma", unit:""},
+    {id:"IT9", name:"Chest seal", cat:"Trauma", unit:""},
+    {id:"IT10", name:"Morphine 10 mg/ml (example)", cat:"Controlled drugs", unit:"amp", cd:true}
+  ];
+  const L = (id,it,loc,qty,par,exp,lot)=>({id,it,loc,qty,par,exp:exp===null?null:TODAY+exp*DAY,lot:lot||"",archived:false});
+  return {
+    items,
+    locs:[{id:"STORE",n:"Store (main)",store:true},{id:"BG1",n:"Bag 1 (adult)"},{id:"BG2",n:"Bag 2 (child)"},{id:"TK",n:"Trauma kit"}],
+    lines:[
+      L("L1","IT1","BG1",12,10,400,"G-2201"), L("L2","IT2","BG1",4,4,200,"S-118"), L("L3","IT3","BG1",20,20,90,"P-77"),
+      L("L4","IT4","BG2",0,4,500), L("L5","IT5","BG2",2,2,1,"GG-5"),
+      L("L6","IT8","TK",2,null,null), L("L7","IT9","TK",2,null,600), L("L8","IT6","TK",4,null,700),
+      L("L9","IT6","STORE",40,25,700), L("L10","IT7","STORE",6,10,null), L("L11","IT2","STORE",24,12,-3,"S-099"),
+      L("L12","IT1","STORE",30,20,380,"G-2190"), L("L13","IT10","STORE",5,5,240,"M-3")
+    ],
+    log:[]
+  };
+}
+let D, S;
+function fresh(){
+  D = freshData();
+  S = {view:"overview", rules:"new", drawer:false, q:"", item:null, loc:"all", cat:"", stock:"", exp:"", sort:"name", showArch:false, modal:null, lineSeq:100, itemSeq:100};
+}
+const it = id => D.items.find(x=>x.id===id);
+const loc = id => D.locs.find(x=>x.id===id) || {n:id};
+const locName = id => loc(id).n;
+const ME = "Cara Demo";
+function nowT(){ return new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}); }
+function addLog(lineId, text){ D.log.push({lineId, itemId: (D.lines.find(l=>l.id===lineId)||{}).it, text, who:ME, time:nowT()}); }
+
+// ----- the rules (new vs June) -----
+const june = () => S.rules==="june";
+function parOf(l){ return (june() && loc(l.loc).store) ? null : l.par; }   // June: Store had no reorder levels (B10)
+function daysLeft(l){ return l.exp===null ? null : Math.round((l.exp - TODAY)/DAY); }
+function stockStatus(l){
+  const p = parOf(l);
+  if (l.qty<=0) return "Out";
+  if (p===null) return june() ? "In" : "None";                             // June: no required amount = fine (B25)
+  if (june()) return l.qty<=p ? "Low" : "In";                               // June: at par = low (B1)
+  return l.qty<p ? "Low" : "In";
+}
+function stockBadge(l){
+  const s = stockStatus(l), store = loc(l.loc).store;
+  if (s==="Out") return `<span class="badge b-danger">Out of stock</span>`;
+  if (s==="Low") return `<span class="badge b-warning">${store?"Below reorder level":"Below required"}</span>`;
+  if (s==="None") return `<span class="badge b-muted nodot">No ${store?"reorder level":"required amount"}</span>`;
+  return `<span class="badge b-success">${june()?"In stock":(store?"In stock":"At or above required")}</span>`;
+}
+function expBadge(l){
+  const d = daysLeft(l);
+  if (d===null) return `<span class="badge b-muted nodot">No expiry</span>`;
+  if (d<0) return `<span class="badge b-danger">Expired</span>`;
+  if (d===0) return `<span class="badge b-danger">Expires today</span>`;
+  if (d<=60) return `<span class="badge b-warning">${d===1?"Expires tomorrow":"Expires in "+d+" days"}</span>`;
+  return `<span class="badge b-success">${esc(new Date(l.exp).toLocaleDateString([], {day:"numeric", month:"short", year:"numeric"}))}</span>`;
+}
+function active(){ return D.lines.filter(l=>!l.archived); }
+function readiness(locId){
+  const ls = active().filter(l=>l.loc===locId);
+  let ok=0, short=0, out=0, expired=0, none=0;
+  ls.forEach(l=>{ const s=stockStatus(l); const d=daysLeft(l); if (d!==null && d<0) expired++; if (s==="Out") out++; else if (s==="Low") short++; else if (s==="None") none++; else ok++; });
+  return {total:ls.length, ok, short, out, expired, none};
+}
+function readyBadge(r, store){
+  if (r.total===0) return `<span class="badge b-muted nodot">Empty</span>`;
+  if (r.out||r.expired) return `<span class="badge b-danger">Not ready</span>`;
+  if (r.short) return `<span class="badge b-warning">${store?"Reorder":"Short"}</span>`;
+  if (r.none) return `<span class="badge b-info nodot">Not set up</span>`;
+  return `<span class="badge b-success">${store?"Stocked":"Ready"}</span>`;
+}
+function readyLine(r, store){
+  if (r.total===0) return "no lines";
+  const bits = [`${r.ok} of ${r.total} ${june()?"at par":(store?"above reorder level":"at or above required")}`];
+  if (r.short) bits.push(`${r.short} ${store?"below reorder level":"short"}`);
+  if (r.out) bits.push(`${r.out} out`);
+  if (r.expired) bits.push(`${r.expired} expired`);
+  if (r.none) bits.push(`${r.none} with no ${store?"reorder level":"required amount"}`);
+  return bits.join(" · ");
+}
+
+// ======================= Tour events =======================
+const seen = {};
+function emit(ev){ if (!seen[ev]){ seen[ev]=true; paintTour(); } }
+
+// ======================= Render =======================
+const root = document.getElementById("app");
+const NAV = [
+  {v:"home", t:"Home", i:"home"}, {grp:"Inventory"},
+  {v:"overview", t:"Overview", i:"box"}, {v:"where", t:"Store and bags", i:"filter"}, {v:"items", t:"Item list", i:"file"},
+  {v:"count", t:"Count a bag", i:"count"}, {v:"takes", t:"Stock takes", i:"clock"}, {v:"cd", t:"Controlled drugs", i:"pill"}, {v:"log", t:"Activity", i:"clock"},
+  {grp:"Team"}, {v:"staff", t:"Staff and training", i:"users"}, {v:"roster", t:"Roster", i:"roster", ext:"R2"},
+  {grp:"Later"}, {v:"patients", t:"Patients", i:"file", ext:"LATER"}
+];
+const TITLES = {home:["Workspace","Home"], overview:["Inventory","Overview"], where:["Inventory","Store and bags"], items:["Inventory","Item list"], item:["Inventory","Item"], count:["Inventory","Count a bag"], takes:["Inventory","Stock takes"], cd:["Inventory","Controlled drugs"], log:["Inventory","Activity"], staff:["Team","Staff and training"], roster:["Team","Roster"], patients:["Later","Patients"], settings:["Admin","Settings"]};
+const LATER = {home:"Shown in demo batch 1.", count:"F10 Count stock: demo batch 3", takes:"F11 Stock takes: demo batch 3", cd:"F12 Controlled-drug register: demo batch 3", log:"F4 Activity log: demo batch 4. Changes you make here show on each item page under “Stock movements”.", staff:"F14, F15: demo batch 4", roster:"F16: release 2, demo batch 4", patients:"F18: later", settings:"F5 Settings: demo batch 4"};
+
+function render(){
+  const v = S.item ? "item" : S.view;
+  const [crumb, title] = TITLES[v];
+  const nav = n => n.grp ? `<div class="navlabel">${esc(n.grp)}</div>` :
+    `<button type="button" data-view="${n.v}" class="${S.view===n.v||(n.v==="items"&&S.item)?"active":""}">${svg(n.i)}${esc(n.t)}${n.ext?`<span class="ext">${esc(n.ext)}</span>`:""}</button>`;
+  root.innerHTML = `<div class="shell ${S.drawer?"drawer":""}">
+    <aside class="side" aria-label="Menu">
+      <button type="button" class="logo" data-view="overview"><div class="mark">${svg("plus",2.4)}</div><div class="name">REACH Inventory<small>PNG base · medical</small></div></button>
+      <nav class="nav">${NAV.map(nav).join("")}</nav>
+      <div class="bottom"><nav class="nav">${nav({v:"settings",t:"Settings",i:"settings"})}</nav></div>
+    </aside>
+    ${S.drawer?`<div class="scrim" id="scrim"></div>`:""}
+    <div class="main">
+      <header class="topbar">
+        <button type="button" class="hamb" id="hamb" aria-label="Open the menu">${svg("menu",2)}</button>
+        <div><div class="crumb">${esc(crumb)}</div><h1>${esc(S.item?it(S.item).name:title)}</h1></div>
+        <div class="search" role="search">${svg("search",2)}<input id="q" placeholder="Search staff &amp; inventory…" value="${esc(S.q)}" autocomplete="off" aria-label="Search">${S.q?results():""}</div>
+        <div class="tb-right">
+          <span class="sync ok" style="cursor:default"><i></i><span class="hide-sm">Up to date</span></span>
+          <span class="me" style="cursor:default"><span class="avatar" style="background:#1E9E62">CD</span><span class="who">Cara Demo<small>Admin</small></span></span>
+        </div>
+      </header>
+      ${june()?`<div class="banner junemode"><span><b>Comparing:</b> readiness and stock levels are worked out with the June app's rules.</span></div>`:""}
+      <div class="content" id="content"></div>
+    </div>
+  </div>${S.modal?`<div class="overlay" id="ov">${S.modal}</div>`:""}<div class="toasts" id="toasts"></div><span class="exband">made-up example data</span>`;
+  const c = $("#content", root);
+  if (S.item) vItem(c); else ({overview:vOverview, where:vWhere, items:vWhere}[S.view] || vLater)(c);
+  root.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{ S.view=b.dataset.view; S.item=null; S.drawer=false; render(); $("#content",root).scrollTop=0; });
+  $("#hamb",root).onclick = ()=>{ S.drawer=true; render(); };
+  const sc = $("#scrim",root); if (sc) sc.onclick = ()=>{ S.drawer=false; render(); };
+  const q = $("#q",root);
+  q.oninput = ()=>{ S.q=q.value; const p=q.selectionStart; render(); const q2=$("#q",root); q2.focus(); q2.setSelectionRange(p,p); };
+  root.querySelectorAll("[data-goitem]").forEach(b=>b.onclick=()=>{ S.item=b.dataset.goitem; S.q=""; render(); emit("opened"); });
+  if (S.modal && S.modalWire) S.modalWire();
+}
+function results(){
+  const q = S.q.trim().toLowerCase(); if (!q) return "";
+  const its = D.items.filter(i=>i.name.toLowerCase().includes(q));
+  return `<div class="results">${its.length?`<div class="grp">Inventory</div>`+its.map(i=>`<button type="button" class="r" data-goitem="${i.id}">${svg("box")}<span>${esc(i.name)}</span></button>`).join(""):`<div class="none">Nothing found for “${esc(S.q)}”.</div>`}</div>`;
+}
+function toast(t, kind){ setTimeout(()=>{ const box=$("#toasts",root); if(!box) return; const el=document.createElement("div"); el.className="toast "+(kind||""); el.textContent=t; box.appendChild(el); setTimeout(()=>el.remove(),3200); },0); }
+function vLater(c){ c.innerHTML = `<div class="placeholder">${svg("box")}<h2>${esc(TITLES[S.view][1])}</h2><p>${esc(LATER[S.view]||"")}</p></div>`; }
+
+// ----- F6 Overview -----
+function vOverview(c){
+  const L = active();
+  const out = L.filter(l=>stockStatus(l)==="Out").length, low = L.filter(l=>stockStatus(l)==="Low").length, none = L.filter(l=>stockStatus(l)==="None").length;
+  const exp = L.filter(l=>{const d=daysLeft(l);return d!==null&&d<0;}).length, soon = L.filter(l=>{const d=daysLeft(l);return d!==null&&d>=0&&d<=60;}).length;
+  const att = L.filter(l=>{const d=daysLeft(l);return d!==null&&d<=60;}).sort((a,b)=>a.exp-b.exp).slice(0,6);
+  c.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">${svg("box")}Item types</div><div class="v">${new Set(L.map(l=>l.it)).size}</div></div>
+      <div class="stat"><div class="k">${svg("check")}Units everywhere</div><div class="v">${L.reduce((s,l)=>s+l.qty,0)}</div></div>
+      <div class="stat click" data-ov="out"><div class="k">${svg("alertC")}Out of stock</div><div class="v">${out}</div></div>
+      <div class="stat click" data-ov="expired"><div class="k">${svg("alertT")}Expired</div><div class="v">${exp} <small>/ ${soon} soon</small></div></div>
+    </div>
+    <div class="attention">
+      ${out?`<div class="att att-danger click" data-ov="out">${svg("alertC",2)}<span><b>${out}</b> out of stock, everywhere</span></div>`:""}
+      ${low?`<div class="att att-warning click" data-ov="low">${svg("alertT",2)}<span><b>${low}</b> ${june()?"low / below par":"below required or reorder level"}</span></div>`:""}
+      ${(exp+soon)?`<div class="att att-danger click" data-ov="expsoon">${svg("alertT",2)}<span><b>${exp+soon}</b> expired or expiring soon</span></div>`:""}
+      ${none?`<div class="att att-info click" data-ov="none">${svg("alertC",2)}<span><b>${none}</b> with no required amount set</span></div>`:""}
+    </div>
+    <div class="panel"><div class="panel-head"><h2>Bag readiness</h2><span class="sub">grab-ready status per location</span></div>
+      <div class="cards">${D.locs.map(lc=>{const r=readiness(lc.id);return `<button type="button" class="appcard" data-gotoloc="${lc.id}"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span class="appcard-name">${esc(lc.n)}</span>${readyBadge(r, lc.store)}</div><div class="appcard-desc" style="margin-top:8px">${esc(readyLine(r, lc.store))}</div></button>`;}).join("")}</div></div>
+    <div class="panel"><div class="panel-head"><h2>Soonest to expire</h2><span class="sub">across the Store and every bag</span></div>
+      ${att.map(l=>`<div class="train-item click" data-goitem="${l.it}" style="cursor:pointer"><div class="ti"><div class="t">${esc(it(l.it).name)}</div><div class="d">${esc(locName(l.loc))} · ${l.qty} ${esc(it(l.it).unit)}</div></div>${expBadge(l)}</div>`).join("")}</div>`;
+  c.querySelectorAll("[data-ov]").forEach(el=>el.onclick=()=>{ const k=el.dataset.ov; Object.assign(S,{view:"where", loc:"all", stock:"", exp:"", cat:""});
+    if (k==="out") S.stock="Out"; else if (k==="low") S.stock="Low"; else if (k==="none") S.stock="None"; else if (k==="expired") S.exp="Expired"; else S.exp="ExpiredSoon"; render(); });
+  c.querySelectorAll("[data-gotoloc]").forEach(el=>el.onclick=()=>{
+    const id = el.dataset.gotoloc; Object.assign(S,{view:"where", loc:id, stock:"", exp:"", cat:""}); render();
+    if (!june()){ if (id==="BG1") emit("b1"); if (id==="TK") emit("b25"); if (id==="STORE") emit("b10"); }
+  });
+}
+
+// ----- F7 Store and bags -----
+function filtered(){
+  const q = S.q.trim().toLowerCase();
+  let ls = D.lines.filter(l=>{
+    if (!S.showArch && l.archived) return false;
+    if (S.loc!=="all" && l.loc!==S.loc) return false;
+    const i = it(l.it);
+    if (S.cat && i.cat!==S.cat) return false;
+    if (S.stock && stockStatus(l)!==S.stock) return false;
+    if (S.exp){ const d=daysLeft(l);
+      if (S.exp==="Expired" && !(d!==null&&d<0)) return false;
+      if (S.exp==="Soon" && !(d!==null&&d>=0&&d<=60)) return false;
+      if (S.exp==="ExpiredSoon" && !(d!==null&&d<=60)) return false;
+      if (S.exp==="OK" && (d!==null&&d<=60)) return false; }
+    return true;
+  });
+  const nm = l=>it(l.it).name.toLowerCase(), rk = l=>({Out:0,Low:1,None:2,In:3}[stockStatus(l)]), ek = l=>l.exp===null?Infinity:l.exp;
+  ls.sort((a,b)=>{ switch(S.sort){ case "nameZ": return nm(b).localeCompare(nm(a)); case "stock": return rk(a)-rk(b)||nm(a).localeCompare(nm(b)); case "expiry": return ek(a)-ek(b)||nm(a).localeCompare(nm(b)); case "qtyLow": return a.qty-b.qty||nm(a).localeCompare(nm(b)); default: return nm(a).localeCompare(nm(b)); } });
+  return ls;
+}
+function vWhere(c){
+  const all = S.loc==="all", lc = loc(S.loc), ls = filtered();
+  const r = (!all) ? readiness(S.loc) : null;
+  const fa = !!(S.cat||S.stock||S.exp);
+  const cats = [...new Set(D.items.map(i=>i.cat))].sort();
+  const attCls = r ? (r.out||r.expired ? "att-danger" : r.short ? "att-warning" : r.none ? "att-info" : "att-ok") : "";
+  const attTxt = r ? (r.out||r.expired||r.short||r.none ? readyLine(r, lc.store) : (lc.store ? "everything above its reorder level" : "grab-ready: everything at or above its required amount")) : "";
+  c.innerHTML = `
+    ${r?`<div class="att ${attCls}" style="margin-bottom:14px">${svg(attCls==="att-ok"?"check":"alertT",2)}<span><b>${esc(lc.n)}</b>: ${esc(attTxt)}${(!june() && r.none && !lc.store)?". It can't show “Ready” until every line has a required amount.":""}</span></div>`:""}
+    <div class="filters">
+      <select id="fLoc" aria-label="Location"><option value="all">All locations</option>${D.locs.map(l=>`<option value="${l.id}" ${S.loc===l.id?"selected":""}>${esc(l.n)}</option>`).join("")}</select>
+      <select id="fCat" aria-label="Category"><option value="">All categories</option>${cats.map(x=>`<option ${S.cat===x?"selected":""}>${esc(x)}</option>`).join("")}</select>
+      <select id="fStock" aria-label="Stock level"><option value="">Any stock level</option><option value="Out" ${S.stock==="Out"?"selected":""}>Out of stock</option><option value="Low" ${S.stock==="Low"?"selected":""}>Below required / reorder</option><option value="In" ${S.stock==="In"?"selected":""}>At or above</option>${june()?"":`<option value="None" ${S.stock==="None"?"selected":""}>No required amount set</option>`}</select>
+      <select id="fExp" aria-label="Expiry"><option value="">Any expiry</option><option value="Expired" ${S.exp==="Expired"?"selected":""}>Expired</option><option value="Soon" ${S.exp==="Soon"?"selected":""}>Expiring soon</option><option value="ExpiredSoon" ${S.exp==="ExpiredSoon"?"selected":""}>Expired or soon</option><option value="OK" ${S.exp==="OK"?"selected":""}>In date</option></select>
+      <select id="fSort" aria-label="Sort"><option value="name" ${S.sort==="name"?"selected":""}>Sort: Name A–Z</option><option value="nameZ" ${S.sort==="nameZ"?"selected":""}>Name Z–A</option><option value="stock" ${S.sort==="stock"?"selected":""}>Stock (worst first)</option><option value="expiry" ${S.sort==="expiry"?"selected":""}>Expiry (soonest first)</option><option value="qtyLow" ${S.sort==="qtyLow"?"selected":""}>Amount (lowest first)</option></select>
+      <label class="chkl"><input type="checkbox" id="fArch" ${S.showArch?"checked":""}> Show archived</label>
+      ${fa?`<button type="button" class="btn btn-ghost btn-sm" id="fClear">${svg("refresh",2)}Clear filters</button>`:""}
+    </div>
+    <div class="panel"><div class="panel-head"><h2>${esc(all?"All locations":lc.n)}</h2><span class="sub" style="margin-left:0">${ls.length} ${ls.length===1?"line":"lines"}</span>
+      <span class="spacer"></span><button type="button" class="btn btn-ghost btn-sm" id="csv">${svg("download",2)}Export CSV</button><button type="button" class="btn btn-primary btn-sm" id="addItem">${svg("plus",2.2)}Add item</button></div>
+      <div class="tscroll"><table><thead><tr><th>Item</th><th class="hide-sm-col">Category</th>${all?"<th>Location</th>":""}<th>On hand</th><th>${lc.store?"Reorder at":"Required"}</th><th>Stock</th><th>Expiry</th><th></th></tr></thead><tbody>
+      ${ls.length?ls.map(l=>{const i=it(l.it); const p=parOf(l); return `<tr class="click ${l.archived?"archived-row":""}" data-goitem="${i.id}">
+        <td><div class="nm">${esc(i.name)}</div>${l.lot?`<div class="em">Lot ${esc(l.lot)}</div>`:""}</td><td class="muted hide-sm-col">${esc(i.cat)}</td>${all?`<td class="muted">${esc(locName(l.loc))}</td>`:""}
+        <td><b>${l.qty}</b> <span class="muted" style="font-size:11.5px">${esc(i.unit)}</span></td><td class="muted">${p===null?"—":p}</td><td>${stockBadge(l)}</td><td>${expBadge(l)}</td>
+        <td class="acts-cell">${l.archived?"":`<button type="button" class="iconbtn" data-restock="${l.id}" aria-label="Restock ${esc(i.name)}" title="Restock (+)">${svg("plus",2.2)}</button><button type="button" class="iconbtn" data-dispense="${l.id}" aria-label="Dispense ${esc(i.name)}" title="Dispense (−)">${svg("minus",2.2)}</button>`}</td></tr>`;}).join(""):`<tr><td colspan="8"><div class="empty">No items match these filters.</div></td></tr>`}
+      </tbody></table></div></div>`;
+  const set = (k,v)=>{ S[k]=v; render(); emit("filtered"); };
+  $("#fLoc",c).onchange=e=>set("loc",e.target.value); $("#fCat",c).onchange=e=>set("cat",e.target.value);
+  $("#fStock",c).onchange=e=>set("stock",e.target.value); $("#fExp",c).onchange=e=>set("exp",e.target.value);
+  $("#fSort",c).onchange=e=>set("sort",e.target.value); $("#fArch",c).onchange=e=>set("showArch",e.target.checked);
+  const cl=$("#fClear",c); if (cl) cl.onclick=()=>{ Object.assign(S,{cat:"",stock:"",exp:""}); render(); };
+  $("#csv",c).onclick=()=>openCSV(ls, all?"all-locations":lc.n);
+  $("#addItem",c).onclick=()=>openAddItem();
+  c.querySelectorAll("[data-restock]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); openAdjust(b.dataset.restock,"restock"); });
+  c.querySelectorAll("[data-dispense]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); openAdjust(b.dataset.dispense,"dispense"); });
+}
+
+// ----- F8 Item page -----
+function vItem(c){
+  const i = it(S.item); const ls = D.lines.filter(l=>l.it===i.id); const act = ls.filter(l=>!l.archived);
+  const total = act.reduce((s,l)=>s+l.qty,0);
+  const feed = D.log.filter(e=>e.itemId===i.id).slice().reverse();
+  c.innerHTML = `<button type="button" class="backlink" id="back">${svg("back")}Back to inventory</button>
+    <div class="prof-head"><div class="appcard-ic" style="width:52px;height:52px;margin:0">${svg("box")}</div>
+      <div><h2>${esc(i.name)}</h2><div class="role">${esc(i.cat)}${i.unit?" · counted in "+esc(i.unit):""}</div>
+        <div class="badges"><span class="badge b-accent nodot">${total} on hand · ${act.length} ${act.length===1?"location":"locations"}</span>${i.cd?`<span class="badge b-warning nodot">Controlled drug</span>`:""}</div></div>
+      <div class="acts"><button type="button" class="btn btn-ghost" id="addLine">${svg("plus",2.2)}Add location</button></div></div>
+    <div class="prof-grid">
+      <div class="panel"><div class="panel-head"><h2>Stock by location</h2><span class="sub">${total} total</span></div>
+        ${ls.length?ls.map(l=>`<div class="train-item ${l.archived?"archived-row":""}"><div class="ti"><div class="t">${esc(locName(l.loc))}${l.archived?" · archived":""}</div>
+          <div class="d"><b>${l.qty}</b>${i.unit?" "+esc(i.unit):""}${parOf(l)!==null?` · ${loc(l.loc).store?"reorder at":"required"} ${parOf(l)}`:""}${l.lot?` · lot ${esc(l.lot)}`:""}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${stockBadge(l)} ${l.exp!==null?expBadge(l):""}</div></div>
+          <div class="line-acts">${l.archived
+            ? `<button type="button" class="iconbtn" data-react="${l.id}" title="Reactivate" aria-label="Reactivate">${svg("refresh",2)}</button><button type="button" class="iconbtn" data-del="${l.id}" title="Delete for good" aria-label="Delete for good">${svg("trash",2)}</button>`
+            : `<button type="button" class="iconbtn" data-restock="${l.id}" title="Restock (+)" aria-label="Restock">${svg("plus",2.2)}</button><button type="button" class="iconbtn" data-dispense="${l.id}" title="Dispense (−)" aria-label="Dispense">${svg("minus",2.2)}</button><button type="button" class="iconbtn" data-move="${l.id}" title="Move to another bag or the Store" aria-label="Move">${svg("move",2)}</button><button type="button" class="iconbtn" data-edit="${l.id}" title="Edit" aria-label="Edit">${svg("edit",2)}</button><button type="button" class="iconbtn" data-arch="${l.id}" title="Archive" aria-label="Archive">${svg("archive",2)}</button>`}</div></div>`).join(""):`<div class="empty">No stock anywhere yet.</div>`}
+      </div>
+      <div><div class="panel feed"><div class="panel-head"><h2>Stock movements</h2></div>
+        ${feed.length?feed.map(e=>`<div class="item"><div class="ic">${svg("clock")}</div><div class="tx">${esc(e.text)}<span class="src">${esc(e.who)} · ${esc(e.time)}</span></div></div>`).join(""):`<div class="empty">No movements yet. Restock, dispense, move or edit a line.</div>`}</div>
+        <div class="panel"><div class="panel-head"><h2>Used on EDP cases</h2></div><div class="empty">Comes with F17 (later): stock used on an EDP case shows here.</div></div></div>
+    </div>`;
+  $("#back",c).onclick=()=>{ S.item=null; render(); };
+  $("#addLine",c).onclick=()=>openLine(i.id, null);
+  const on = (a, f)=>c.querySelectorAll(`[data-${a}]`).forEach(b=>b.onclick=()=>f(b.dataset[a]));
+  on("restock", id=>openAdjust(id,"restock")); on("dispense", id=>openAdjust(id,"dispense"));
+  on("move", openMove); on("edit", id=>openLine(i.id,id));
+  on("arch", id=>{ const l=D.lines.find(x=>x.id===id); l.archived=true; addLog(id, `Archived the line in ${locName(l.loc)} (${l.qty} on hand)`); toast("Line archived. It can be reactivated, or deleted for good."); render(); emit("archived"); });
+  on("react", id=>{ const l=D.lines.find(x=>x.id===id); l.archived=false; addLog(id, `Reactivated the line in ${locName(l.loc)}`); render(); });
+  on("del", id=>openDelete(id));
+}
+
+// ----- modals -----
+function modal(html, wire){ S.modal = html; S.modalWire = ()=>{ $("#mcancel",root).onclick=closeModal; wire(); }; render(); const f=root.querySelector(".modal input, .modal select"); if (f) f.focus(); }
+function closeModal(){ S.modal=null; S.modalWire=null; render(); }
+function wholeNumber(raw, {min=1, max=Infinity, what="amount"}={}){
+  const s = String(raw).trim();
+  if (s==="") return {err:`Type the ${what}.`};
+  if (!/^-?\d+([.,]\d+)?$/.test(s)) return {err:`“${s}” isn't a number.`};
+  const n = Number(s.replace(",","."));
+  if (!Number.isInteger(n)) return {err:`Whole numbers only. ${s} isn't allowed.`};
+  if (n < min) return {err: min===1 ? `It has to be at least 1. ${n} isn't allowed.` : `It can't be below ${min}.`};
+  if (n > max) return {err:`Only ${max} on hand, so ${n} can't be taken.`, tooMany:true};
+  return {n};
+}
+function openAdjust(lineId, kind){
+  const l = D.lines.find(x=>x.id===lineId), i = it(l.it), disp = kind==="dispense";
+  if (disp && i.cd){
+    modal(`<div class="modal"><div class="modal-head"><h2>Dispense: ${esc(i.name)}</h2></div><div class="modal-body">
+      <p style="margin:0">This is a <b>controlled drug</b>. Taking it out goes through the controlled-drug register, with a reason, a witness and the running balance.</p>
+      <p style="margin:0;color:var(--text-muted);font-size:12.5px">The register (F12) is in demo batch 3.</p></div>
+      <div class="modal-foot"><button type="button" class="btn btn-ghost" id="mcancel">Close</button></div></div>`, ()=>{});
+    emit("cd"); return;
+  }
+  modal(`<div class="modal"><div class="modal-head"><h2>${disp?"Dispense":"Restock"}: ${esc(i.name)}</h2></div>
+    <div class="modal-body"><p style="margin:0;color:var(--text-muted);font-size:13px">${esc(locName(l.loc))} · currently <b style="color:var(--text)">${l.qty}</b>${i.unit?" "+esc(i.unit):""}</p>
+      <div class="field"><label for="adj">${disp?"How many to take out":"How many to add"}</label><input id="adj" inputmode="numeric" value="1" autocomplete="off"><div class="hint">Whole numbers, 1 or more. Try 0, −5, 2.7 or an empty box.</div></div>
+      <div id="aerr"></div></div>
+    <div class="modal-foot"><button type="button" class="btn btn-ghost" id="mcancel">Cancel</button><button type="button" class="btn btn-primary" id="mgo">${disp?"Dispense":"Restock"}</button></div></div>`, ()=>{
+    const go = ()=>{
+      const inp = $("#adj",root), v = wholeNumber(inp.value, {max: disp ? l.qty : Infinity});
+      if (v.err){ $("#aerr",root).innerHTML = `<div class="ferr">${esc(v.err)} Nothing was changed.</div>`; inp.classList.add("bad"); inp.focus(); emit(v.tooMany?"tooMany":"rejected"); return; }
+      const old = l.qty; l.qty += disp ? -v.n : v.n;
+      addLog(l.id, `${disp?"Dispensed":"Restocked"} ${v.n} × ${i.name} ${disp?"from":"to"} ${locName(l.loc)}: ${old} → ${l.qty}`);
+      closeModal(); toast(`${disp?"Dispensed":"Restocked"} ${v.n} · ${i.name} now ${l.qty}`, disp?"":"success"); emit(disp?"dispensed":"restocked");
+    };
+    $("#mgo",root).onclick = go; $("#adj",root).onkeydown = e=>{ if (e.key==="Enter") go(); };
+  });
+}
+function openMove(lineId){
+  const l = D.lines.find(x=>x.id===lineId), i = it(l.it);
+  const targets = D.locs.filter(x=>x.id!==l.loc);
+  modal(`<div class="modal"><div class="modal-head"><h2>Move: ${esc(i.name)}</h2></div>
+    <div class="modal-body"><p style="margin:0;color:var(--text-muted);font-size:13px">From <b style="color:var(--text)">${esc(locName(l.loc))}</b> · ${l.qty} on hand${l.lot?" · lot "+esc(l.lot):""}</p>
+      <div class="form-grid"><div class="field"><label for="mto">Move to</label><select id="mto">${targets.map(t=>`<option value="${t.id}">${esc(t.n)}</option>`).join("")}</select></div>
+      <div class="field"><label for="mqty">How many</label><input id="mqty" inputmode="numeric" value="${l.qty}" autocomplete="off"><div class="hint">All ${l.qty}, or part of them</div></div></div>
+      <div id="merr"></div></div>
+    <div class="modal-foot"><button type="button" class="btn btn-ghost" id="mcancel">Cancel</button><button type="button" class="btn btn-primary" id="mgo">Move</button></div></div>`, ()=>{
+    $("#mgo",root).onclick = ()=>{
+      const v = wholeNumber($("#mqty",root).value, {max:l.qty});
+      if (v.err){ $("#merr",root).innerHTML = `<div class="ferr">${esc(v.err)} Nothing was moved.</div>`; return; }
+      const to = $("#mto",root).value;
+      let dest = D.lines.find(x=>x.it===l.it && x.loc===to && !x.archived && x.lot===l.lot && x.exp===l.exp);
+      let note = "";
+      if (dest){ dest.qty += v.n; note = " (added to the line already there)"; }
+      else { dest = {id:"L"+(++S.lineSeq), it:l.it, loc:to, qty:v.n, par:null, exp:l.exp, lot:l.lot, archived:false}; D.lines.push(dest); note = loc(to).store ? " (set a reorder level there)" : " (set a required amount there)"; }
+      const old = l.qty; l.qty -= v.n;
+      addLog(l.id, `Moved ${v.n} × ${i.name}: ${locName(l.loc)} ${old} → ${l.qty}, ${locName(to)} +${v.n}${note}`);
+      if (l.qty===0 && v.n===old){ l.archived = true; }
+      closeModal(); toast(`Moved ${v.n} to ${locName(to)}`, "success"); emit("moved");
+    };
+  });
+}
+function openLine(itemId, lineId){
+  const i = it(itemId), l = lineId ? D.lines.find(x=>x.id===lineId) : null, editing = !!l;
+  const free = D.locs.filter(x=>!D.lines.some(y=>y.it===itemId && y.loc===x.id && !y.archived));
+  if (!editing && !free.length){ toast("This item is already in every location."); return; }
+  const expV = l && l.exp!==null ? ymd(l.exp) : "";
+  modal(`<div class="modal"><div class="modal-head"><h2>${editing?"Edit stock: "+esc(locName(l.loc)):"Add a location"}</h2></div>
+    <div class="modal-body"><div class="form-grid">
+      <div class="field">${editing?`<label>Location</label><input value="${esc(locName(l.loc))}" disabled><div class="hint">To change the location, use Move →</div>`:`<label for="lloc">Location</label><select id="lloc">${free.map(o=>`<option value="${o.id}">${esc(o.n)}</option>`).join("")}</select>`}</div>
+      <div class="field"><label for="lqty">On hand</label><input id="lqty" inputmode="numeric" value="${editing?l.qty:0}"></div>
+      <div class="field"><label for="lpar">Required amount / reorder level</label><input id="lpar" inputmode="numeric" value="${editing&&l.par!==null?l.par:""}" placeholder="empty = not set"></div>
+      <div class="field"><label for="llot">Lot</label><input id="llot" value="${editing?esc(l.lot):""}"></div>
+      <div class="field full"><label for="lexp">Expiry</label><input id="lexp" type="date" value="${expV}"></div>
+    </div><div id="lerr"></div></div>
+    <div class="modal-foot"><button type="button" class="btn btn-ghost" id="mcancel">Cancel</button><button type="button" class="btn btn-primary" id="mgo">${editing?"Save changes":"Add location"}</button></div></div>`, ()=>{
+    $("#mgo",root).onclick = ()=>{
+      const q = wholeNumber($("#lqty",root).value, {min:0, what:"amount on hand"});
+      const pr = $("#lpar",root).value.trim(); const p = pr==="" ? {n:null} : wholeNumber(pr, {min:0, what:"required amount"});
+      if (q.err || p.err){ $("#lerr",root).innerHTML = `<div class="ferr">${esc(q.err||p.err)} Nothing was saved.</div>`; return; }
+      const ev = $("#lexp",root).value, exp = ev ? sod(new Date(ev+"T00:00").getTime()) : null, lot = $("#llot",root).value.trim();
+      if (editing){
+        const ch = [];
+        if (l.qty!==q.n) ch.push(`on hand ${l.qty} → ${q.n}`);
+        if (l.par!==p.n) ch.push(`required ${l.par===null?"none":l.par} → ${p.n===null?"none":p.n}`);
+        if (l.lot!==lot) ch.push(`lot ${l.lot||"none"} → ${lot||"none"}`);
+        if (l.exp!==exp) ch.push(`expiry changed`);
+        Object.assign(l, {qty:q.n, par:p.n, lot, exp});
+        if (ch.length){ addLog(l.id, `Edited ${locName(l.loc)}: ${ch.join(", ")}`); emit("edited"); }
+        closeModal(); toast(ch.length?"Saved":"Nothing changed", ch.length?"success":"");
+      } else {
+        const id = "L"+(++S.lineSeq), lc = $("#lloc",root).value;
+        D.lines.push({id, it:itemId, loc:lc, qty:q.n, par:p.n, lot, exp, archived:false});
+        addLog(id, `Added ${i.name} to ${locName(lc)}: ${q.n}`); closeModal(); toast("Location added", "success"); emit("added");
+      }
+    };
+  });
+}
+function openDelete(lineId){
+  const l = D.lines.find(x=>x.id===lineId), i = it(l.it);
+  modal(`<div class="modal"><div class="modal-head"><h2>Delete for good?</h2></div>
+    <div class="modal-body"><p style="margin:0">${esc(i.name)} in <b>${esc(locName(l.loc))}</b> (${l.qty} on hand) will be deleted and can't be brought back.</p><p style="margin:0;color:var(--text-muted);font-size:12.5px">The delete is written to the activity log, with who, when and what was there.</p></div>
+    <div class="modal-foot"><button type="button" class="btn btn-ghost" id="mcancel">Cancel</button><button type="button" class="btn btn-primary" id="mgo" style="background:var(--danger)">Delete</button></div></div>`, ()=>{
+    $("#mgo",root).onclick = ()=>{ addLog(l.id, `Deleted the line in ${locName(l.loc)} for good (had ${l.qty}${l.lot?", lot "+l.lot:""})`); D.lines = D.lines.filter(x=>x.id!==lineId); closeModal(); toast("Deleted. The activity log keeps a record."); emit("deleted"); };
+  });
+}
+function openAddItem(){
+  const cats = [...new Set(D.items.map(i=>i.cat))].sort();
+  modal(`<div class="modal"><div class="modal-head"><h2>Add item</h2></div>
+    <div class="modal-body"><div class="form-grid">
+      <div class="field full"><label for="aname">Name</label><input id="aname" placeholder="e.g. Burn dressing 10×10 cm"></div>
+      <div class="field"><label for="acat">Category</label><select id="acat">${cats.map(x=>`<option>${esc(x)}</option>`).join("")}</select></div>
+      <div class="field"><label for="aunit">Counted in</label><input id="aunit" placeholder="pack, tab, box…"></div>
+      <div class="field"><label for="aloc">First location</label><select id="aloc">${D.locs.map(o=>`<option value="${o.id}">${esc(o.n)}</option>`).join("")}</select></div>
+      <div class="field"><label for="aqty">On hand</label><input id="aqty" inputmode="numeric" value="0"></div>
+    </div><div id="aerr2"></div></div>
+    <div class="modal-foot"><button type="button" class="btn btn-ghost" id="mcancel">Cancel</button><button type="button" class="btn btn-primary" id="mgo">Add item</button></div></div>`, ()=>{
+    $("#mgo",root).onclick = ()=>{
+      const name = $("#aname",root).value.trim().replace(/\s+/g," ");
+      const q = wholeNumber($("#aqty",root).value, {min:0, what:"amount on hand"});
+      let err = !name ? "Give the item a name." : (q.err || "");
+      if (!err && D.items.some(x=>x.name.toLowerCase()===name.toLowerCase())) err = `“${name}” already exists. Open it and add a location instead.`;
+      if (err){ $("#aerr2",root).innerHTML = `<div class="ferr">${esc(err)}</div>`; return; }
+      const iid = "IT"+(++S.itemSeq), lid = "L"+(++S.lineSeq), lc = $("#aloc",root).value;
+      D.items.push({id:iid, name, cat:$("#acat",root).value, unit:$("#aunit",root).value.trim()});
+      D.lines.push({id:lid, it:iid, loc:lc, qty:q.n, par:null, lot:"", exp:null, archived:false});
+      addLog(lid, `Added new item ${name} to ${locName(lc)}: ${q.n}`);
+      S.item = iid; closeModal(); toast("Item added. Set its required amount with Edit.", "success"); emit("added");
+    };
+  });
+}
+function openCSV(ls, label){
+  const fname = `inventory-${label.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}-${ymd(TODAY)}.csv`;
+  const q = s => /[",\n]/.test(s) ? `"${String(s).replace(/"/g,'""')}"` : s;
+  const rows = [["Item","Category","Location","On hand","Unit","Required/reorder","Lot","Expiry"].join(",")].concat(ls.map(l=>{const i=it(l.it);return [q(i.name),q(i.cat),q(locName(l.loc)),l.qty,q(i.unit),l.par===null?"":l.par,q(l.lot),l.exp===null?"":ymd(l.exp)].join(",");}));
+  modal(`<div class="modal"><div class="modal-head"><h2>Export CSV</h2></div>
+    <div class="modal-body"><p style="margin:0;font-size:13px">File: <b>${esc(fname)}</b> · ${ls.length} lines, exactly what the table shows now (filters and sort included).</p><div class="csv">${esc(rows.slice(0,8).join("\n"))}${rows.length>8?"\n…":""}</div>
+    <p style="margin:0;color:var(--text-muted);font-size:12.5px">In the real program this saves the file to your computer. Opens in Excel or Numbers.</p></div>
+    <div class="modal-foot"><button type="button" class="btn btn-primary" id="mcancel">Done</button></div></div>`, ()=>{});
+  emit("csv");
+}
+
+// ======================= Tour =======================
+const TOUR = {
+  F6:{title:"Inventory overview", june:"J4",
+    steps:[
+      "This is the June Overview. Look at <b>Bag readiness</b>: Bag 1 says <b>Ready</b>. Its lines hold <i>exactly</i> their required amount.",
+      "Switch <b>Rules</b> to <b>June</b> (above the app). Bag 1 drops to <b>Short</b>, the Trauma kit turns <b>Ready</b> with nothing defined, and the Store loses its warning. Switch back.",
+      "With the new rules, click the <b>Bag 1</b>, <b>Trauma kit</b> and <b>Store</b> cards. Each opens its list with a one-line verdict.",
+      "Click a red or amber box at the top (out of stock, expired) to jump to just those lines."
+    ],
+    checks:[
+      {ev:"b1", b:"B1", now:"A bag holding exactly its required amount is Ready", was:"June: “Low · below par”, so no bag could ever be Ready"},
+      {ev:"b25", b:"B25", now:"Lines with no required amount make the bag “Not set up”, never Ready", was:"June: the Trauma kit showed Ready with nothing defined"},
+      {ev:"b10", b:"B10", now:"The Store has reorder levels and warns when it's below", was:"June: the Store had no reorder levels, so it never showed low"}
+    ],
+    real:["Overview is the start of the Inventory: what's missing, what's expiring, which bags are ready to grab.","A bag is Ready only when every line is at or above its required amount and in date. Lines with no required amount make it “Not set up”.","Click any card or warning to see exactly which lines it means."]},
+  F7:{title:"Store and bags", june:"J5",
+    steps:[
+      "Open <b>Store and bags</b> in the menu. Pick a location, category, stock level or expiry, and change the sort.",
+      "Press <b>Export CSV</b>. The file holds exactly what the table shows.",
+      "Click any row to open that item's page (F8)."
+    ],
+    checks:[
+      {ev:"filtered", now:"Filters and sort work as in June", was:"June: same, kept"},
+      {ev:"csv", now:"CSV export of what you see", was:"June: same, kept"},
+      {ev:"opened", now:"A row opens the item page", was:"June: same, kept"}
+    ],
+    real:["Store and bags lists every stock line, everywhere or in one place.","Filter by location, category, stock level and expiry; sort by name, stock, expiry or amount.","Export CSV saves the list as it is on screen, for Excel."]},
+  F8:{title:"Item page", june:"J6",
+    steps:[
+      "Open <b>Bandage 8 cm</b> (search it, or click it in Store and bags).",
+      "On the Store line press <b>→ Move</b>, move 5 to the Trauma kit. Watch both lines and <b>Stock movements</b>.",
+      "Press <b>✎ Edit</b> on a line and change the required amount. The movement shows old → new.",
+      "Archive a line, then delete it for good. The movement list keeps a record.",
+      "Optional: <b>Add location</b>, or <b>Add item</b> in Store and bags."
+    ],
+    checks:[
+      {ev:"moved", b:"B24", now:"A stock line can be moved to another bag or the Store", was:"June: location was locked, yet deleting a bag said “move its items first”"},
+      {ev:"edited", now:"Edits are recorded as old → new", was:"June: no numbers in the log (rule B19, tested with F4)"},
+      {ev:"deleted", now:"A delete for good leaves a record", was:"June: deletes left no trace (rule B18, tested with F4)"},
+      {ev:"added", now:"Add a location or a new item", was:"June: same, kept"}
+    ],
+    real:["The item page shows one item everywhere it is kept, with every movement.","Use Move when stock goes from the Store into a bag, or from one bag to another.","Archive hides a line; delete removes it for good, and the log keeps a record."]},
+  F9:{title:"Restock and dispense", june:"J7",
+    steps:[
+      "On any line press <b>+</b> (restock) or <b>−</b> (dispense).",
+      "Type <b>2.7</b>, then <b>0</b>, then <b>−5</b>, then leave the box empty, and press the button each time.",
+      "Dispense more than there is (e.g. 99).",
+      "Dispense from <b>Morphine (example)</b> in the Store."
+    ],
+    checks:[
+      {ev:"rejected", b:"B17", now:"A wrong amount is refused with a message. Nothing changes.", was:"June: 0, −5 and empty quietly became 1, and 2.7 became 2"},
+      {ev:"tooMany", now:"Taking more than there is is refused", was:"June: same, kept"},
+      {ev:"restocked", now:"A good amount is booked, old → new", was:"June: same, plus the numbers"},
+      {ev:"cd", now:"A controlled drug goes through the register", was:"new (F12, batch 3)"}
+    ],
+    real:["+ adds stock (a delivery, a refill from the Store); − takes it out (used, broken, expired).","Type a whole number, 1 or more. Anything else is refused with a message, and nothing changes.","Controlled drugs are taken out through the register, with a reason and a witness."]}
+};
+let tab = "F6";
+const tabsEl = document.getElementById("tabs"), tourEl = document.getElementById("tour");
+function paintTour(){
+  tabsEl.innerHTML = Object.keys(TOUR).map(k=>{ const n = TOUR[k].checks.filter(c=>seen[c.ev]).length;
+    return `<button type="button" class="tab" role="tab" data-tab="${k}" aria-selected="${k===tab}"><span class="fid">${k}</span>${esc(TOUR[k].title)}<span class="cnt">${n}/${TOUR[k].checks.length}</span></button>`; }).join("");
+  tabsEl.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{ tab=b.dataset.tab; paintTour(); });
+  const ta = tourEl.querySelector("textarea");
+  if (ta && document.activeElement===ta){ tourEl.querySelectorAll(".chk").forEach(el=>el.classList.toggle("seen", !!seen[el.dataset.ev])); return; }
+  const t = TOUR[tab];
+  tourEl.innerHTML = `<div class="card"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="fid">${tab}</span><h2>${esc(t.title)}</h2><span class="small muted">from June: ${esc(t.june)}</span></div>
+      <span class="k">Try it in the demo</span><ol>${t.steps.map(s=>`<li>${s}</li>`).join("")}</ol></div>
+    <div class="card"><span class="k">What the demo must show (ticks itself)</span>
+      <div class="checks">${t.checks.map(c=>`<div class="chk ${seen[c.ev]?"seen":""}" data-ev="${c.ev}"><span class="box">✓</span><span>${c.b?`<span class="bid">${c.b}</span> `:""}${esc(c.now)}<span class="was">${esc(c.was)}</span></span></div>`).join("")}</div></div>
+    <div class="card"><span class="k">How to use it, in the real app</span><ul>${t.real.map(r=>`<li>${esc(r)}</li>`).join("")}</ul></div>
+    <div class="review" data-part="${tab.toLowerCase()}"></div>`;
+  setupStrip(tourEl.querySelector(".review"));
+}
+
+// ======================= Controls =======================
+document.querySelectorAll("[data-dev]").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("[data-dev]").forEach(x=>x.setAttribute("aria-pressed", x===b?"true":"false"));
+  document.getElementById("devframe").classList.toggle("phone", b.dataset.dev==="phone"); S.drawer=false; render();
+});
+document.querySelectorAll("[data-rules]").forEach(b=>b.onclick=()=>{
+  S.rules = b.dataset.rules; document.querySelectorAll("[data-rules]").forEach(x=>x.setAttribute("aria-pressed", x===b?"true":"false"));
+  if (S.rules==="new" && S.stock==="None") S.stock = "";
+  render(); if (S.rules==="june") emit("compared");
+});
+document.getElementById("w-reset").onclick = ()=>{ fresh(); document.querySelectorAll("[data-rules]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.rules==="new"?"true":"false")); render(); };
+
+// ======================= Review strips (db collection "batch2") =======================
+const state = {}; let db = null;
+function setupStrip(el){
+  if (!el) return;
+  const part = el.dataset.part, fin = !!el.dataset.final;
+  el.innerHTML = `<span class="q">${fin ? "Is batch 2 right, all four together?" : `Is ${part.toUpperCase()} right?`}</span>
+    <span class="btns"><button type="button" class="yes" aria-pressed="false">${fin ? "Yes, batch 2 is right" : "Right"}</button>
+    <button type="button" class="no" aria-pressed="false">${fin ? "Not yet" : "Not right"}</button></span>
+    <textarea placeholder="${fin ? "Anything missing or wrong? (optional)" : "What's wrong or missing? (optional)"}"></textarea>
+    <span class="state">Not answered yet.</span>`;
+  el.querySelector(".yes").onclick = ()=>pick(part,"right");
+  el.querySelector(".no").onclick = ()=>pick(part,"not");
+  let t; el.querySelector("textarea").addEventListener("input",e=>{ state[part]=Object.assign({},state[part],{note:e.target.value}); clearTimeout(t); t=setTimeout(()=>save(part),800); });
+  paintStrip(part);
+}
+function stripEl(part){ return document.querySelector(`.review[data-part="${part}"]`); }
+function paintStrip(part){
+  const el = stripEl(part); if (!el) return; const s = state[part] || {};
+  el.querySelector(".yes").setAttribute("aria-pressed", s.verdict==="right"?"true":"false");
+  el.querySelector(".no").setAttribute("aria-pressed", s.verdict==="not"?"true":"false");
+  const ta = el.querySelector("textarea"); if (document.activeElement!==ta && typeof s.note==="string") ta.value = s.note;
+  if (s.at) el.querySelector(".state").textContent = "Saved for Claude · "+new Date(s.at).toLocaleString();
+}
+function msg(part, text){ const el=stripEl(part); if (el) el.querySelector(".state").textContent = text; }
+function pick(part, v){ state[part] = Object.assign({}, state[part], {verdict:v}); paintStrip(part); save(part); }
+async function save(part){
+  const s = state[part] || {};
+  const rec = {part, verdict:s.verdict||null, note:s.note||"", at:new Date().toISOString(), seen:Object.keys(seen).filter(k=>seen[k])};
+  if (!db){ state[part] = Object.assign({}, rec, {at:null}); msg(part, "Shown here, but can't be saved in this view. Open the page from its link, or tell Claude in chat."); return; }
+  state[part] = rec;
+  try{ await db.collection("batch2").doc(part).set(rec); msg(part, "Saved for Claude · "+new Date(rec.at).toLocaleTimeString()); }
+  catch(e){ msg(part, "Not saved ("+(e && e.code || "error")+"). Tell Claude in chat instead."); }
+}
+
+// ======================= Start =======================
+fresh(); render(); paintTour(); setupStrip(document.querySelector('.review[data-part="overall"]'));
+(async function(){
+  try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : null); }catch(e){ db = null; }
+  if (!db) return;
+  db.collection("batch2").onSnapshot(snap=>{
+    (snap.docs || []).forEach(d=>{ const r = typeof d.data === "function" ? d.data() : d.data; if (!r || !r.part) return; state[r.part] = r; paintStrip(r.part); });
+  }, ()=>{});
+})();
+})();
+</script>

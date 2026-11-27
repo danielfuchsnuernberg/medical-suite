@@ -1,0 +1,181 @@
+<title>REACH Master Checklist</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Stage 4 part 3: the Master Checklist, built from CHECKLIST.md (one source). Stage 4 colours, dark mode. Answers save to db collection "master". */
+:root{
+  --bg:#F4F4F6; --surface:#FFFFFF; --surface-2:#FAFAFB; --border:#E4E4EA; --border-strong:#D2D2DA;
+  --text:#1B1B23; --muted:#6B6B78; --faint:#9B9BA6;
+  --accent:#4F46E5; --accent-soft:#EEEDFD; --accent-border:#C9C6F7; --on-accent:#FFFFFF;
+  --ok:#1E9E62; --ok-soft:#E7F5EE; --warn:#C77A12; --warn-soft:#F8EFDF; --bad:#D14343; --bad-soft:#FAEAEA; --edp:#0F6E8C; --edp-soft:#E3F1F5;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A; --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C; --edp:#5BBAD6; --edp-soft:#14303A; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A; --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C; --edp:#5BBAD6; --edp-soft:#14303A; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:64px}
+.wrap{max-width:1000px;margin:0 auto}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:28px;font-weight:700;letter-spacing:-.4px} h2{font-size:20px;font-weight:700} h3{font-size:15.5px;font-weight:650}
+p{margin:0;max-width:70ch}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:13px}
+header.top{padding-block:32px 12px;display:flex;flex-direction:column;gap:12px}
+.flow{display:flex;gap:0;align-items:stretch;overflow-x:auto;padding-bottom:4px}
+.fs{flex:1 0 160px;min-width:160px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:3px}
+.fs .w{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent)}
+.fs.here{border:2px solid var(--accent)}
+.to{flex:none;display:flex;align-items:center;padding:0 6px;color:var(--faint)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:700px){.stats{grid-template-columns:1fr 1fr}}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.stat .v{font-size:26px;font-weight:700;letter-spacing:-.5px}
+.stat .k{font-size:12px;color:var(--muted)}
+.stat.good .v{color:var(--ok)}
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;border-bottom:1px solid var(--border);display:flex;gap:6px;overflow-x:auto;margin-top:14px;align-items:center}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+nav.toc a{flex:none;font-size:13px;color:var(--muted);text-decoration:none;padding:5px 10px;border-radius:8px}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--accent-soft);color:var(--accent);outline:none}
+.filt{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;flex:none}
+.filt button{font:inherit;font-size:12.5px;padding:5px 10px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.filt button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+section{padding-block:30px 6px;display:flex;flex-direction:column;gap:14px;scroll-margin-top:60px}
+.feat{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.feat .hd{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--surface-2)}
+.fid{font-family:var(--mono);font-size:12px;font-weight:500;padding:1px 7px;border-radius:5px;background:var(--surface);border:1px solid var(--border-strong);white-space:nowrap}
+.meta{font-size:12px;color:var(--muted)}
+.tag{font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:6px}
+.tag.r1{background:var(--accent);color:var(--on-accent)} .tag.r2{background:var(--surface);border:1px solid var(--border-strong)} .tag.later{background:var(--warn-soft);color:var(--warn)}
+.st{margin-left:auto;font-size:12px;color:var(--muted)}
+.items{list-style:none;margin:0;padding:0}
+.items li{display:grid;grid-template-columns:62px 1fr;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);font-size:14px}
+.items li:last-child{border-bottom:0}
+.items li.hide{display:none}
+.iid{font-family:var(--mono);font-size:12px;color:var(--muted);padding-top:2px}
+.src{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.chip{font-size:11px;padding:1px 7px;border-radius:5px;white-space:nowrap}
+.chip.b{background:var(--bad-soft);color:var(--bad);font-family:var(--mono)}
+.chip.q{background:var(--accent-soft);color:var(--accent);font-family:var(--mono)}
+.chip.d{background:var(--warn-soft);color:var(--warn)}
+.chip.o{background:var(--surface-2);color:var(--muted);border:1px solid var(--border)}
+.review{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--border-strong)}
+.review .q{font-size:13.5px;font-weight:600;flex:1 1 220px}
+.review .btns{display:flex;gap:6px}
+.review button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.review button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.review button[aria-pressed="true"].yes{background:var(--ok);border-color:var(--ok);color:var(--on-accent)}
+.review button[aria-pressed="true"].no{background:var(--warn);border-color:var(--warn);color:var(--on-accent)}
+.review textarea{flex:1 1 100%;min-height:54px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);resize:vertical}
+.review .state{font-size:12px;color:var(--faint);flex:1 1 100%}
+.final{border:2px solid var(--accent);background:var(--accent-soft)} .final .q{font-size:16px}
+footer{padding-top:28px;font-size:12.5px;color:var(--faint)}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Stage 4 · part 3 of 3 · Master Checklist</div>
+  <h1>Everything the new app must do, as tests</h1>
+  <p class="muted">This is the list the build is held to. Every line has to be proven by a test that can fail before its feature counts as done. Each line says where it comes from: a June mistake <span class="chip b">B…</span>, one of your answers <span class="chip q">Q…</span>, your own words <span class="chip d">Danny</span>, or an approved demo <span class="chip o">demo</span>.</p>
+  <div class="flow" aria-label="Where this list is used">
+    <div class="fs"><span class="w">Stage 4 · done</span>Feature list and 4 demo batches, approved</div><span class="to">→</span>
+    <div class="fs here"><span class="w">Now</span>This checklist: what “done” means for each feature</div><span class="to">→</span>
+    <div class="fs"><span class="w">Stage 5</span>Look and structure, then your GO</div><span class="to">→</span>
+    <div class="fs"><span class="w">Stages 6–8</span>Build, then try to break every line here, then audit</div>
+  </div>
+  <div class="stats" id="stats"></div>
+</header>
+
+<nav class="toc" aria-label="Sections"><a href="#g-all">For every feature</a><a href="#g-found">Foundation</a><a href="#g-inv">Inventory</a><a href="#g-ppl">People</a><a href="#g-later">Later</a><a href="#g-overall">Your answer</a>
+  <span class="filt" role="group" aria-label="Show"><button type="button" data-f="all" aria-pressed="true">All lines</button><button type="button" data-f="b" aria-pressed="false">June mistakes</button><button type="button" data-f="q" aria-pressed="false">Your answers and words</button></span></nav>
+
+<div id="groups"></div>
+
+<section id="g-overall"><div class="eyebrow">Your answer</div><h2>Is this the Master Checklist?</h2>
+  <p class="muted">If yes, Stage 4 is signed off and Stage 5 (look and structure) comes next, after your GO. Anything marked “Not right” gets fixed here first.</p>
+  <div class="review final" data-part="overall" data-final="1"></div></section>
+<footer>REACH Inventory · Stage 4 · Master Checklist draft, 27 Nov 2026 · built from <span style="font-family:var(--mono)">CHECKLIST.md</span> › Master Feature Checklist · source <span style="font-family:var(--mono)">docs/stage4/master-checklist.html</span></footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const B = /*DATA*/[];
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const md = s => esc(s).replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>").replace(/`([^`]+)`/g,'<code>$1</code>');
+const GROUPS = [
+  {id:"g-all", part:"all", t:"For every feature", ids:["ALL"]},
+  {id:"g-found", part:"found", t:"Foundation", ids:["F1","F2","F3","F4","F5"]},
+  {id:"g-inv", part:"inv", t:"Inventory", ids:["F6","F7","F8","F9","F10","F11","F12","F13"]},
+  {id:"g-ppl", part:"ppl", t:"People", ids:["F14","F15"]},
+  {id:"g-later", part:"later", t:"Later (own stages)", ids:["F16","F17","F18"]}
+];
+function chips(src){
+  if (!src) return "";
+  return src.split(/,\s*/).map(s=>{ const t=s.trim();
+    if (/^B\d+/.test(t)) return `<span class="chip b">${esc(t)}</span>`;
+    if (/^Q\d+/.test(t)) return `<span class="chip q">${esc(t)}</span>`;
+    if (/^Danny/.test(t)) return `<span class="chip d">${esc(t)}</span>`;
+    return `<span class="chip o">${esc(t)}</span>`; }).join("");
+}
+const all = B.flatMap(b=>b.items);
+const txt = all.map(i=>i.text+" "+i.src).join(" ");
+const bugs = Array.from({length:26},(_,k)=>"B"+(k+1)).filter(b=>new RegExp("\\b"+b+"\\b").test(txt)).length;
+const feats = B.filter(b=>/^F\d+$/.test(b.id)).length;
+const ans = ["Q3","Q4","Q5","Q6","Q7","Q8","Q9","Q10","Q13","Q14","Q15","Q16","Q17","Q18","Q19"].filter(q=>new RegExp("\\b"+q+"\\b").test(txt)).length;
+document.getElementById("stats").innerHTML = `
+  <div class="stat"><div class="v">${all.length}</div><div class="k">lines to prove</div></div>
+  <div class="stat ${feats===18?"good":""}"><div class="v">${feats} / 18</div><div class="k">features with a block</div></div>
+  <div class="stat ${bugs===26?"good":""}"><div class="v">${bugs} / 26</div><div class="k">June mistakes turned into tests</div></div>
+  <div class="stat ${ans===15?"good":""}"><div class="v">${ans} / 15</div><div class="k">answers that shape the app (Q3–Q19)</div></div>`;
+document.getElementById("groups").innerHTML = GROUPS.map(g=>`<section id="${g.id}"><div class="eyebrow">${esc(g.t)}</div>
+  ${g.ids.map(id=>{ const b=B.find(x=>x.id===id); if(!b) return "";
+    const rel = b.meta.find(m=>/release|later/i.test(m))||"";
+    return `<div class="feat"><div class="hd"><span class="fid">${esc(b.id)}</span><h3>${esc(b.name)}</h3>${rel?`<span class="tag ${/^later/.test(rel)?"later":/release 1/.test(rel)?"r1":/release 2/.test(rel)?"r2":"later"}">${esc(rel)}</span>`:""}<span class="meta">${esc(b.meta.filter(m=>m!==rel).join(" · "))}</span><span class="st">${esc(b.status)}</span></div>
+      <ul class="items">${b.items.map(i=>`<li data-k="${/\bB\d+/.test(i.src)?"b":""}${/\bQ\d+|Danny/.test(i.src)?"q":""}"><span class="iid">${esc(i.id)}</span><span>${md(i.text)}<span class="src">${chips(i.src)}</span></span></li>`).join("")}</ul></div>`; }).join("")}
+  <div class="review" data-part="${g.part}"></div></section>`).join("");
+document.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("[data-f]").forEach(x=>x.setAttribute("aria-pressed", x===b?"true":"false"));
+  const f=b.dataset.f; document.querySelectorAll(".items li").forEach(li=>li.classList.toggle("hide", f!=="all" && !li.dataset.k.includes(f)));
+});
+
+// ---------- review strips (db collection "master") ----------
+const state = {}; let db = null;
+function setup(el){
+  const part = el.dataset.part, fin = !!el.dataset.final;
+  el.innerHTML = `<span class="q">${fin ? "Is this the Master Checklist?" : "Is this group right and complete?"}</span>
+    <span class="btns"><button type="button" class="yes" aria-pressed="false">${fin?"Yes, that's it":"Right"}</button><button type="button" class="no" aria-pressed="false">${fin?"Not yet":"Not right"}</button></span>
+    <textarea placeholder="${fin?"Anything missing or wrong? (optional)":"What's wrong or missing? Name the line, e.g. F10.2 (optional)"}"></textarea><span class="state">Not answered yet.</span>`;
+  el.querySelector(".yes").onclick=()=>pick(part,"right"); el.querySelector(".no").onclick=()=>pick(part,"not");
+  let t; el.querySelector("textarea").addEventListener("input",e=>{ state[part]=Object.assign({},state[part],{note:e.target.value}); clearTimeout(t); t=setTimeout(()=>save(part),800); });
+}
+document.querySelectorAll(".review").forEach(setup);
+function el(part){ return document.querySelector(`.review[data-part="${part}"]`); }
+function paint(part){ const e=el(part); if(!e) return; const s=state[part]||{};
+  e.querySelector(".yes").setAttribute("aria-pressed", s.verdict==="right"?"true":"false"); e.querySelector(".no").setAttribute("aria-pressed", s.verdict==="not"?"true":"false");
+  const ta=e.querySelector("textarea"); if (document.activeElement!==ta && typeof s.note==="string") ta.value=s.note;
+  if (s.at) e.querySelector(".state").textContent="Saved for Claude · "+new Date(s.at).toLocaleString(); }
+function msg(part,t){ const e=el(part); if(e) e.querySelector(".state").textContent=t; }
+function pick(part,v){ state[part]=Object.assign({},state[part],{verdict:v}); paint(part); save(part); }
+async function save(part){
+  const s=state[part]||{}; const rec={part, verdict:s.verdict||null, note:s.note||"", at:new Date().toISOString()};
+  if (!db){ state[part]=Object.assign({},rec,{at:null}); msg(part,"Shown here, but can't be saved in this view. Open the page from its link, or tell Claude in chat."); return; }
+  state[part]=rec;
+  try{ await db.collection("master").doc(part).set(rec); msg(part,"Saved for Claude · "+new Date(rec.at).toLocaleTimeString()); }
+  catch(e){ msg(part,"Not saved ("+(e&&e.code||"error")+"). Tell Claude in chat instead."); }
+}
+(async function(){
+  try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : null); }catch(e){ db=null; }
+  if (!db) return;
+  db.collection("master").onSnapshot(snap=>{ (snap.docs||[]).forEach(d=>{ const r=typeof d.data==="function"?d.data():d.data; if(r&&r.part){ state[r.part]=r; paint(r.part); } }); }, ()=>{});
+})();
+})();
+</script>

@@ -1,0 +1,181 @@
+<title>REACH Master Checklist</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Stage 4 part 3: the Master Checklist, built from CHECKLIST.md (one source). Stage 4 colours, dark mode. Answers save to db collection "master". */
+:root{
+  --bg:#F4F4F6; --surface:#FFFFFF; --surface-2:#FAFAFB; --border:#E4E4EA; --border-strong:#D2D2DA;
+  --text:#1B1B23; --muted:#6B6B78; --faint:#9B9BA6;
+  --accent:#4F46E5; --accent-soft:#EEEDFD; --accent-border:#C9C6F7; --on-accent:#FFFFFF;
+  --ok:#1E9E62; --ok-soft:#E7F5EE; --warn:#C77A12; --warn-soft:#F8EFDF; --bad:#D14343; --bad-soft:#FAEAEA; --edp:#0F6E8C; --edp-soft:#E3F1F5;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A; --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C; --edp:#5BBAD6; --edp-soft:#14303A; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A; --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C; --edp:#5BBAD6; --edp-soft:#14303A; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:64px}
+.wrap{max-width:1000px;margin:0 auto}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:28px;font-weight:700;letter-spacing:-.4px} h2{font-size:20px;font-weight:700} h3{font-size:15.5px;font-weight:650}
+p{margin:0;max-width:70ch}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:13px}
+header.top{padding-block:32px 12px;display:flex;flex-direction:column;gap:12px}
+.flow{display:flex;gap:0;align-items:stretch;overflow-x:auto;padding-bottom:4px}
+.fs{flex:1 0 160px;min-width:160px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:3px}
+.fs .w{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent)}
+.fs.here{border:2px solid var(--accent)}
+.to{flex:none;display:flex;align-items:center;padding:0 6px;color:var(--faint)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:700px){.stats{grid-template-columns:1fr 1fr}}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.stat .v{font-size:26px;font-weight:700;letter-spacing:-.5px}
+.stat .k{font-size:12px;color:var(--muted)}
+.stat.good .v{color:var(--ok)}
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;border-bottom:1px solid var(--border);display:flex;gap:6px;overflow-x:auto;margin-top:14px;align-items:center}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+nav.toc a{flex:none;font-size:13px;color:var(--muted);text-decoration:none;padding:5px 10px;border-radius:8px}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--accent-soft);color:var(--accent);outline:none}
+.filt{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;flex:none}
+.filt button{font:inherit;font-size:12.5px;padding:5px 10px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.filt button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+section{padding-block:30px 6px;display:flex;flex-direction:column;gap:14px;scroll-margin-top:60px}
+.feat{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.feat .hd{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--surface-2)}
+.fid{font-family:var(--mono);font-size:12px;font-weight:500;padding:1px 7px;border-radius:5px;background:var(--surface);border:1px solid var(--border-strong);white-space:nowrap}
+.meta{font-size:12px;color:var(--muted)}
+.tag{font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:6px}
+.tag.r1{background:var(--accent);color:var(--on-accent)} .tag.r2{background:var(--surface);border:1px solid var(--border-strong)} .tag.later{background:var(--warn-soft);color:var(--warn)}
+.st{margin-left:auto;font-size:12px;color:var(--muted)}
+.items{list-style:none;margin:0;padding:0}
+.items li{display:grid;grid-template-columns:62px 1fr;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);font-size:14px}
+.items li:last-child{border-bottom:0}
+.items li.hide{display:none}
+.iid{font-family:var(--mono);font-size:12px;color:var(--muted);padding-top:2px}
+.src{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.chip{font-size:11px;padding:1px 7px;border-radius:5px;white-space:nowrap}
+.chip.b{background:var(--bad-soft);color:var(--bad);font-family:var(--mono)}
+.chip.q{background:var(--accent-soft);color:var(--accent);font-family:var(--mono)}
+.chip.d{background:var(--warn-soft);color:var(--warn)}
+.chip.o{background:var(--surface-2);color:var(--muted);border:1px solid var(--border)}
+.review{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--border-strong)}
+.review .q{font-size:13.5px;font-weight:600;flex:1 1 220px}
+.review .btns{display:flex;gap:6px}
+.review button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.review button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.review button[aria-pressed="true"].yes{background:var(--ok);border-color:var(--ok);color:var(--on-accent)}
+.review button[aria-pressed="true"].no{background:var(--warn);border-color:var(--warn);color:var(--on-accent)}
+.review textarea{flex:1 1 100%;min-height:54px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);resize:vertical}
+.review .state{font-size:12px;color:var(--faint);flex:1 1 100%}
+.final{border:2px solid var(--accent);background:var(--accent-soft)} .final .q{font-size:16px}
+footer{padding-top:28px;font-size:12.5px;color:var(--faint)}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Stage 4 · part 3 of 3 · Master Checklist</div>
+  <h1>Everything the new app must do, as tests</h1>
+  <p class="muted">This is the list the build is held to. Every line has to be proven by a test that can fail before its feature counts as done. Each line says where it comes from: a June mistake <span class="chip b">B…</span>, one of your answers <span class="chip q">Q…</span>, your own words <span class="chip d">Danny</span>, or an approved demo <span class="chip o">demo</span>.</p>
+  <div class="flow" aria-label="Where this list is used">
+    <div class="fs"><span class="w">Stage 4 · done</span>Feature list and 4 demo batches, approved</div><span class="to">→</span>
+    <div class="fs here"><span class="w">Now</span>This checklist: what “done” means for each feature</div><span class="to">→</span>
+    <div class="fs"><span class="w">Stage 5</span>Look and structure, then your GO</div><span class="to">→</span>
+    <div class="fs"><span class="w">Stages 6–8</span>Build, then try to break every line here, then audit</div>
+  </div>
+  <div class="stats" id="stats"></div>
+</header>
+
+<nav class="toc" aria-label="Sections"><a href="#g-all">For every feature</a><a href="#g-found">Foundation</a><a href="#g-inv">Inventory</a><a href="#g-ppl">People</a><a href="#g-later">Later</a><a href="#g-overall">Your answer</a>
+  <span class="filt" role="group" aria-label="Show"><button type="button" data-f="all" aria-pressed="true">All lines</button><button type="button" data-f="b" aria-pressed="false">June mistakes</button><button type="button" data-f="q" aria-pressed="false">Your answers and words</button></span></nav>
+
+<div id="groups"></div>
+
+<section id="g-overall"><div class="eyebrow">Your answer</div><h2>Is this the Master Checklist?</h2>
+  <p class="muted">If yes, Stage 4 is signed off and Stage 5 (look and structure) comes next, after your GO. Anything marked “Not right” gets fixed here first.</p>
+  <div class="review final" data-part="overall" data-final="1"></div></section>
+<footer>REACH Inventory · Stage 4 · Master Checklist draft, 27 Nov 2026 · built from <span style="font-family:var(--mono)">CHECKLIST.md</span> › Master Feature Checklist · source <span style="font-family:var(--mono)">docs/stage4/master-checklist.html</span></footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const B = [{"id":"ALL","name":"rules for every feature","meta":[],"items":[{"id":"ALL.1","text":"No real stock, staff or patient data in the code or in Git. Real data only comes in through import (F13).","src":"CLAUDE.md, B9"},{"id":"ALL.2","text":"Everything country-specific is a setting (F5), never written into the code.","src":"brief, Stage 3"},{"id":"ALL.3","text":"The June screens and look stay; no restyle before EDP F53.","src":"Danny, Stage 3: \"The UI is good\""},{"id":"ALL.4","text":"Dates are local dates of the base. No date is ever written or read in world time (UTC).","src":"B13"},{"id":"ALL.5","text":"Every change is logged with who, when and old → new (F4).","src":"B18, B19"},{"id":"ALL.6","text":"Everything typed is shown as plain text, everywhere.","src":"B4"},{"id":"ALL.7","text":"Works on Mac and Windows as an installed program, phone and tablet sizes included.","src":"Q3, Q4"},{"id":"ALL.8","text":"The program is called “REACH Inventory”; the name is a setting until the common REACH look (EDP F53).","src":"Q10"}],"status":"🔴 not built"},{"id":"F1","name":"Program window, menu and search","meta":["release 1","June J1","demo batch 1"],"items":[{"id":"F1.1","text":"Menu as in the June app: Home; Inventory (Overview, Store and bags, Item list, Count a bag, Stock takes, Controlled drugs, Activity); Team (Staff and training, Roster); Later (Patients); Settings at the bottom. Home has a card per section.","src":"demo 1"},{"id":"F1.2","text":"Below 720 px wide the menu sits behind ☰; it opens, closes, and every screen can be reached. No sideways scroll at 375 px.","src":"B5"},{"id":"F1.3","text":"Text with quotes, `\u003cb>` or script tags shows as plain text in search, names and notes; no button breaks.","src":"B4"},{"id":"F1.4","text":"Search at the top finds staff and stock from any screen; a result opens it.","src":"demo 1"},{"id":"F1.5","text":"\"Today\" moves on while the program stays open: expiry badges change after midnight without reopening.","src":"B7"}],"status":"🔴 not built"},{"id":"F2","name":"Sign-in and roles","meta":["release 1","June J1 \"Acting as\"","demo batch 1"],"items":[{"id":"F2.1","text":"Everyone signs in with their own REACH account, the same as in EDP. There is no \"Acting as\".","src":"B12, Q6"},{"id":"F2.2","text":"Roles Staff, Manager, Admin come with the account; only an Admin changes roles.","src":"demo 1"},{"id":"F2.3","text":"A Staff member can't open Settings or change any role.","src":"B12"},{"id":"F2.4","text":"The last Admin can't be demoted or archived; the message says why.","src":"B14"},{"id":"F2.5","text":"Nobody can archive themselves.","src":"B23"},{"id":"F2.6","text":"\"Stay signed in on this computer\" lets the program open offline; a first sign-in on a new computer needs internet once, and says so.","src":"Stage 3, demo 1"},{"id":"F2.7","text":"Archive and delete rights: everyone archives stock; deleting stock for good needs a Manager or Admin; archiving and deleting people is Admin-only.","src":"Q17 = B"},{"id":"F2.8","text":"Controlled-drug rights don't follow these roles: see F12.","src":"Danny, batch 2 note"}],"status":"🔴 not built"},{"id":"F3","name":"Works without internet","meta":["release 1","new","demo batch 1"],"items":[{"id":"F3.1","text":"The program opens with no internet, showing the data of the last sync and the time of that sync.","src":"Danny, Stage 3: \"App also needs to Open without Internet\""},{"id":"F3.2","text":"Changes made offline are kept on the computer and sent on their own when the internet is back.","src":"Q5, Q9"},{"id":"F3.3","text":"Sync light: green up to date, amber offline with the number of changes waiting, red not saved; a click lists what's waiting.","src":"demo 1"},{"id":"F3.4","text":"Two computers changing the same stock line: both movements count, and it's shown.","src":"demo 1"},{"id":"F3.5","text":"Two counts of the same line that disagree: the later count is used, both are kept, and it's flagged for checking.","src":"demo 3, approved without comment"},{"id":"F3.6","text":"A save that fails is shown in red, and nothing pretends to be saved.","src":"B22"},{"id":"F3.7","text":"A new version carries all data over: nothing is ever replaced by built-in data.","src":"B3"}],"status":"🔴 not built"},{"id":"F4","name":"Activity log","meta":["release 1","June J12","demo batch 4"],"items":[{"id":"F4.1","text":"One log for all REACH apps (Inventory, People, Settings, EDP), newest first, filter by app.","src":"Q7, demo 4"},{"id":"F4.2","text":"Every change shows old → new; renaming an item keeps its history (history follows the ID, not the name).","src":"B19"},{"id":"F4.3","text":"Every delete for good is logged with who, when and what was there.","src":"B18"},{"id":"F4.4","text":"Nobody can edit or delete a log entry, Admins included.","src":"demo 4"}],"status":"🔴 not built"},{"id":"F5","name":"Settings and country settings","meta":["release 1","June J10","demo batch 4"],"items":[{"id":"F5.1","text":"Country settings: base name, country, time zone, date style, shift times.","src":"brief, Stage 3"},{"id":"F5.2","text":"\"Today\" and every expiry follow the base's time zone. Test PNG (UTC+10) after 10:00 and Peru (UTC−5) after 19:00: no item shows \"Expired\" a day early.","src":"B13"},{"id":"F5.3","text":"Every box in Settings looks like every other box in the app.","src":"B8"},{"id":"F5.4","text":"A department or category in use, even only by archived records, can't be deleted; the message says who uses it.","src":"B21"},{"id":"F5.5","text":"Renaming only the capitals is allowed (icu → ICU); a real duplicate is refused.","src":"B24 part"},{"id":"F5.6","text":"Departments, inventory categories, courses and bags are managed here.","src":"June J10"},{"id":"F5.7","text":"Only Admins change settings; everyone else can look.","src":"demo 4"}],"status":"🔴 not built"},{"id":"F6","name":"Inventory overview","meta":["release 1","June J4","demo batch 2"],"items":[{"id":"F6.1","text":"The June Overview: totals, attention strip, bag readiness, soonest to expire. Every card and warning opens the matching list.","src":"June J4"},{"id":"F6.2","text":"A line holding exactly its required amount counts as OK; a bag is Ready only when every line is at or above it and in date.","src":"B1"},{"id":"F6.3","text":"A line with no required amount makes its bag \"Not set up\", never Ready.","src":"B25"},{"id":"F6.4","text":"Store lines have reorder levels; below it shows \"Below reorder level\", and the Store card warns.","src":"B10"}],"status":"🔴 not built"},{"id":"F7","name":"Store and bags","meta":["release 1","June J5","demo batch 2"],"items":[{"id":"F7.1","text":"Filters: location, category, stock level (including \"no required amount\"), expiry; sort; show archived; clear filters.","src":"June J5"},{"id":"F7.2","text":"Export CSV holds exactly what the table shows, with local dates.","src":"June J5, B13"},{"id":"F7.3","text":"A row opens its item page.","src":"June J5"}],"status":"🔴 not built"},{"id":"F8","name":"Item page","meta":["release 1","June J6","demo batch 2"],"items":[{"id":"F8.1","text":"Stock per location with lot, expiry and status, and the item's movements.","src":"June J6"},{"id":"F8.2","text":"Move all or part of a line to another bag or the Store. It joins a matching line (same lot and expiry), or starts a new one without a required amount. Logged.","src":"B24"},{"id":"F8.3","text":"Edit a line: the location can't be edited there (use Move); every change is logged old → new; amounts are whole numbers.","src":"demo 2"},{"id":"F8.4","text":"Add a location; add an item (a duplicate name is refused); archive and reactivate; delete for good only from archived, after a confirm, logged. Rights per F2.7.","src":"demo 2, Q17"},{"id":"F8.5","text":"A \"Used on EDP cases\" panel waits for F17.","src":"demo 2"}],"status":"🔴 not built"},{"id":"F9","name":"Restock and dispense","meta":["release 1","June J7","demo batch 2"],"items":[{"id":"F9.1","text":"+ and − ask for a whole number, 1 or more. 0, negatives, decimals and an empty box are refused with a message, and nothing changes.","src":"B17"},{"id":"F9.2","text":"Taking out more than is there is refused.","src":"June J7"},{"id":"F9.3","text":"Every booked movement is logged old → new.","src":"B19"},{"id":"F9.4","text":"For a controlled drug, − leads to the register (F12); there's no plain dispense.","src":"demo 2, Q8"}],"status":"🔴 not built"},{"id":"F10","name":"Count stock","meta":["release 1","June J8","demo batch 3"],"items":[{"id":"F10.1","text":"Pick a bag or the Store and type what you find; an empty box means \"not counted\" and leaves the line as it was.","src":"B16"},{"id":"F10.2","text":"Typed counts survive searching and switching location; leaving with unsaved counts asks Save / Throw away / Keep counting.","src":"B16"},{"id":"F10.3","text":"A count that isn't a whole number of 0 or more shows red and blocks saving.","src":"demo 3"},{"id":"F10.4","text":"After saving: how many changed, the same, not counted; each change logged old → new.","src":"demo 3"}],"status":"🔴 not built"},{"id":"F11","name":"Stock takes","meta":["release 1","June J9","demo batch 3"],"items":[{"id":"F11.1","text":"Freeze a stock take: every line, date, who, label; it can't be changed afterwards.","src":"June J9"},{"id":"F11.2","text":"Then vs now for every line; lines removed since are shown as removed.","src":"June J9"},{"id":"F11.3","text":"Export a stock take as a spreadsheet file, with local dates.","src":"demo 3"},{"id":"F11.4","text":"Stock takes are kept on the server and survive every new version.","src":"B3"}],"status":"🔴 not built"},{"id":"F12","name":"Controlled-drug register","meta":["release 1","new","demo batch 3"],"items":[{"id":"F12.1","text":"Each controlled drug has a running balance. Every line has: when, in / out / correction, amount, balance, who, which doctor and how they approved, witness, reason or case.","src":"Q8"},{"id":"F12.2","text":"Only a doctor takes a controlled drug out or approves it being taken out. Being Admin gives no right.","src":"Danny, batch 2 note"},{"id":"F12.3","text":"A nurse takes one out with a doctor's approval, either in the room (the doctor types their own PIN on the nurse's screen) or by request to the doctor's own phone or Mac (Approve / Ask / Refuse, red badge until answered). Nothing comes off the balance until it's approved; a refused request stays visible, crossed out.","src":"Q13 = A"},{"id":"F12.4","text":"Emergency, no doctor reachable: reason and witness required; booked at once; red \"waiting for doctor\" on Home and in the register until a doctor approves or queries it.","src":"Q14 = A"},{"id":"F12.5","text":"Every line has a witness: a second person who was there. Never yourself, and never the approving doctor.","src":"Q15 = A, Q8"},{"id":"F12.6","text":"Only a doctor gives another person the right to approve, never themselves; the first doctor is set once at setup with Danny; Admins can't change the list.","src":"Q16 = B"},{"id":"F12.7","text":"A doctor removes someone's right with ✕; it's logged and every doctor is told; the last doctor can't be removed.","src":"Danny, batch 3 note"},{"id":"F12.8","text":"Lines are never edited or deleted. A doctor adds a correction line that names the original, with a witness and a reason; the balance can't go below 0.","src":"Q8, demo 3"},{"id":"F12.9","text":"Receiving needs a witness, no doctor.","src":"demo 3, approved without comment"},{"id":"F12.10","text":"Taking out more than the balance is refused.","src":"demo 3"}],"status":"🔴 not built"},{"id":"F13","name":"Backup, export and import","meta":["release 1","June J11","demo batch 3"],"items":[{"id":"F13.1","text":"The server keeps the data and makes a backup every night; the last 30 are kept.","src":"Q5, demo 3"},{"id":"F13.2","text":"Export a backup file to your own computer.","src":"June J11"},{"id":"F13.3","text":"An import with no stock, or with no people, is refused with the reason; nothing changes.","src":"B15"},{"id":"F13.4","text":"A restore shows what changes (now vs after), needs a tick to confirm, and saves a backup of today first.","src":"B15"},{"id":"F13.5","text":"After a restore every screen shows the restored data at once, with no reload.","src":"B2"},{"id":"F13.6","text":"Importing the Excel lists shows problems first: impossible dates (e.g. 1900), the same item twice in one place, double spaces, missing units, lot fields that look like dates. Blocking rows must be fixed in the spreadsheet; the list can be copied for the medics.","src":"B6"},{"id":"F13.7","text":"The real stock and staff lists come only from Danny's files through import; never built in, never in Git.","src":"B9"},{"id":"F13.8","text":"Only Admins import or restore.","src":"demo 3"}],"status":"🔴 not built"},{"id":"F14","name":"Staff","meta":["release 1","June J2","demo batch 4"],"items":[{"id":"F14.1","text":"People come from the one REACH people list, shared with EDP; \"Add person\" adds there; an email already in the list is refused.","src":"Q6 = C"},{"id":"F14.2","text":"The directory shows department, role and training status; \"Show archived\" shows archived people faded.","src":"June J2"},{"id":"F14.3","text":"Counts never include archived people, even when they're shown.","src":"B26"},{"id":"F14.4","text":"Archive keeps the history and can be undone; delete for good only from archived, logged. Admin-only.","src":"Q17 = B, B18"},{"id":"F14.5","text":"A profile shows training, details and this week's duties.","src":"demo 4"}],"status":"🔴 not built"},{"id":"F15","name":"Training and certificates","meta":["release 1","June J3","demo batch 4"],"items":[{"id":"F15.1","text":"Each course shows Valid, Expires in N days (30 or fewer), Expired, Required or In progress.","src":"June J3"},{"id":"F15.2","text":"An expired certificate can be renewed, and a valid one renewed early.","src":"B20"},{"id":"F15.3","text":"Expiry is worked out month-safe: 31 Jan + 1 month = end of February.","src":"B26"},{"id":"F15.4","text":"Archived people are offered no courses.","src":"B26"},{"id":"F15.5","text":"A completion date can't be in the future; every change logged old → new.","src":"demo 4"},{"id":"F15.6","text":"Managers and Admins assign and complete courses.","src":"June J3"}],"status":"🔴 not built"},{"id":"F16","name":"Duty roster","meta":["later (planned for release 2)","June J14 placeholder","demo batch 4 (idea only)"],"items":[{"id":"F16.1","text":"Shows which nurse or doctor is on duty when.","src":"Danny, Stage 3"},{"id":"F16.2","text":"EDP reads it, so the dispatcher only assigns someone on duty at that time; EDP can't change it.","src":"Danny, Stage 3"},{"id":"F16.3","text":"Managers and Admins change it; every change is logged.","src":"Q19 = A"},{"id":"F16.4","text":"What one entry looks like, and the rules it must follow, come from Danny's roster rules in F16's own stages before release 2.","src":"Q18 parked"}],"status":"⚪ later. Danny, 27 Nov: “Roster I would tackle later.” Gets its own stages, starting from his roster rules."},{"id":"F17","name":"\"Used on a case\" from EDP","meta":["later","June J13","no demo"],"items":[{"id":"F17.1","text":"Its own run through the stages when EDP (F79) and the server are ready. The needs are already written down in `PLAN.md` › EDP link: same item IDs, location and lot, a unique ID per message (counted once), corrections, an offline queue, controlled drugs with witness and register.","src":""},{"id":"F17.2","text":"Never below zero without a word: overuse is flagged.","src":"B11"}],"status":"⚪ later"},{"id":"F18","name":"Patient File and Patient Archive","meta":["later","June J14 placeholder","no demo"],"items":[{"id":"F18.1","text":"Its own run through the stages: one file per patient (from EDP or added by hand), growing over the years, kept in the Patient Archive, with stricter access.","src":"Danny, Stage 3"}],"status":"⚪ later"}];
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const md = s => esc(s).replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>").replace(/`([^`]+)`/g,'<code>$1</code>');
+const GROUPS = [
+  {id:"g-all", part:"all", t:"For every feature", ids:["ALL"]},
+  {id:"g-found", part:"found", t:"Foundation", ids:["F1","F2","F3","F4","F5"]},
+  {id:"g-inv", part:"inv", t:"Inventory", ids:["F6","F7","F8","F9","F10","F11","F12","F13"]},
+  {id:"g-ppl", part:"ppl", t:"People", ids:["F14","F15"]},
+  {id:"g-later", part:"later", t:"Later (own stages)", ids:["F16","F17","F18"]}
+];
+function chips(src){
+  if (!src) return "";
+  return src.split(/,\s*/).map(s=>{ const t=s.trim();
+    if (/^B\d+/.test(t)) return `<span class="chip b">${esc(t)}</span>`;
+    if (/^Q\d+/.test(t)) return `<span class="chip q">${esc(t)}</span>`;
+    if (/^Danny/.test(t)) return `<span class="chip d">${esc(t)}</span>`;
+    return `<span class="chip o">${esc(t)}</span>`; }).join("");
+}
+const all = B.flatMap(b=>b.items);
+const txt = all.map(i=>i.text+" "+i.src).join(" ");
+const bugs = Array.from({length:26},(_,k)=>"B"+(k+1)).filter(b=>new RegExp("\\b"+b+"\\b").test(txt)).length;
+const feats = B.filter(b=>/^F\d+$/.test(b.id)).length;
+const ans = ["Q3","Q4","Q5","Q6","Q7","Q8","Q9","Q10","Q13","Q14","Q15","Q16","Q17","Q18","Q19"].filter(q=>new RegExp("\\b"+q+"\\b").test(txt)).length;
+document.getElementById("stats").innerHTML = `
+  <div class="stat"><div class="v">${all.length}</div><div class="k">lines to prove</div></div>
+  <div class="stat ${feats===18?"good":""}"><div class="v">${feats} / 18</div><div class="k">features with a block</div></div>
+  <div class="stat ${bugs===26?"good":""}"><div class="v">${bugs} / 26</div><div class="k">June mistakes turned into tests</div></div>
+  <div class="stat ${ans===15?"good":""}"><div class="v">${ans} / 15</div><div class="k">answers that shape the app (Q3–Q19)</div></div>`;
+document.getElementById("groups").innerHTML = GROUPS.map(g=>`<section id="${g.id}"><div class="eyebrow">${esc(g.t)}</div>
+  ${g.ids.map(id=>{ const b=B.find(x=>x.id===id); if(!b) return "";
+    const rel = b.meta.find(m=>/release|later/i.test(m))||"";
+    return `<div class="feat"><div class="hd"><span class="fid">${esc(b.id)}</span><h3>${esc(b.name)}</h3>${rel?`<span class="tag ${/^later/.test(rel)?"later":/release 1/.test(rel)?"r1":/release 2/.test(rel)?"r2":"later"}">${esc(rel)}</span>`:""}<span class="meta">${esc(b.meta.filter(m=>m!==rel).join(" · "))}</span><span class="st">${esc(b.status)}</span></div>
+      <ul class="items">${b.items.map(i=>`<li data-k="${/\bB\d+/.test(i.src)?"b":""}${/\bQ\d+|Danny/.test(i.src)?"q":""}"><span class="iid">${esc(i.id)}</span><span>${md(i.text)}<span class="src">${chips(i.src)}</span></span></li>`).join("")}</ul></div>`; }).join("")}
+  <div class="review" data-part="${g.part}"></div></section>`).join("");
+document.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("[data-f]").forEach(x=>x.setAttribute("aria-pressed", x===b?"true":"false"));
+  const f=b.dataset.f; document.querySelectorAll(".items li").forEach(li=>li.classList.toggle("hide", f!=="all" && !li.dataset.k.includes(f)));
+});
+
+// ---------- review strips (db collection "master") ----------
+const state = {}; let db = null;
+function setup(el){
+  const part = el.dataset.part, fin = !!el.dataset.final;
+  el.innerHTML = `<span class="q">${fin ? "Is this the Master Checklist?" : "Is this group right and complete?"}</span>
+    <span class="btns"><button type="button" class="yes" aria-pressed="false">${fin?"Yes, that's it":"Right"}</button><button type="button" class="no" aria-pressed="false">${fin?"Not yet":"Not right"}</button></span>
+    <textarea placeholder="${fin?"Anything missing or wrong? (optional)":"What's wrong or missing? Name the line, e.g. F10.2 (optional)"}"></textarea><span class="state">Not answered yet.</span>`;
+  el.querySelector(".yes").onclick=()=>pick(part,"right"); el.querySelector(".no").onclick=()=>pick(part,"not");
+  let t; el.querySelector("textarea").addEventListener("input",e=>{ state[part]=Object.assign({},state[part],{note:e.target.value}); clearTimeout(t); t=setTimeout(()=>save(part),800); });
+}
+document.querySelectorAll(".review").forEach(setup);
+function el(part){ return document.querySelector(`.review[data-part="${part}"]`); }
+function paint(part){ const e=el(part); if(!e) return; const s=state[part]||{};
+  e.querySelector(".yes").setAttribute("aria-pressed", s.verdict==="right"?"true":"false"); e.querySelector(".no").setAttribute("aria-pressed", s.verdict==="not"?"true":"false");
+  const ta=e.querySelector("textarea"); if (document.activeElement!==ta && typeof s.note==="string") ta.value=s.note;
+  if (s.at) e.querySelector(".state").textContent="Saved for Claude · "+new Date(s.at).toLocaleString(); }
+function msg(part,t){ const e=el(part); if(e) e.querySelector(".state").textContent=t; }
+function pick(part,v){ state[part]=Object.assign({},state[part],{verdict:v}); paint(part); save(part); }
+async function save(part){
+  const s=state[part]||{}; const rec={part, verdict:s.verdict||null, note:s.note||"", at:new Date().toISOString()};
+  if (!db){ state[part]=Object.assign({},rec,{at:null}); msg(part,"Shown here, but can't be saved in this view. Open the page from its link, or tell Claude in chat."); return; }
+  state[part]=rec;
+  try{ await db.collection("master").doc(part).set(rec); msg(part,"Saved for Claude · "+new Date(rec.at).toLocaleTimeString()); }
+  catch(e){ msg(part,"Not saved ("+(e&&e.code||"error")+"). Tell Claude in chat instead."); }
+}
+(async function(){
+  try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : null); }catch(e){ db=null; }
+  if (!db) return;
+  db.collection("master").onSnapshot(snap=>{ (snap.docs||[]).forEach(d=>{ const r=typeof d.data==="function"?d.data():d.data; if(r&&r.part){ state[r.part]=r; paint(r.part); } }); }, ()=>{});
+})();
+})();
+</script>

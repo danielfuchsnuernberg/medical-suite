@@ -1,0 +1,293 @@
+<title>Controlled Drug Questions</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Questions Q13–Q16 about the controlled-drug register (F12), from Danny's note on demo batch 2.
+   Outer page: Stage 4 colours with dark mode. Mock screens: the June look (light), as in the demos. Answers save to db collection "cdq". */
+:root{
+  --bg:#F4F4F6; --surface:#FFFFFF; --surface-2:#FAFAFB; --border:#E4E4EA; --border-strong:#D2D2DA;
+  --text:#1B1B23; --muted:#6B6B78; --faint:#9B9BA6;
+  --accent:#4F46E5; --accent-soft:#EEEDFD; --accent-border:#C9C6F7; --on-accent:#FFFFFF;
+  --ok:#1E9E62; --ok-soft:#E7F5EE; --warn:#C77A12; --warn-soft:#F8EFDF; --bad:#D14343; --bad-soft:#FAEAEA;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A;
+  --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121218; --surface:#1B1B23; --surface-2:#20202A; --border:#2C2C38; --border-strong:#3A3A48;
+  --text:#ECECF2; --muted:#A3A3B2; --faint:#76768A;
+  --accent:#8B85F5; --accent-soft:#25234A; --accent-border:#3F3B7A; --on-accent:#121218;
+  --ok:#4CC48A; --ok-soft:#173326; --warn:#E0A247; --warn-soft:#352812; --bad:#EE7474; --bad-soft:#3A1C1C; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:64px}
+.wrap{max-width:1120px;margin:0 auto}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:28px;font-weight:700;letter-spacing:-.4px}
+h2{font-size:20px;font-weight:700}
+h3{font-size:14.5px;font-weight:600}
+p{margin:0;max-width:72ch}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:13px}
+header.top{padding-block:32px 16px;display:flex;flex-direction:column;gap:12px}
+.quote{border-left:3px solid var(--accent);padding:8px 12px;background:var(--surface);border-radius:0 10px 10px 0;font-size:14px}
+.rule{padding:10px 12px;border-radius:10px;background:var(--ok-soft);font-size:14px}
+.rule b{color:var(--ok)}
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px}
+.qstep{font:inherit;font-size:13px;padding:6px 12px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.qstep[aria-current="step"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.qstep .dot{width:8px;height:8px;border-radius:50%;background:var(--border-strong)}
+.qstep.done .dot{background:var(--ok)}
+.qstep:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.qcard{display:flex;flex-direction:column;gap:16px;padding-top:8px}
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:820px){.why{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px;font-size:14px;min-width:0}
+.k{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.flow{display:flex;gap:0;align-items:stretch;overflow-x:auto;padding-bottom:4px}
+.fstep{flex:1 0 150px;min-width:150px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:4px}
+.fstep .who{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent)}
+.fstep.doc .who{color:var(--ok)} .fstep.warnb{border-color:var(--warn)} .fstep.warnb .who{color:var(--warn)}
+.fstep.off{opacity:.35}
+.to{flex:none;display:flex;align-items:center;padding:0 6px;color:var(--faint)}
+.qgrid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.qgrid{grid-template-columns:1fr}}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:12px;border:1px solid var(--border-strong);background:var(--surface)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt[aria-pressed="true"]{border:2px solid var(--accent);background:var(--accent-soft);padding:11px 13px}
+.opt .l{font-weight:600;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.opt .d{font-size:13px;color:var(--muted)}
+.opt .cons{font-size:12.5px;display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.opt .cons span::before{content:"+ ";color:var(--ok);font-weight:700}
+.opt .cons span.minus::before{content:"− ";color:var(--bad)}
+.prop{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--ok);color:#fff}
+.ans{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--border-strong)}
+.ans .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13.5px}
+.ans button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.ans button[aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:#fff}
+.ans textarea{min-height:54px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);resize:vertical}
+.ans .state{font-size:12px;color:var(--faint)}
+.nav{display:flex;justify-content:space-between;gap:10px}
+.navb{font:inherit;font-size:14px;padding:8px 16px;border-radius:9px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.navb.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.navb:disabled{opacity:.4;cursor:default}
+footer{padding-top:28px;font-size:12.5px;color:var(--faint)}
+
+/* ---- mock screens: June look, light ---- */
+.mocks{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:560px){.mocks{grid-template-columns:1fr}}
+.m{--s:#FFFFFF;--b:#E4E4EA;--t:#1B1B23;--mu:#6B6B78;--fa:#9B9BA6;--a:#4F46E5;--as:#EEEDFD;--g:#1E9E62;--gs:#E7F5EE;--w:#C77A12;--ws:#F8EFDF;--r:#D14343;--rs:#FAEAEA;
+  color-scheme:light;background:#F4F4F6;color:var(--t);border:1px solid #D2D2DA;border-radius:12px;overflow:hidden;font-size:12.5px;line-height:1.4}
+.m .cap{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--fa);padding:6px 10px;background:#F0F0F3;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;gap:6px}
+.m .body{padding:10px;display:flex;flex-direction:column;gap:8px}
+.m .mod{background:var(--s);border:1px solid var(--b);border-radius:10px;box-shadow:0 6px 18px -8px rgba(20,20,35,.18)}
+.m .mh{padding:9px 12px;border-bottom:1px solid var(--b);font-weight:700;font-size:13px}
+.m .mb{padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.m .f{display:flex;flex-direction:column;gap:2px}
+.m .f label{font-size:11px;font-weight:600;color:var(--mu)}
+.m .f .in{border:1px solid #D2D2DA;border-radius:6px;padding:5px 8px;background:#fff}
+.m .sec{border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;outline:2px dashed var(--a);outline-offset:1px;background:var(--as)}
+.m .sec .lbl{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--a)}
+.m .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:600;font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid var(--b);background:#fff;color:var(--t)}
+.m .btn.p{background:var(--a);border-color:var(--a);color:#fff}
+.m .btn.g{background:var(--g);border-color:var(--g);color:#fff}
+.m .btn.r{background:#fff;border-color:var(--r);color:var(--r)}
+.m .btn.dis{opacity:.4}
+.m .note{font-size:11.5px;color:var(--mu)}
+.m .warnbox{background:var(--ws);color:#7a4a08;border-radius:7px;padding:7px 9px;font-size:11.5px}
+.m .errbox{background:var(--rs);color:var(--r);border-radius:7px;padding:7px 9px;font-size:11.5px}
+.m .okbox{background:var(--gs);color:#14663f;border-radius:7px;padding:7px 9px;font-size:11.5px}
+.m .phone{width:100%;max-width:240px;margin:0 auto;border:7px solid #1b1b23;border-radius:24px;background:#F4F4F6;overflow:hidden}
+.m .phone .bar{display:flex;justify-content:space-between;padding:5px 10px;font-size:10px;color:var(--mu);background:#fff;border-bottom:1px solid var(--b)}
+.m .phone .scr{padding:8px;display:flex;flex-direction:column;gap:7px;min-height:220px}
+.m .notif{background:#fff;border:1px solid var(--b);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:5px;box-shadow:0 4px 12px -6px rgba(0,0,0,.2)}
+.m .notif .t{font-weight:700;font-size:11.5px;display:flex;gap:6px;align-items:center}
+.m .notif .t i{width:8px;height:8px;border-radius:50%;background:var(--r)}
+.m .grey{opacity:.35;filter:grayscale(1)}
+.m table{width:100%;border-collapse:collapse;font-size:11.5px}
+.m th{font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--fa);text-align:left;padding:5px 6px;border-bottom:1px solid var(--b)}
+.m td{padding:6px;border-bottom:1px solid var(--b);vertical-align:top}
+.m tr.hl td{background:var(--ws)}
+.m .tag{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px}
+.m .tag.red{background:var(--rs);color:var(--r)} .m .tag.green{background:var(--gs);color:var(--g)} .m .tag.ac{background:var(--as);color:var(--a)}
+.m .tscroll{overflow-x:auto}
+.m .prof{display:flex;gap:8px;align-items:center}
+.m .av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:10.5px;font-weight:700}
+.m .tick{display:flex;gap:8px;align-items:center;padding:7px 9px;border:1px solid var(--b);border-radius:8px;background:#fff}
+.m .box{width:16px;height:16px;border-radius:4px;border:1.5px solid #D2D2DA;display:grid;place-items:center;font-size:11px;color:#fff;font-weight:700}
+.m .box.on{background:var(--a);border-color:var(--a)}
+.m .box.lock{background:#EDEDF1}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Stage 4 · before demo batch 3 · controlled drugs</div>
+  <h1>Who may take out a controlled drug, and how does the doctor approve?</h1>
+  <div class="quote">Your note on demo batch 2: “the Doctor should be the only authorized person either taking out a controlled Drug or authorizing taking out a controlled drug. Admin should not have authority to do so.” And your question: “If a nurse needs to dispense a controlled drug … how does the doctor know or authorize the dispense?”</div>
+  <div class="rule"><b>Written down as a rule (F12):</b> only a doctor takes out a controlled drug or approves someone else taking it out. Being Admin gives no right here.</div>
+  <p class="muted">Your question opens four smaller ones. I haven't decided any of them. Each one is shown on the screens it changes, with a proposed answer marked. Pick an answer and the screens change with it. The people and the drug are made-up examples.</p>
+  <div class="steps" id="steps" aria-label="Questions"></div>
+</header>
+
+<main id="q" class="qcard" aria-live="polite"></main>
+<div class="nav" style="margin-top:18px"><button type="button" class="navb" id="prev">← Back</button><button type="button" class="navb primary" id="next">Next question →</button></div>
+
+<footer>REACH Inventory · Stage 4 · controlled-drug questions Q13–Q16 · 27 Nov 2026 · source <span style="font-family:var(--mono)">docs/stage4/controlled-drug-questions.html</span></footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+// ---------- mock pieces ----------
+const nurseModal = (sec, extra="") => `<div class="m"><div class="cap"><span>Anna's screen (nurse, at the base)</span><span>REACH Inventory</span></div><div class="body">
+  <div class="mod"><div class="mh">Take out: Morphine 10 mg/ml (example)</div><div class="mb">
+    <div class="f"><label>How many</label><div class="in">1 amp</div></div>
+    <div class="f"><label>Reason / case</label><div class="in">Pain relief · EDP case 2026-118</div></div>
+    ${sec}
+  </div></div>${extra}</div></div>`;
+const docPhone = (inner, off) => `<div class="m"><div class="cap"><span>Dr Ben's phone or Mac</span><span>same app</span></div><div class="body ${off?"grey":""}">
+  <div class="phone"><div class="bar"><span>09:42</span><span>REACH Inventory</span></div><div class="scr">${inner}</div></div></div></div>`;
+const reqNotif = `<div class="notif"><div class="t"><i></i>Waiting for your approval</div><div>Anna Example asks to take out <b>1 × Morphine 10 mg/ml</b> from the Store · pain relief · EDP case 2026-118</div>
+  <div style="display:flex;gap:5px;flex-wrap:wrap"><span class="btn g">Approve</span><span class="btn">Ask Anna</span><span class="btn r">Refuse</span></div></div>
+  <div class="note">Also shown as a red badge on Home and on the Controlled drugs menu until it is answered.</div>`;
+
+// ---------- the questions ----------
+const Q = [
+ {id:"q13", n:"Q13", title:"How does the doctor approve when a nurse takes one out?",
+  what:"Anna (nurse) needs 1 ampoule of morphine from the Store. The register window opens: amount, reason, case. Before it's booked, a doctor has to approve it.",
+  why:"Your rule says only a doctor takes it out or approves it. The doctor isn't always in the same room, and there isn't always internet. Pick a way that only works in the room, and the nurse is stuck when the doctor is away. Pick one that only works remotely, and it's stuck whenever the internet is down.",
+  changes:"Pick an answer: the nurse's window and the doctor's screen show what each person sees.",
+  flow:true,
+  opts:{
+   A:{l:"Both: in the room or from the doctor's own device", d:"If the doctor is there, the doctor signs on the nurse's screen with their own PIN. If not, the nurse sends the request; it pops up on the doctor's phone or Mac, and the doctor approves there.",
+      pro:["Works when the doctor is next door and when the doctor is away","Every approval carries the doctor's own sign-in"], con:["Two ways to learn (both short)"]},
+   B:{l:"Only in the room", d:"The doctor must be there and sign on the nurse's screen with their own PIN.",
+      pro:["Simple, works with no internet"], con:["Doctor away = nothing can be taken out (see Q14)"]},
+   C:{l:"Only from the doctor's own device", d:"The nurse always sends a request; the doctor approves on their own phone or Mac.",
+      pro:["Doctor never has to walk over"], con:["Needs internet on both sides; without it, nothing can be taken out (see Q14)"]}
+  }, prop:"A",
+  mock:o=>{
+    const pin = `<span class="btn p">Doctor is here: doctor signs with own PIN</span>`;
+    const ask = `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="in" style="border:1px solid #D2D2DA;border-radius:6px;padding:5px 8px;background:#fff">Dr Ben Sample ▾</span><span class="btn p">Ask for approval</span></div>`;
+    const sec = `<div class="sec"><span class="lbl">Doctor's approval</span>${o==="A"?pin+`<div class="note">or, if no doctor is here:</div>`+ask:o==="B"?pin+`<div class="note">No other way.</div>`:ask+`<div class="note">The request waits until a doctor approves.</div>`}</div>`;
+    return `<div class="mocks">${nurseModal(sec)}${docPhone(o==="B"?`<div class="note" style="padding:20px 6px;text-align:center">Not used: the doctor signs on Anna's screen.</div>`:reqNotif, o==="B")}</div>`;
+  },
+  flowFor:o=>[
+    {w:"Nurse", t:"Fills in the register window", on:true},
+    {w:"Doctor in the room", t:"Types their PIN on the nurse's screen", on:o!=="C", doc:true},
+    {w:"Doctor away", t:"Gets the request on their phone or Mac, taps Approve", on:o!=="B", doc:true},
+    {w:"App", t:"Books it: balance −1, nurse + doctor + witness in the register", on:true}
+  ]},
+ {id:"q14", n:"Q14", title:"What if no doctor can be reached, and it can't wait?",
+  what:"A MedEvac, or a patient in pain at the base. No doctor is in the room, and there's no internet (or the doctor doesn't answer). The patient needs the drug now.",
+  why:"Blocking it could delay care, and people would work around the app, which leaves the register wrong. Allowing it means a dose given without the doctor's approval first. Either way the register must stay honest.",
+  changes:"Pick an answer: the nurse's window shows what she can do, and the register shows what's recorded.",
+  opts:{
+   A:{l:"Allowed as an emergency; the doctor approves afterwards", d:"The nurse ticks “Emergency, no doctor reachable”, gives a reason and a witness signs. It's booked straight away, shown red as “waiting for doctor” on Home and in the register until a doctor approves or queries it.",
+      pro:["Care is never held up by the app","The register is right from the first minute; nothing happens off the books"], con:["A dose can be given before a doctor has seen it (but it stays flagged until a doctor has)"]},
+   B:{l:"Never without a doctor", d:"The app won't book it until a doctor has approved.",
+      pro:["No dose without approval, in the app"], con:["In a real emergency the drug is given anyway and written down later, or not at all: the register goes wrong"]}
+  }, prop:"A",
+  mock:o=>{
+    const sec = `<div class="sec"><span class="lbl">Doctor's approval</span><div class="warnbox">No internet. No doctor here.</div>${o==="A"
+      ? `<div class="tick"><span class="box on">✓</span><span><b>Emergency, no doctor reachable</b><br><span class="note">Reason and witness required. A doctor must approve afterwards.</span></span></div><span class="btn p">Book as emergency (witness signs)</span>`
+      : `<span class="btn p dis">Ask for approval</span><div class="errbox">Can't be booked without a doctor's approval.</div>`}</div>`;
+    const reg = `<div class="m"><div class="cap"><span>Controlled-drug register</span><span>Morphine 10 mg/ml</span></div><div class="body"><div class="tscroll"><table><thead><tr><th>When</th><th>Out</th><th>Balance</th><th>Doctor</th></tr></thead><tbody>
+      <tr><td>26 Nov 14:10</td><td>1</td><td>5</td><td>Dr Ben Sample <span class="tag green">approved</span></td></tr>
+      ${o==="A"?`<tr class="hl"><td>27 Nov 09:42</td><td>1</td><td>4</td><td><span class="tag red">waiting for doctor</span><br><span class="note">emergency · witness Cara Demo</span></td></tr>`:`<tr><td colspan="4" class="note">Nothing booked. The balance still says 5. In reality there are 4 if it was given anyway.</td></tr>`}
+      </tbody></table></div></div></div>`;
+    return `<div class="mocks">${nurseModal(sec)}${reg}</div>`;
+  }},
+ {id:"q15", n:"Q15", title:"Is the doctor's approval also the witness?",
+  what:"You chose a full register in Q8: reason, <b>witness</b>, running balance. A witness is a second person who saw the drug taken out and given. Now a doctor's approval comes on top.",
+  why:"When a nurse takes it out, the doctor approves, but may be far away and hasn't seen it. When the doctor takes it out personally, someone still has to watch. The question is whether the register needs two people, or three.",
+  changes:"Pick an answer: the register line shows who is recorded.",
+  opts:{
+   A:{l:"Keep both: a doctor approves, and a second person witnesses", d:"Every line has who took it out, which doctor approved, and a witness who was there. If the doctor takes it out personally, someone else witnesses.",
+      pro:["Someone who was physically there always signs","Matches Q8 as you answered it"], con:["Needs a second person present every time"]},
+   B:{l:"The doctor's approval counts as the witness", d:"Who took it out and which doctor approved. No separate witness.",
+      pro:["Faster, one person less"], con:["A remote approval means nobody actually saw it given","Drops the witness you asked for in Q8"]}
+  }, prop:"A",
+  mock:o=>`<div class="m"><div class="cap"><span>Controlled-drug register</span><span>Morphine 10 mg/ml</span></div><div class="body"><div class="tscroll"><table><thead><tr><th>When</th><th>Out</th><th>Bal.</th><th>Taken out by</th><th>Doctor</th>${o==="A"?"<th>Witness</th>":""}</tr></thead><tbody>
+      <tr><td>27 Nov 09:42</td><td>1</td><td>4</td><td>Anna Example (nurse)</td><td>Dr Ben Sample<br><span class="note">from Ben's phone</span></td>${o==="A"?"<td>Cara Demo<br><span class=\"note\">was there</span></td>":""}</tr>
+      <tr><td>27 Nov 13:05</td><td>1</td><td>3</td><td>Dr Ben Sample</td><td>Dr Ben Sample<br><span class="note">took it out personally</span></td>${o==="A"?"<td>Anna Example</td>":""}</tr>
+    </tbody></table></div>${o==="B"?`<div class="warnbox">Line 1: nobody who signed was in the room when it was given.</div>`:`<div class="okbox">Every line: someone who was in the room signed.</div>`}</div></div>`},
+ {id:"q16", n:"Q16", title:"Who decides who counts as a doctor here?",
+  what:"The app needs a list of people allowed to approve controlled drugs. Someone has to tick “may approve controlled drugs” on a person.",
+  why:"You said Admin should have no say over controlled drugs. If an Admin can tick that box, an Admin could tick it for themselves and then approve. This question closes that gap.",
+  changes:"Pick an answer: the profile shows who can tick the box.",
+  opts:{
+   A:{l:"Admin ticks it, and every doctor is told", d:"An Admin sets it in the people list. Each change is logged and shown to all doctors.",
+      pro:["Simple, one place to manage people"], con:["An Admin could make themselves a doctor (it would be seen, but it's possible)"]},
+   B:{l:"Only a doctor can make someone else a doctor", d:"The first doctor is set once when the app is set up. After that only a doctor can tick it for another person, and never for themselves. Admins can't change it.",
+      pro:["Admin has no way into controlled drugs, as you said","Every change logged"], con:["If the only doctor leaves, the setup step is needed again (done with you)"]}
+  }, prop:"B",
+  mock:o=>`<div class="mocks"><div class="m"><div class="cap"><span>Staff › Anna Example · seen by Cara (Admin)</span></div><div class="body">
+      <div class="prof"><span class="av" style="background:#4F46E5">AE</span><div><b>Anna Example</b><div class="note">Nurse · Staff</div></div></div>
+      <div class="sec"><span class="lbl">Controlled drugs</span><div class="tick"><span class="box ${o==="A"?"":"lock"}">${o==="A"?"":"🔒"}</span><span>May approve controlled drugs</span></div>
+      <div class="note">${o==="A"?"Cara (Admin) can tick this. All doctors get told.":"Locked for Admins. Only a doctor can change it."}</div></div></div></div>
+    <div class="m"><div class="cap"><span>Staff › Cara Demo · seen by Dr Ben</span></div><div class="body">
+      <div class="prof"><span class="av" style="background:#1E9E62">CD</span><div><b>Cara Demo</b><div class="note">Base manager · Admin</div></div></div>
+      <div class="sec"><span class="lbl">Controlled drugs</span><div class="tick"><span class="box">${""}</span><span>May approve controlled drugs</span></div>
+      <div class="note">${o==="A"?"Ben can't change this here; Admins manage it.":"Ben (doctor) can tick this for Cara. Nobody can tick it for themselves."}</div></div></div></div></div>`}
+];
+
+// ---------- state + saving ----------
+let idx = 0; const ans = {}; let db = null;
+const stepsEl = document.getElementById("steps"), qEl = document.getElementById("q");
+function shown(q){ const a = ans[q.id]; return a && a.choice && q.opts[a.choice] ? a.choice : q.prop; }
+function paintSteps(){
+  stepsEl.innerHTML = Q.map((q,i)=>`<button type="button" class="qstep ${ans[q.id]&&ans[q.id].choice?"done":""}" data-i="${i}" ${i===idx?'aria-current="step"':""}><span class="dot"></span>${q.n}</button>`).join("");
+  stepsEl.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{ idx=+b.dataset.i; paint(); window.scrollTo({top:stepsEl.offsetTop-10, behavior:"smooth"}); });
+}
+function paint(){
+  paintSteps();
+  const q = Q[idx], o = shown(q), a = ans[q.id] || {};
+  const flow = q.flow ? `<div class="flow">${q.flowFor(o).map((s,i,arr)=>`<div class="fstep ${s.doc?"doc":""} ${s.on?"":"off"}"><span class="who">${esc(s.w)}</span>${esc(s.t)}</div>${i<arr.length-1?'<span class="to">→</span>':""}`).join("")}</div>` : "";
+  qEl.innerHTML = `<div><div class="eyebrow">${q.n} of Q13–Q16</div><h2>${esc(q.title)}</h2></div>
+    <div class="why"><div class="panel"><span class="k">What it's about</span><p>${q.what}</p></div><div class="panel"><span class="k">Why it matters</span><p>${esc(q.why)}</p></div><div class="panel"><span class="k">What each answer changes</span><p>${esc(q.changes)}</p></div></div>
+    ${flow}
+    <div class="qgrid"><div id="mock">${q.mock(o)}</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="opts">${Object.keys(q.opts).map(k=>{const x=q.opts[k];return `<button type="button" class="opt" data-o="${k}" aria-pressed="${a.choice===k}"><span class="l">${k} · ${esc(x.l)}${k===q.prop?' <span class="prop">Proposed</span>':""}</span><span class="d">${esc(x.d)}</span><span class="cons">${x.pro.map(p=>`<span>${esc(p)}</span>`).join("")}${x.con.map(p=>`<span class="minus">${esc(p)}</span>`).join("")}</span></button>`;}).join("")}</div>
+        <div class="ans"><div class="row"><b>Your answer:</b> <span id="cur">${a.choice ? (a.choice==="unsure" ? "Not sure" : a.choice+" · "+esc(q.opts[a.choice].l)) : "not picked yet (the screens show the proposed one)"}</span></div>
+          <div class="row"><button type="button" id="unsure" aria-pressed="${a.choice==="unsure"}">Not sure</button></div>
+          <textarea id="note" placeholder="Anything to add? (optional)">${esc(a.note||"")}</textarea><span class="state" id="st">${a.at?"Saved for Claude · "+esc(new Date(a.at).toLocaleString()):"Not answered yet."}</span></div>
+      </div></div>`;
+  qEl.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{ ans[q.id]=Object.assign({}, ans[q.id], {choice:b.dataset.o}); paint(); save(q.id); });
+  document.getElementById("unsure").onclick = ()=>{ ans[q.id]=Object.assign({}, ans[q.id], {choice:"unsure"}); paint(); save(q.id); };
+  let t; document.getElementById("note").oninput = e=>{ ans[q.id]=Object.assign({}, ans[q.id], {note:e.target.value}); clearTimeout(t); t=setTimeout(()=>save(q.id),800); };
+  document.getElementById("prev").disabled = idx===0;
+  const nx = document.getElementById("next"); nx.textContent = idx===Q.length-1 ? "Done: back to Q13" : "Next question →";
+}
+document.getElementById("prev").onclick = ()=>{ if (idx>0){ idx--; paint(); window.scrollTo({top:stepsEl.offsetTop-10}); } };
+document.getElementById("next").onclick = ()=>{ idx = (idx+1) % Q.length; paint(); window.scrollTo({top:stepsEl.offsetTop-10}); };
+async function save(id){
+  const a = ans[id] || {}; const rec = {q:id, choice:a.choice||null, note:a.note||"", at:new Date().toISOString()};
+  const st = document.getElementById("st");
+  if (!db){ if (st && Q[idx].id===id) st.textContent = "Shown here, but can't be saved in this view. Open the page from its link, or tell Claude in chat."; return; }
+  ans[id] = rec;
+  try{ await db.collection("cdq").doc(id).set(rec); if (Q[idx].id===id && st) st.textContent = "Saved for Claude · "+new Date(rec.at).toLocaleTimeString(); paintSteps(); }
+  catch(e){ if (st) st.textContent = "Not saved ("+(e&&e.code||"error")+"). Tell Claude in chat instead."; }
+}
+paint();
+(async function(){
+  try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : null); }catch(e){ db = null; }
+  if (!db) return;
+  db.collection("cdq").onSnapshot(snap=>{
+    let changed = false;
+    (snap.docs||[]).forEach(d=>{ const r = typeof d.data==="function" ? d.data() : d.data; if (r && r.q){ ans[r.q] = r; changed = true; } });
+    const ta = document.getElementById("note");
+    if (changed && !(ta && document.activeElement===ta)) paint();
+  }, ()=>{});
+})();
+})();
+</script>
