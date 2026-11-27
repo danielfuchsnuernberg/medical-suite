@@ -51,7 +51,7 @@ test("F4.1 one log for all REACH apps, newest first, filter by app; who, which r
   await page.click('[data-area="EDP"]');
   await expect(entries()).toHaveCount(1);
   await page.click('[data-area="Settings"]');
-  await expect(page.getByTestId("log-empty")).toBeVisible();
+  expect(new Set(await page.getByTestId("log").locator(".tagapp").allTextContents())).toEqual(new Set(["SETTINGS"]));   // the DEMO settings and lists
   // every entry has the R9 shape
   const shapeOk = await page.evaluate(() => window.__mdTest.door.log().every(e => e.by && e.recordType && e.recordId && typeof e.at === "number" && e.app && Array.isArray(e.changes)));
   expect(shapeOk).toBe(true);
@@ -78,7 +78,7 @@ test("F4.3 every delete for good is logged with who, when and what was there (B1
   await page.getByRole("button", { name: "Add a person" }).click();
   await page.getByLabel("New person's name").fill("Typo Persn");
   await page.getByLabel("New person's job").fill("Nurse");
-  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.getByTestId("people-access").getByRole("button", { name: "Add", exact: true }).click();
   await page.locator("[data-person]", { hasText: "Typo Persn" }).getByRole("button", { name: "Delete (mistake)" }).click();
   await openLog();
   const del = entries().nth(0);

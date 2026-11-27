@@ -10,14 +10,15 @@ export const isLevel = (x: unknown): x is Level => x === "View" || x === "Work" 
 export type Action =
   | "changeStock"    // counts, movements (Work)
   | "archiveStock"   // archive stock (Work and Manage, F2.7)
-  | "openSettings"   // F2.3
+  | "changeSettings" // F5.7: only Manage changes settings (everyone may look, Q23 = C)
+  | "seePeopleAccess" // F2.3 (Q23 = C): People and access shows only for Manage level
   | "changeLevels"   // F2.2, F2.3
   | "managePeople"   // add people, give one-time passwords (Q22 = A)
   | "archivePeople"  // F2.7
   | "deleteMistake"; // F2.7, REACH Q38
 const NEED: Record<Action, Level> = {
   changeStock: "Work", archiveStock: "Work",
-  openSettings: "Manage", changeLevels: "Manage", managePeople: "Manage", archivePeople: "Manage", deleteMistake: "Manage",
+  changeSettings: "Manage", seePeopleAccess: "Manage", changeLevels: "Manage", managePeople: "Manage", archivePeople: "Manage", deleteMistake: "Manage",
 };
 
 export function can(level: unknown, action: Action): boolean {

@@ -60,7 +60,7 @@ test("F2.1 (Q22 = A) a new computer: the first Management person sets it up; oth
   await page.getByRole("button", { name: "Add a person" }).click();
   await page.getByLabel("New person's name").fill("Anna Real");
   await page.getByLabel("New person's job").fill("Nurse");
-  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.getByTestId("people-access").getByRole("button", { name: "Add", exact: true }).click();
   await expect(row("Anna Real")).toContainText("No password on this computer");
   await row("Anna Real").getByRole("button", { name: "One-time password" }).click();
   const code = (await page.getByTestId("one-time-code").textContent()).trim();
@@ -107,12 +107,14 @@ test("F2.2 three levels, set in Settings by Management; a change takes effect at
   expect(await page.evaluate(() => window.__mdTest.door.get("line", "demo-s1").qty)).toBe(12);
 });
 
-test("F2.3 a Work-level person can't open Settings or change anyone's level (B12)", async () => {
+test("F2.3 a Work-level person can't change Settings and doesn't see People and access (B12, Q23 = C)", async () => {
   await launch();
   await signIn(page, "Anna Example");
   await openSettings();
-  await expect(page.getByTestId("settings-locked")).toContainText("Settings are for Manage level");
+  await expect(page.getByTestId("settings-readonly")).toHaveText("Only Manage level changes settings. You can look.");
+  await expect(page.getByTestId("people-access")).toHaveCount(0);
   await expect(page.locator("select[aria-label^='Level of']")).toHaveCount(0);
+  await expect(page.locator("body")).not.toContainText("One-time password");
   // and not behind the screen either: the rule is checked again where the change is saved
   const why = await page.evaluate(async () => {
     const a = window.__mdTest.accounts;
@@ -187,7 +189,7 @@ test("F2.7 delete for good: only a mistake within 24 hours, by Manage level, log
   await expect(row("Anna Example").getByRole("button", { name: "Delete (mistake)" })).toHaveCount(0); // added weeks ago
   await page.getByRole("button", { name: "Add a person" }).click();
   await page.getByLabel("New person's name").fill("Typo Persn");
-  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.getByTestId("people-access").getByRole("button", { name: "Add", exact: true }).click();
   await row("Typo Persn").getByRole("button", { name: "Delete (mistake)" }).click();
   await expect(row("Typo Persn")).toHaveCount(0);
   const ops = await page.evaluate(() => window.__mdTest.door.messages().filter(m => m.recordType === "person" && m.data.name === "Typo Persn" || m.op === "delete").map(m => m.op));

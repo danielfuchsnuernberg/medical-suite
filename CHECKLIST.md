@@ -1,5 +1,5 @@
 # CHECKLIST — REACH Medical Suite
-**Now:** Stage 6 — Execution · F1, F2, F3, F4 built and tested · waiting for Danny: try F4 (Activity), commit, then F5 (needs Q23 first)
+**Now:** Stage 6 — Execution · F1–F5 built and tested (F5 not committed) · waiting for Danny: try F5 (Settings), commit, then F6
 
 ### ARCHIVE — clear away the June prototype (26 Nov 2026)
 **Goal:** only the new app is left in sight; nothing is lost.
@@ -126,14 +126,15 @@ Danny: nobody uses the June app, so no patches. All 26 bugs are rules for the ne
 - [x] F3 works without internet (the store door): built, 7 of 7 lines tested in the real program; built before F2 (Danny, 27 Nov) — the server parts are proven against a stand-in server until REACH decides the real one
 - [x] F2 sign-in and levels: built, 8 of 8 lines tested in the real program (28 Nov); Q22 = A. The parts that need the server (one REACH account shared with EDP; “first sign-in needs internet”) wait for REACH SD2
 - [x] F4 activity log: built, 4 of 4 lines tested in the real program (28 Nov); EDP's part proven with the stand-in server until EDP is joined (SD2)
-- [ ] F5 settings · [ ] F6 overview · [ ] F7 Store and bags · [ ] F8 item page · [ ] F9 restock and dispense
+- [x] F5 settings: built, 7 of 7 lines tested in the real program (28 Nov); Q23 = C
+- [ ] F6 overview · [ ] F7 Store and bags · [ ] F8 item page · [ ] F9 restock and dispense
 - [ ] F10 count · [ ] F11 stock takes · [ ] F12 register · [ ] F13 backup and import · [ ] F14 staff · [ ] F15 training
 **Tests for this stage:**
-- [x] Unit tests: `npx vitest run` → 52 of 52 pass (28 Nov, after F4)
-- [x] Program tests: `npx playwright test` → 24 of 24 pass (F1 5, F2 8, F3 7, F4 4) (28 Nov)
-- [x] Each program test can fail: F1.5 (date tick broken), F3.6 (a failed save pretended to work: the June B22), F3.7 (a new version threw old data away: the June B3), unit F3.4/F3.5 (movements overwritten instead of added); F2: 7 rules broken one at a time (last Manage person, archive yourself, wrong password accepted, stay signed in ignored, Settings unlocked, 24-hour delete rule, one-time password by Work level) and the new same-moment test (B27); F4: 6 rules broken one at a time (newest first, filter by app, one record's history, old → new, what was there, locked entries) — each failed when broken, then restored
+- [x] Unit tests: `npx vitest run` → 59 of 59 pass (28 Nov, after F5)
+- [x] Program tests: `npx playwright test` → 31 of 31 pass (F1 5, F2 8, F3 7, F4 4, F5 7) (28 Nov)
+- [x] Each program test can fail: F1.5 (date tick broken), F3.6 (a failed save pretended to work: the June B22), F3.7 (a new version threw old data away: the June B3), unit F3.4/F3.5 (movements overwritten instead of added); F2: 7 rules broken one at a time (last Manage person, archive yourself, wrong password accepted, stay signed in ignored, Settings unlocked, 24-hour delete rule, one-time password by Work level) and the new same-moment test (B27); F4: 6 rules broken one at a time (newest first, filter by app, one record's history, old → new, what was there, locked entries); F5: 8 rules broken one at a time (archived users count, case-only rename, base time zone, styled boxes, Manage only behind and on the screen, bag with stock, country proposes time zone) — each failed when broken, then restored
 **Status:** 🟡 IN PROGRESS
-**Open questions:** Q23 (Settings: locked or look-only below Manage), needed before F5
+**Open questions:** none
 
 ### STAGE 7 — Testing
 **Status:** 🔴 OPEN
@@ -171,7 +172,7 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 ### F2 — Sign-in and roles · release 1 · June J1 "Acting as" · demo batch 1
 - [x] F2.1 Everyone signs in with their own REACH account: one account per person, the same as in EDP. There is no "Acting as". (B12, Q6, REACH R3) ✅ 28 Nov: tests/app/f2-signin.spec.mjs › F2.1 (wrong password refused, no “Acting as”, saves carry the person) and › F2.1 (Q22 = A) (new computer set up by Management, one-time password, own password, never sent anywhere). One REACH account shared with EDP: comes with the server (SD2)
 - [x] F2.2 Inside this app a person has one of three levels: View, Work or Manage. Nurses work at Work level; doctors in charge and base managers at Manage. Levels are set by Management. (Q20 = A, REACH R3, Q11) ✅ 28 Nov: › F2.2 (three levels, set by Cara, takes effect at once; View can't change stock)
-- [x] F2.3 A Work-level person can't open Settings or change anyone's level. (B12) ✅ 28 Nov: › F2.3 (Settings locked for Anna; the rule is checked again behind the screen; no one-time passwords from Work level)
+- [x] F2.3 A Work-level person can't change Settings or anyone's level, and doesn't see People and access. (B12; reworded by Q23 = C, 28 Nov) ✅ 28 Nov: › F2.3 (Anna sees “Only Manage level changes settings. You can look.”, no People and access, no level boxes; checked again behind the screen; no one-time passwords from Work level)
 - [x] F2.4 The last Manage-level person can't be lowered or archived; the message says why. (B14) ✅ 28 Nov: › F2.4 (Cara can't lower herself as the last one; message says why) + unit test for two changes at the same moment (B27)
 - [x] F2.5 Nobody can archive themselves. (B23) ✅ 28 Nov: › F2.5 (Cara can't archive herself; Dina archived, off the sign-in list, restored)
 - [x] F2.6 "Stay signed in on this computer" lets the program open offline; a first sign-in on a new computer needs internet once, and says so. (Stage 3, demo 1) ✅ 28 Nov: › F2.6 (ticked: reopens offline signed in; not ticked or signed out: sign-in screen). “A first sign-in on a new computer needs internet”: until the server, a new computer is set up by Management instead (Q22 = A); the internet part comes with SD2
@@ -197,14 +198,14 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 **Status:** 🟢 built and tested (28 Nov 2026). EDP's entries are proven with the stand-in server; they get tested again when EDP is joined through the real server (SD2).
 
 ### F5 — Settings and country settings · release 1 · June J10 · demo batch 4
-- [ ] F5.1 Country settings: base name, country, time zone, date style, shift times. (brief, Stage 3)
-- [ ] F5.2 "Today" and every expiry follow the base's time zone. Test PNG (UTC+10) after 10:00 and Peru (UTC−5) after 19:00: no item shows "Expired" a day early. (B13)
-- [ ] F5.3 Every box in Settings looks like every other box in the app. (B8)
-- [ ] F5.4 A department or category in use, even only by archived records, can't be deleted; the message says who uses it. (B21)
-- [ ] F5.5 Renaming only the capitals is allowed (icu → ICU); a real duplicate is refused. (B24 part)
-- [ ] F5.6 Departments, inventory categories, courses and bags are managed here. (June J10)
-- [ ] F5.7 Only Manage level changes settings; everyone else can look. (Q20, demo 4)
-**Status:** 🔴 not built
+- [x] F5.1 Country settings: base name, country, time zone, date style, shift times. (brief, Stage 3) ✅ 28 Nov: tests/app/f5-settings.spec.mjs › F5.1 (Cara changes base name, country → time zone proposed, date style, shifts; sidebar follows; a bad shift time is refused; the log shows country: PG → PE) + unit tests
+- [x] F5.2 "Today" and every expiry follow the base's time zone. Test PNG (UTC+10) after 10:00 and Peru (UTC−5) after 19:00: no item shows "Expired" a day early. (B13) ✅ 28 Nov: › F5.2 (computer on UTC, 28 Nov 00:30 UTC: PNG base shows Saturday 28 Nov and “Expires today”; Peru base shows Friday 27 Nov and “Expires tomorrow”; never “Expired”)
+- [x] F5.3 Every box in Settings looks like every other box in the app. (B8) ✅ 28 Nov: › F5.3 (every box in Settings has the same border, corners and type as the boxes elsewhere; not the browser's default box)
+- [x] F5.4 A department or category in use, even only by archived records, can't be deleted; the message says who uses it. (B21) ✅ 28 Nov: › F5.4 (Training: “still used by Finn Former (archived)”; icu: used by an archived item; archive instead, Finn keeps it; an unused new entry can be deleted) + unit tests
+- [x] F5.5 Renaming only the capitals is allowed (icu → ICU); a real duplicate is refused. (B24 part) ✅ 28 Nov: › F5.5 (icu → ICU accepted; ICU → fluids refused ““Fluids” is already there.”; “clinical” refused) + unit test
+- [x] F5.6 Departments, inventory categories, courses and bags are managed here. (June J10) ✅ 28 Nov: › F5.6 (departments listed; category, course with months, bag added; course months changed; a bag with stock can't be archived; the Store isn't a bag) + unit test
+- [x] F5.7 Only Manage level changes settings; everyone else can look at the base's settings and lists. (Q20, demo 4; Q23 = C) ✅ 28 Nov: › F5.7 (Anna: everything visible and greyed, no change buttons, no People and access; three changes tried behind the screen all refused)
+**Status:** 🟢 built and tested (28 Nov 2026).
 
 ### F6 — Inventory overview · release 1 · June J4 · demo batch 2
 - [ ] F6.1 The June Overview: totals, attention strip, bag readiness, soonest to expire. Every card and warning opens the matching list. (June J4)

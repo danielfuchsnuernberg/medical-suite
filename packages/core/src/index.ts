@@ -7,3 +7,4 @@ export * from "./search/search";
 export * from "./demo/seed";
 export * from "./access/levels";
 export * from "./access/password";
+export * from "./settings/lists";

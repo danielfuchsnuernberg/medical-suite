@@ -7,3 +7,4 @@ export { fold, type CountFlag } from "./fold";
 export { Accounts, Refused, DEMO_PASSWORD, type SignInResult, type PasswordState } from "./accounts";
 export { buildLog, areaOf, NOT_SHOWN, type LogEntry, type LogArea, type FieldChange } from "./log";
 export { step } from "./fold";
+export { SettingsStore } from "./settingsStore";

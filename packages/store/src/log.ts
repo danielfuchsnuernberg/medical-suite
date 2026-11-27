@@ -14,9 +14,11 @@ export interface LogEntry {
   data: Record<string, unknown>;          // the message's own data (e.g. an event's "what")
 }
 
-const AREA: Record<string, LogArea> = { item: "Inventory", line: "Inventory", location: "Inventory", person: "People", event: "People", setting: "Settings", settings: "Settings", list: "Settings" };
+const AREA: Record<string, LogArea> = { item: "Inventory", line: "Inventory", location: "Inventory", person: "People", event: "People", settings: "Settings", department: "Settings", category: "Settings", course: "Settings" };
 /** Stamps and bookkeeping, not "what changed". */
-export const NOT_SHOWN = new Set(["id", "createdAt", "createdBy", "changedAt", "changedBy", "country", "demo", "lastCountAt", "lastCountBy"]);
+export const NOT_SHOWN = new Set(["id", "createdAt", "createdBy", "changedAt", "changedBy", "demo", "lastCountAt", "lastCountBy"]);
+// The country stamp is set when a record is made; a later change to it (the base moving country, F5.1) is shown.
+const NOT_SHOWN_ON_CREATE = new Set(["state", "country"]);
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 const visible = (r?: StoredRecord) => { const o: Record<string, unknown> = {}; if (r) for (const [k, v] of Object.entries(r)) if (!NOT_SHOWN.has(k)) o[k] = v; return o; };
@@ -34,11 +36,11 @@ export function buildLog(changes: Change[], country = "PG"): LogEntry[] {
     const { before, after } = step(records, c, country);
     const b = visible(before), a = visible(after);
     const changesOut: FieldChange[] = [];
-    if (c.op !== "delete") for (const k of new Set([...Object.keys(b), ...Object.keys(a)])) if (!same(b[k], a[k]) && !(c.op === "create" && k === "state")) changesOut.push({ field: k, from: b[k] ?? null, to: a[k] ?? null });
+    if (c.op !== "delete") for (const k of new Set([...Object.keys(b), ...Object.keys(a)])) if (!same(b[k], a[k]) && !(c.op === "create" && NOT_SHOWN_ON_CREATE.has(k))) changesOut.push({ field: k, from: b[k] ?? null, to: a[k] ?? null });
     out.push({
       messageId: c.messageId, at: c.at, by: c.by, app: c.app, area: areaOf(c), device: c.device,
       recordType: c.recordType, recordId: c.recordId, op: c.op, changes: changesOut,
-      was: c.op === "delete" && before ? b : undefined, data: c.data,
+      was: c.op === "delete" && before ? Object.fromEntries(Object.entries(b).filter(([k]) => k !== "country")) : undefined, data: c.data,
     });
   }
   return out.reverse();

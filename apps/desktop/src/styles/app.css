@@ -187,3 +187,30 @@ button{font-family:inherit}
 .btn.more{margin:12px 16px 0;align-self:flex-start}
 .lock{margin:0;padding:10px 16px;font-size:var(--fs-xs);color:var(--text-muted);display:flex;align-items:center;gap:6px}
 @media (max-width:720px){ .seg{border-radius:var(--r-md);align-self:stretch} .seg button{flex:1 1 auto} }
+
+/* F5: Settings (same boxes as everywhere else, B8) */
+.lockm{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--border);font-size:var(--fs-sm);color:var(--text-muted)}
+.setgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+.setcol{display:flex;flex-direction:column;gap:16px;min-width:0}
+.form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.form-grid .field,.form .field{min-width:0}
+.form-grid .wide{grid-column:1 / -1}
+.field input,.field select{width:100%;min-width:0;max-width:100%}
+.field input:disabled,.field select:disabled{background:var(--surface-2);color:var(--text-muted);opacity:1}
+.saved{font-size:var(--fs-sm);color:var(--success);font-weight:600;align-self:center}
+.entries{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.entries li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:var(--fs-sm);flex-wrap:wrap}
+.entries li:last-child{border-bottom:0}
+.entries li.archived .en{opacity:.55}
+.entries li.none{color:var(--text-muted)}
+.entries .en{display:flex;flex-direction:column;min-width:0}
+.entries .en small{font-size:var(--fs-xs);color:var(--text-muted)}
+.entries .uses{color:var(--text-faint)!important}
+.entries .acts{display:flex;gap:6px;flex-wrap:wrap}
+.rename,.addrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex:1}
+.rename input,.addrow input{font:inherit;font-size:var(--fs-sm);padding:5px 9px;border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--text);min-width:0;flex:1}
+.months{display:flex;align-items:center;gap:4px;font-size:var(--fs-xs);color:var(--text-muted)}
+.months input{width:64px;flex:none}
+.check.small{font-size:var(--fs-xs);margin:0}
+@media (max-width:860px){ .setgrid{grid-template-columns:1fr} }
+@media (max-width:520px){ .form-grid{grid-template-columns:1fr} }

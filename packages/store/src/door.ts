@@ -3,7 +3,7 @@
 // - A change is shown only after it has been saved; a failed save changes nothing and turns the light red (B22, F3.6).
 // - Old saved data is carried into a new version; built-in data is only ever added to an empty store (B3, F3.7).
 // - With a server, waiting messages are sent and other computers' messages fetched; each counted once (F3.2, F3.4).
-import { makeChange, APP_CODE, type Change, type ChangeOp, type StoredRecord, type Moment } from "@md/core";
+import { makeChange, APP_CODE, categoryId, type Change, type ChangeOp, type StoredRecord, type Moment } from "@md/core";
 import type { Backend } from "./backend";
 import type { Transport } from "./transport";
 import { fold, type CountFlag } from "./fold";
@@ -13,14 +13,30 @@ import { buildLog, type LogEntry } from "./log";
 function deepFreeze<T>(o: T): T { if (o && typeof o === "object" && !Object.isFrozen(o)) { Object.freeze(o); for (const v of Object.values(o as object)) deepFreeze(v); } return o; }
 function frozen(c: Change): Change { return deepFreeze(c); }
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 export type ServerState = "none" | "online" | "offline";
 export interface DoorStatus { server: ServerState; waiting: number; lastSyncAt: Moment | null; error: string | null; openedOffline: boolean; version: number }
 export class DoorError extends Error {}
 
 // One step per version. Each step only ever adds or reshapes; it never drops a message (B3).
-const MIGRATIONS: Record<number, (c: Change) => Change> = {
-  0: (c) => ({ ...c, app: c.app || APP_CODE }),
+const MIGRATIONS: Record<number, (cs: Change[]) => Change[]> = {
+  0: (cs) => cs.map(c => ({ ...c, app: c.app || APP_CODE })),
+  // 1 → 2 (F5): an item's category was text; now it points to a category record by ID (R5). The category records are
+  // made from the text that was there, with IDs and message IDs worked out from the name, so two computers that
+  // migrate on their own make the very same messages (counted once). The text stays in the item too.
+  1: (cs) => {
+    const have = new Set(cs.filter(c => c.recordType === "category" && c.op === "create").map(c => c.recordId));
+    const out = cs.map(c => {
+      if (c.recordType !== "item" || c.op !== "create" || typeof c.data.category !== "string" || c.data.categoryId) return c;
+      return { ...c, data: { ...c.data, categoryId: categoryId(c.data.category) } };
+    });
+    const firstAt = new Map<string, Change>();
+    for (const c of cs) if (c.recordType === "item" && typeof c.data.category === "string" && c.data.category.trim()) {
+      const id = categoryId(c.data.category); if (!have.has(id) && (!firstAt.has(id) || c.at < firstAt.get(id)!.at)) firstAt.set(id, c);
+    }
+    for (const [id, c] of firstAt) out.push({ messageId: "mig2-" + id, at: c.at, by: "system", app: APP_CODE, recordType: "category", recordId: id, op: "create", data: { name: String(c.data.category).trim() } });
+    return out;
+  },
 };
 
 export interface OpenOptions { backend: Backend; transport?: Transport | null; device?: string; seed?: () => Change[]; now?: () => Moment }
@@ -43,7 +59,7 @@ export class Door {
     // Carry old data into this version (B3).
     let v = typeof d.meta.schemaVersion === "number" ? (d.meta.schemaVersion as number) : (changes.length ? 0 : SCHEMA_VERSION);
     if (v < SCHEMA_VERSION) {
-      while (v < SCHEMA_VERSION) { const step = MIGRATIONS[v]; changes = changes.map(step); v++; }
+      while (v < SCHEMA_VERSION) { const step = MIGRATIONS[v]; changes = step(changes); v++; }
       await o.backend.rewrite(changes);
     }
     await o.backend.setMeta({ schemaVersion: SCHEMA_VERSION });

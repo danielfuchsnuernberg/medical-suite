@@ -8,13 +8,15 @@ const anna = P("Anna", "Work"), ben = P("Ben", "Manage"), cara = P("Cara", "Mana
 
 describe("levels (F2.2, F2.3)", () => {
   it("there are exactly three levels", () => expect(LEVELS).toEqual(["View", "Work", "Manage"]));
-  it("View looks, Work changes stock, only Manage opens Settings and changes levels", () => {
+  it("View looks, Work changes stock, only Manage changes Settings, sees People and access, changes levels", () => {
     expect(can("View", "changeStock")).toBe(false);
     expect(can("Work", "changeStock")).toBe(true);
-    expect(can("Work", "openSettings")).toBe(false);
+    expect(can("Work", "changeSettings")).toBe(false);
+    expect(can("Work", "seePeopleAccess")).toBe(false);
     expect(can("Work", "changeLevels")).toBe(false);
-    expect(can("Manage", "openSettings")).toBe(true);
-    expect(can("Admin", "openSettings")).toBe(false);          // unknown level: nothing
+    expect(can("Manage", "changeSettings")).toBe(true);
+    expect(can("Manage", "seePeopleAccess")).toBe(true);
+    expect(can("Admin", "changeSettings")).toBe(false);          // unknown level: nothing
     expect(checkLevelChange([anna, cara], anna, anna, "Manage")).toEqual({ ok: false, why: "Only Manage level can change levels." });
   });
   it("F2.7 archive stock: Work and Manage; archive people and delete: Manage", () => {

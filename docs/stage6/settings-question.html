@@ -1,0 +1,174 @@
+<title>Settings Question</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Question Q23 (F5 Settings) before building. Stage 4 colours, dark mode; mock screens in the June look (light). Answer saves to db collection "q23". */
+:root{--bg:#F4F4F6;--surface:#FFFFFF;--surface-2:#FAFAFB;--border:#E4E4EA;--border-strong:#D2D2DA;--text:#1B1B23;--muted:#6B6B78;--faint:#9B9BA6;--accent:#4F46E5;--accent-soft:#EEEDFD;--accent-border:#C9C6F7;--on-accent:#FFFFFF;--ok:#1E9E62;--ok-soft:#E7F5EE;--warn:#C77A12;--warn-soft:#F8EFDF;--bad:#D14343;--bad-soft:#FAEAEA;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121218;--surface:#1B1B23;--surface-2:#20202A;--border:#2C2C38;--border-strong:#3A3A48;--text:#ECECF2;--muted:#A3A3B2;--faint:#76768A;--accent:#8B85F5;--accent-soft:#25234A;--accent-border:#3F3B7A;--on-accent:#121218;--ok:#4CC48A;--ok-soft:#173326;--warn:#E0A247;--warn-soft:#352812;--bad:#EE7474;--bad-soft:#3A1C1C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121218;--surface:#1B1B23;--surface-2:#20202A;--border:#2C2C38;--border-strong:#3A3A48;--text:#ECECF2;--muted:#A3A3B2;--faint:#76768A;--accent:#8B85F5;--accent-soft:#25234A;--accent-border:#3F3B7A;--on-accent:#121218;--ok:#4CC48A;--ok-soft:#173326;--warn:#E0A247;--warn-soft:#352812;--bad:#EE7474;--bad-soft:#3A1C1C;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;margin:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:64px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0} h1{font-size:27px;font-weight:700;letter-spacing:-.4px} h2{font-size:19px;font-weight:700}
+p{margin:0;max-width:72ch}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:13px}
+header{padding-top:32px;display:flex;flex-direction:column;gap:10px}
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:780px){.why{grid-template-columns:1fr}}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:5px;font-size:14px;min-width:0}
+.k{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.risk{border-color:var(--bad);background:var(--bad-soft)} .risk .k{color:var(--bad)}
+.flow{display:flex;gap:0;align-items:stretch;overflow-x:auto;padding-bottom:4px}
+.fs{flex:1 0 170px;min-width:170px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:3px}
+.fs .w{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent)}
+.fs.bad{border-color:var(--bad)} .fs.bad .w{color:var(--bad)} .fs.good{border-color:var(--ok)} .fs.good .w{color:var(--ok)}
+.to{flex:none;display:flex;align-items:center;padding:0 6px;color:var(--faint)}
+.qgrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.qgrid{grid-template-columns:1fr}}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:12px;border:1px solid var(--border-strong);background:var(--surface)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt[aria-pressed="true"]{border:2px solid var(--accent);background:var(--accent-soft);padding:11px 13px}
+.opt .l{font-weight:600;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.opt .d{font-size:13px;color:var(--muted)}
+.opt .cons{font-size:12.5px;display:flex;flex-direction:column;gap:2px;margin-top:3px}
+.opt .cons span::before{content:"+ ";color:var(--ok);font-weight:700} .opt .cons span.minus::before{content:"− ";color:var(--bad)}
+.prop{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--ok);color:#fff}
+.ans{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--border-strong)}
+.ans .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13.5px}
+.ans button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.ans button[aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:#fff}
+.ans textarea{min-height:54px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);resize:vertical}
+.ans .state{font-size:12px;color:var(--faint)}
+.note{font-size:13px;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--border)}
+/* mock screens (June look) */
+.mocks{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.mocks{grid-template-columns:1fr}}
+.m{color-scheme:light;background:#F4F4F6;color:#1B1B23;border:1px solid #D2D2DA;border-radius:12px;overflow:hidden;font-size:12px;line-height:1.4}
+.m .cap{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#9B9BA6;padding:6px 10px;background:#F0F0F3;border-bottom:1px solid #E4E4EA}
+.m .body{padding:10px;display:flex;flex-direction:column;gap:7px}
+.m .card{background:#fff;border:1px solid #E4E4EA;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.m .t{font-weight:700;font-size:13px}
+.m .f{display:flex;flex-direction:column;gap:2px} .m .f span{font-size:10.5px;font-weight:600;color:#6B6B78} .m .f i{font-style:normal;border:1px solid #D2D2DA;border-radius:6px;padding:4px 7px;background:#fff;color:#6B6B78}
+.m .btn{align-self:flex-start;font-weight:600;font-size:11.5px;padding:5px 10px;border-radius:6px;background:#4F46E5;color:#fff}
+.m .ghost{background:#fff;color:#1B1B23;border:1px solid #E4E4EA}
+.m .warn{background:#FAEAEA;color:#D14343;border-radius:7px;padding:6px 8px;font-size:11px}
+.m .okm{background:#E7F5EE;color:#14663f;border-radius:7px;padding:6px 8px;font-size:11px}
+.m .pick{display:flex;flex-direction:column;gap:4px}
+.m .pick b{font-weight:600;border:1px solid #E4E4EA;border-radius:7px;padding:5px 8px;background:#FAFAFB}
+footer{padding-top:18px;font-size:12.5px;color:var(--faint)}
+</style>
+<style>
+.clash{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:stretch}
+@media (max-width:700px){.clash{grid-template-columns:1fr}.clash .vs{justify-self:center}}
+.line{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+.line .id{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--accent)}
+.line .src{font-size:12px;color:var(--faint)}
+.vs{align-self:center;font-size:12px;font-weight:700;color:var(--bad);background:var(--bad-soft);border-radius:999px;padding:4px 10px}
+.m table{width:100%;border-collapse:collapse;font-size:11.5px}
+.m th{font-size:9.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#9B9BA6;text-align:left;padding:4px 6px;border-bottom:1px solid #E4E4EA}
+.m td{padding:6px;border-bottom:1px solid #EEEEF2}
+.m .y{color:#14663f;font-weight:700} .m .n{color:#9B9BA6} .m .ro{color:#C77A12;font-weight:600}
+.m .sec{border:1px solid #E4E4EA;border-radius:8px;background:#fff;padding:8px;display:flex;flex-direction:column;gap:4px}
+.m .sec.hi{outline:2px solid #4F46E5;outline-offset:1px}
+.m .row2{display:flex;justify-content:space-between;gap:6px;font-size:11px}
+.m .val{color:#6B6B78}
+.m .lockd{display:flex;flex-direction:column;align-items:center;gap:4px;padding:18px 6px;color:#6B6B78;text-align:center}
+.m .lockd b{color:#1B1B23}
+.m .tag{font-size:9.5px;font-weight:700;letter-spacing:.4px;color:#C77A12;background:#F8EFDF;border-radius:4px;padding:1px 5px;align-self:flex-start}
+.chg{font-size:13px;display:flex;flex-direction:column;gap:3px}
+.chg b{font-family:var(--mono);font-weight:500;font-size:12px;color:var(--accent)}
+</style>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Stage 6 · before building F5 (Settings) · question Q23</div>
+  <h1>May a nurse look at Settings, or not open it at all?</h1>
+  <p class="muted">Two lines you approved in the Master Checklist say different things. F2 is built the way the first one says. Before F5 adds the real settings, one of them has to change.</p>
+</header>
+<div class="clash">
+  <div class="line"><span class="id">F2.3</span><span>“A Work-level person <b>can't open Settings</b> or change anyone's level.”</span><span class="src">From the June bug B12: staff could reach admin functions.</span></div>
+  <span class="vs">disagree</span>
+  <div class="line"><span class="id">F5.7</span><span>“Only Manage level changes settings; <b>everyone else can look</b>.”</span><span class="src">From demo batch 4, which you approved.</span></div>
+</div>
+<div class="why">
+  <div class="box"><span class="k">What it's about</span><p>Anna (nurse, Work level) clicks <b>Settings</b>. Settings will hold two kinds of things: the base's settings and lists (base name, time zone, shift times, bags, categories), and <b>People and access</b> (everyone's level, and who has which kind of password on this computer).</p></div>
+  <div class="box risk"><span class="k">Why it matters</span><p>Changing is settled: only Manage level changes anything, in every answer. The question is only what a nurse may <b>see</b>. People and access shows who has no password on this computer yet, which is the account someone could try to take over.</p></div>
+  <div class="box"><span class="k">What each answer changes</span><p>Pick one: Anna's screen and the “who sees what” table change with it. Cara (Manage) sees and changes everything in every answer.</p></div>
+</div>
+<div class="qgrid">
+  <div class="mocks" id="mocks"></div>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div class="opts" id="opts"></div>
+    <div class="ans"><div class="row"><b>Your answer:</b> <span id="cur">not picked yet (showing the proposed one)</span></div>
+      <div class="row"><button type="button" id="unsure" aria-pressed="false">Not sure</button></div>
+      <textarea id="note" placeholder="Anything to add? (optional)"></textarea><span class="state" id="st">Not answered yet.</span></div>
+    <div class="note chg" id="chg"></div>
+  </div>
+</div>
+<footer>REACH Medical Suite · Stage 6 · question Q23 · 28 Nov 2026 · source <code>docs/stage6/settings-question.html</code></footer>
+</div>
+<script>
+(function(){
+"use strict";
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const O = {
+  A:{l:"Locked: below Manage, Settings doesn't open", d:"As built now (F2.3). Anna sees “Settings are for Manage level”.",
+     pro:["Simplest; nothing to see, nothing to leak"], con:["Nurses can't check shift times, bags or categories themselves; they ask a manager","F5.7 changes"],
+     see:{set:"n", ppl:"n"}, lines:["F2.3 stays as it is","F5.7 becomes: “Only Manage level opens and changes Settings.”"]},
+  B:{l:"Look at everything: all of Settings, read-only", d:"Anna sees every part of Settings, including People and access, but can't change anything.",
+     pro:["Everything is visible to everyone"], con:["Anyone can see who has no password on this computer yet, and everyone's level","F2.3 changes"],
+     see:{set:"ro", ppl:"ro"}, lines:["F2.3 becomes: “A Work-level person can look at Settings but can't change anything or anyone's level.”","F5.7 stays as it is"]},
+  C:{l:"Look at the base's settings and lists; People and access stays with Manage", d:"Anna can read base name, time zone, shift times, bags and categories. People and access doesn't show for her.", prop:true,
+     pro:["Nurses can check settings and lists themselves","Levels and passwords stay with Management"], con:["Both lines get a small wording change"],
+     see:{set:"ro", ppl:"n"}, lines:["F2.3 becomes: “A Work-level person can't change Settings, and doesn't see People and access.”","F5.7 becomes: “Only Manage level changes settings; everyone else can look at the base's settings and lists.”"]}
+};
+const PROP = "C"; let pick = null, note = "", at = null, db = null;
+const shown = () => pick && O[pick] ? pick : PROP;
+const cell = v => v==="y" ? '<td class="y">sees and changes</td>' : v==="ro" ? '<td class="ro">looks only</td>' : '<td class="n">—</td>';
+function mocks(o){
+  const s = O[o].see;
+  const setSec = `<div class="sec ${s.set!=="n"?"hi":""}"><b>Country settings and lists</b>${s.set==="ro"?'<span class="tag">LOOK ONLY</span>':""}
+    <div class="row2"><span>Base</span><span class="val">Port Moresby base</span></div><div class="row2"><span>Time zone</span><span class="val">Port Moresby (UTC+10)</span></div>
+    <div class="row2"><span>Day shift</span><span class="val">07:00–19:00</span></div><div class="row2"><span>Bags</span><span class="val">Bag 1 (adult), Bag 2 (child)</span></div></div>`;
+  const pplSec = `<div class="sec ${s.ppl!=="n"?"hi":""}"><b>People and access</b>${s.ppl==="ro"?'<span class="tag">LOOK ONLY</span>':""}
+    <div class="row2"><span>Anna Example</span><span class="val">Work · DEMO password</span></div><div class="row2"><span>Dina Test</span><span class="val">Work · <b style="color:#D14343">no password here yet</b></span></div>
+    <div class="row2"><span>Dr Ben Sample</span><span class="val">Manage · own password</span></div></div>`;
+  const anna = (s.set==="n" && s.ppl==="n")
+    ? `<div class="lockd"><b>Settings are for Manage level</b>You are signed in at Work level. Settings and levels are changed by Management.</div>`
+    : (s.set!=="n"?setSec:"") + (s.ppl!=="n"?pplSec:"");
+  return `<div class="m"><div class="cap">Anna (nurse, Work level) clicks Settings</div><div class="body">${anna}</div></div>
+    <div class="m"><div class="cap">Who sees what in Settings</div><div class="body"><table>
+      <thead><tr><th></th><th>Work / View</th><th>Manage</th></tr></thead>
+      <tbody><tr><td>Base settings and lists</td>${cell(s.set)}${cell("y")}</tr><tr><td>People and access</td>${cell(s.ppl)}${cell("y")}</tr><tr><td>Change anything</td>${cell("n")}${cell("y")}</tr></tbody></table>
+      <div class="okm">Changing stays Manage-only in every answer (F5.7, B12).</div></div></div>`;
+}
+function paint(){
+  const o = shown();
+  document.getElementById("mocks").innerHTML = mocks(o);
+  document.getElementById("chg").innerHTML = `<span><b>${esc(o)}</b> changes the checklist like this:</span>` + O[o].lines.map(l=>`<span>· ${esc(l)}</span>`).join("");
+  document.querySelectorAll(".opt").forEach(b=>b.setAttribute("aria-pressed", b.dataset.o===pick?"true":"false"));
+  document.getElementById("cur").textContent = pick ? (pick==="unsure"?"Not sure":pick+" · "+O[pick].l) : "not picked yet (showing the proposed one)";
+  document.getElementById("unsure").setAttribute("aria-pressed", pick==="unsure"?"true":"false");
+  const ta = document.getElementById("note"); if (document.activeElement!==ta) ta.value = note;
+  if (at) document.getElementById("st").textContent = "Saved for Claude · "+new Date(at).toLocaleString();
+}
+document.getElementById("opts").innerHTML = Object.keys(O).map(k=>`<button type="button" class="opt" data-o="${k}" aria-pressed="false"><span class="l">${k} · ${esc(O[k].l)}${O[k].prop?' <span class="prop">Proposed</span>':""}</span><span class="d">${esc(O[k].d)}</span><span class="cons">${O[k].pro.map(p=>`<span>${esc(p)}</span>`).join("")}${O[k].con.map(p=>`<span class="minus">${esc(p)}</span>`).join("")}</span></button>`).join("");
+document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{ pick=b.dataset.o; paint(); save(); });
+document.getElementById("unsure").onclick=()=>{ pick="unsure"; paint(); save(); };
+let t; document.getElementById("note").oninput=e=>{ note=e.target.value; clearTimeout(t); t=setTimeout(save,800); };
+async function save(){
+  const rec = {q:"q23", choice:pick, note, at:new Date().toISOString()};
+  if (!db){ document.getElementById("st").textContent = "Shown here, but can't be saved in this view. Open the page from its link, or tell Claude in chat."; return; }
+  try{ await db.collection("q23").doc("q23").set(rec); at = rec.at; paint(); }catch(e){ document.getElementById("st").textContent = "Not saved ("+(e&&e.code||"error")+"). Tell Claude in chat instead."; }
+}
+paint();
+(async function(){
+  try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : null); }catch(e){ db=null; }
+  if (!db) return;
+  db.collection("q23").onSnapshot(s=>{ (s.docs||[]).forEach(d=>{ const r=typeof d.data==="function"?d.data():d.data; if(r&&r.q==="q23"){ pick=r.choice; note=r.note||""; at=r.at; paint(); } }); }, ()=>{});
+})();
+})();
+</script>

@@ -1,5 +1,19 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — Q23 answered; F5 built: Settings and country settings
+- Q23 = C on the page: nurses look at the base's settings and lists; People and access stays with Management. F2.3 and F5.7 reworded, F2 changed to match (Anna now opens Settings, greyed, without People and access).
+- Settings: Country and base (base name, country, time zone, date style, day and night shift, Save), Departments, Inventory categories, Courses (with months valid), Bags: add, rename, archive / restore, delete. People and access below, for Manage level.
+- “Today” and every expiry now follow the base's time zone from Settings (no longer a fixed DEMO value).
+- DEMO data: base settings, 4 departments, 6 categories (“icu” in lower case, used only by an archived item), 5 courses, an archived person Finn Former in Training — as in demo batch 4.
+- Store version 2: items saved with a category as text get a category record; nothing is lost.
+- Activity: words for the new things; departments, categories, courses and base settings show under Settings; a change of country shows (the country stamp used to be hidden).
+- Tests: 7 new unit tests, 7 program tests (one per F5 line), F2.3 test changed for Q23. 8 rules broken on purpose, each made its test fail. 59 of 59 and 31 of 31 pass.
+- Found and fixed while building: after saving a shift typed with “-” the form still said there were changes; departments etc. were tagged Inventory in the log; boxes ran out of their panel on a wide screen; the time zone was cut off.
+
+## 2026-11-28 — F4 committed; question Q23 before F5
+- F4 committed and pushed (0afd110).
+- Q23 on https://claude.ai/artifact/K5QWdU8pktRz7LhKhB77My (source `docs/stage6/settings-question.html`, answer in its `q23` collection): F2.3 and F5.7 disagree on whether a nurse may look at Settings. Proposed C: look at the base's settings and lists, People and access stays Manage-only. Checked before publishing: each answer changes Anna's screen as described, no sideways scroll at 375 px, no console errors.
+
 ## 2026-11-28 — F4 built: Activity log
 - F2 committed and pushed first (cc59147).
 - Activity (menu › Activity): one log for all REACH apps, newest first, filter Everything / Inventory / People / Settings / EDP. Each entry: app tag, what happened in words (“took 2 from Gauze 10×10 cm in Bag 1 (adult)”), old → new per field, who · when (base time, 24-hour), and “from EDP” for other apps.

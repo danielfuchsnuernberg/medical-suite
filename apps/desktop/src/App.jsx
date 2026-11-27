@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { demoSettings, findEntry, MENU, can } from "@md/core";
+import { findEntry, MENU, can } from "@md/core";
 import Sidebar from "./components/Sidebar.jsx";
 import SearchBox from "./components/SearchBox.jsx";
 import SyncLight from "./components/SyncLight.jsx";
@@ -22,9 +22,16 @@ const crumbOf = (id) => {
 };
 
 export default function App() {
-  const settings = demoSettings;   // F5 brings the real country settings
+  const { door, accounts, settings: settingsStore, error, tick } = useDoor();
+  // The base's settings (F5), from the store. Until they are set: the computer's own time zone, and it says so.
+  const base = door ? door.get("settings", "base") : null;
+  const settings = {
+    baseName: base?.baseName ? String(base.baseName) : "Base not named yet",
+    timeZone: base?.timeZone ? String(base.timeZone) : Intl.DateTimeFormat().resolvedOptions().timeZone,
+    dateStyle: base?.dateStyle === "short" ? "short" : "long",
+    set: !!base,
+  };
   const today = useToday(settings.timeZone);
-  const { door, accounts, error, tick } = useDoor();
   // Who is signed in (F2). Read from the store every time, so a level change or archiving takes effect at once.
   const [auth, setAuth] = useState({ id: null, mustChange: false, ready: false });
   useEffect(() => { if (accounts && !auth.ready) setAuth({ id: accounts.stayed(), mustChange: false, ready: true }); }, [accounts, auth.ready]);
@@ -106,7 +113,7 @@ export default function App() {
         <main className="content" id="content">
           {view === "home" ? <Home go={go} today={today} baseName={settings.baseName} />
             : view === "log" ? <Activity door={door} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} />
-            : view === "settings" ? <Settings me={me} accounts={accounts} tick={tick} toast={toast} />
+            : view === "settings" ? <Settings me={me} accounts={accounts} store={settingsStore} door={door} tick={tick} toast={toast} />
             : <Placeholder view={view} />}
         </main>
       </div>

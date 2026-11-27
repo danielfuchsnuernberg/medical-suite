@@ -6,10 +6,11 @@ import Icon from "../components/Icon.jsx";
 // The entries come from door.log() (worked out from the change messages). This screen only puts them into words.
 
 const AREAS = [["all", "Everything"], ["Inventory", "Inventory"], ["People", "People"], ["Settings", "Settings"], ["EDP", "EDP"]];
-const KIND = { item: "item", line: "stock line", location: "place", person: "person", case: "case" };
+const KIND = { item: "item", line: "stock line", location: "place", person: "person", case: "case", department: "department", category: "category", course: "course", settings: "" };
 const FIELD = { qty: "quantity", required: "required", expiry: "expiry", lot: "lot", name: "name", job: "job", level: "level", state: "state",
   itemId: "item", locationId: "place", category: "category", unit: "unit", kind: "kind", staffNo: "staff number", itemNo: "item number",
-  controlled: "controlled drug", cdRight: "doctor's right", caseNo: "case number" };
+  controlled: "controlled drug", cdRight: "doctor's right", caseNo: "case number", baseName: "base name", country: "country", timeZone: "time zone",
+  dateStyle: "date style", dayShift: "day shift", nightShift: "night shift", departmentId: "department", categoryId: "category", validMonths: "valid for (months)" };
 const PAGE = 100;
 
 export default function Activity({ door, tick, timeZone, dateStyle }) {
@@ -76,6 +77,7 @@ function words(door, log) {
   }
   const person = (id) => door.get("person", id);
   const name = (type, id, fallback) => {
+    if (type === "settings") return "the base settings";
     if (type === "line") {
       const l = door.get("line", id) || fallback;
       if (!l) return "a stock line";
@@ -93,10 +95,13 @@ function words(door, log) {
     if (typeof v === "boolean") return v ? "yes" : "no";
     if (k === "itemId") return String(door.get("item", v)?.name ?? v);
     if (k === "locationId") return String(door.get("location", v)?.name ?? v);
+    if (k === "departmentId") return String(door.get("department", v)?.name ?? lastName.get("department|" + v) ?? v);
+    if (k === "categoryId") return String(door.get("category", v)?.name ?? lastName.get("category|" + v) ?? v);
     return String(v);
   };
   const sentence = (e, open) => {
-    const kind = KIND[e.recordType] || e.recordType;
+    const k0 = KIND[e.recordType] ?? e.recordType;
+    const kind = k0 ? k0 + " " : "";
     const link = <button type="button" className="reclink" onClick={open} title="Show the history of this record">{name(e.recordType, e.recordId, e.was)}</button>;
     if (e.recordType === "event") {
       const about = e.data.personId ? name("person", String(e.data.personId)) : "";
@@ -105,14 +110,14 @@ function words(door, log) {
       return <>{String(e.data.what)}{about ? ` (${about})` : ""}</>;
     }
     switch (e.op) {
-      case "create": return <>added {kind} {link}</>;
-      case "set": return <>changed {kind} {link}</>;
+      case "create": return <>added {kind}{link}</>;
+      case "set": return <>changed {kind}{link}</>;
       case "delta": { const by = Number(e.data.by); return <>{by < 0 ? "took" : "added"} {Math.abs(by)} {by < 0 ? "from" : "to"} {link}</>; }
       case "count": return <>counted {link}</>;
-      case "archive": return <>archived {kind} {link}</>;
-      case "restore": return <>restored {kind} {link}</>;
-      case "delete": return <>deleted {kind} {link} for good{e.data.reason === "mistake" ? " (a mistake, within 24 hours)" : ""}</>;
-      default: return <>{e.op} {kind} {link}</>;
+      case "archive": return <>archived {kind}{link}</>;
+      case "restore": return <>restored {kind}{link}</>;
+      case "delete": return <>deleted {kind}{link} for good{e.data.reason === "mistake" ? " (a mistake, within 24 hours)" : ""}</>;
+      default: return <>{e.op} {kind}{link}</>;
     }
   };
   return { name, who, field, value, sentence };
