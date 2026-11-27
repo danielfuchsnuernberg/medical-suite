@@ -13,6 +13,8 @@ import Activity from "./screens/Activity.jsx";
 import Overview from "./screens/Overview.jsx";
 import StockList from "./screens/StockList.jsx";
 import ItemPage from "./screens/ItemPage.jsx";
+import Count from "./screens/Count.jsx";
+import Dialog from "./components/Dialog.jsx";
 import { SignIn, ChooseOwn, SetUp } from "./screens/SignIn.jsx";
 import useToday from "./state/useToday.js";
 import useDoor from "./state/useDoor.js";
@@ -44,12 +46,28 @@ export default function App() {
   const [view, setView] = useState("home");
   const [filter, setFilter] = useState(null);     // the Store and bags filters (F7); the Overview opens it with one set (F6.1)
   const [itemId, setItemId] = useState(null);     // the item a row opened (F7.3; the page itself is F8)
+  // F10: typed counts are kept here, not on the count screen, so searching and switching place never wipe them (B16)
+  const [count, setCount] = useState({ locationId: null, q: "", drafts: {} });
+  const [countResult, setCountResult] = useState(null);
+  const [leaving, setLeaving] = useState(null);   // where to go once unsaved counts are saved or thrown away
+  // whoever signs in next never sees, or saves, someone else's typed counts
+  useEffect(() => { setCount({ locationId: null, q: "", drafts: {} }); setCountResult(null); setLeaving(null); }, [auth.id]);
   const [drawer, setDrawer] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [offlineClosed, setOfflineClosed] = useState(false);
   const toast = useCallback((text, kind) => setToasts(t => [...t, { id: Math.random().toString(36).slice(2), text, kind }]), []);
   const dropToast = useCallback((id) => setToasts(t => t.filter(x => x.id !== id)), []);
-  const go = (id, f = null) => { setView(id); setFilter(f); setDrawer(false); };
+  const typedCounts = Object.values(count.drafts).filter(v => String(v).trim() !== "").length;
+  // closing the program window with typed counts asks too (electron/main.cjs shows the question)
+  useEffect(() => {
+    if (!typedCounts) return;
+    const ask = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", ask);
+    return () => window.removeEventListener("beforeunload", ask);
+  }, [typedCounts]);
+  const goNow = (id, f = null) => { setView(id); setFilter(f); setDrawer(false); if (id !== "count") setCountResult(null); };
+  // F10.2: leaving with unsaved counts asks Save / Throw away / Keep counting
+  const go = (id, f = null) => { if (view === "count" && id !== "count" && typedCounts) { setDrawer(false); setLeaving({ id, f }); return; } goNow(id, f); };
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape") setDrawer(false); };
@@ -97,12 +115,27 @@ export default function App() {
     return `${c.recordType}: ${c.op}`;
   };
 
+  const saveCounts = async () => {
+    try {
+      const ids = Object.keys(count.drafts).filter(id => String(count.drafts[id]).trim() !== "");
+      const places = new Set(ids.map(id => door.get("line", id)?.locationId));
+      const notCounted = data.inv.lines.filter(l => places.has(l.locationId) && !ids.includes(l.id) && door.get("item", l.itemId)?.controlled !== true).length;
+      const r = await inventory.saveCounts(me, count.drafts);
+      setCount(c => ({ ...c, drafts: {} }));
+      setCountResult(`Saved: ${r.changed} changed, ${r.same} the same${notCounted ? `, ${notCounted} not counted (left as they were, not set to 0)` : ""}.`);
+      return true;
+    } catch (e) { toast(String(e.message || e), "danger"); return false; }
+  };
+
   if (error) return <div className="opening"><div><div className="mark"><Icon name="plus" stroke={2.4} /></div><b>The program couldn't open its data.</b><br />{error}</div></div>;
   if (!door || !data || !auth.ready) return <div className="opening" data-testid="opening"><div><div className="mark"><Icon name="plus" stroke={2.4} /></div>Opening…</div></div>;
 
   const demo = door.records("person").some(p => p.demo === true) || door.records("item").some(i => i.demo === true);
   // Signing out takes effect at once; forgetting "stay signed in" is saved after.
-  const signOut = () => { setAuth({ id: null, mustChange: false, ready: true }); setView("home"); accounts.stay(null).catch(e => toast(String(e.message || e), "danger")); };
+  // Typed counts belong to the person who typed them: signing out asks first (like leaving) and always clears them.
+  const signOutNow = () => { setCount({ locationId: null, q: "", drafts: {} }); setCountResult(null); setAuth({ id: null, mustChange: false, ready: true }); setView("home"); accounts.stay(null).catch(e => toast(String(e.message || e), "danger")); };
+  const signOut = () => { if (typedCounts) { setLeaving({ id: "signout" }); return; } signOutNow(); };
+  const after = (t) => { if (t.id === "signout") signOutNow(); else goNow(t.id, t.f); };
   if (accounts.needsSetUp()) return <SetUp accounts={accounts} baseName={settings.baseName} demo={demo} onDone={(id) => setAuth({ id, mustChange: false, ready: true })} />;
   if (me && me.state === "Active" && auth.mustChange) return <ChooseOwn accounts={accounts} person={me} demo={demo} onDone={() => setAuth(a => ({ ...a, mustChange: false }))} onCancel={signOut} />;
   if (!signedIn) return <SignIn accounts={accounts} demo={demo} baseName={settings.baseName} onSignedIn={async (id, o) => {
@@ -131,11 +164,20 @@ export default function App() {
             : view === "overview" ? <Overview inv={data.inv} today={today} dateStyle={settings.dateStyle} open={(f) => go("where", f)} openItem={(id) => { setItemId(id); setView("item"); }} />
             : view === "where" ? <StockList inv={data.inv} today={today} dateStyle={settings.dateStyle} filter={filter} setFilter={setFilter} openItem={(id) => { setItemId(id); setView("item"); }} me={me} store={inventory} toast={toast} openRegister={() => go("cd")} />
             : view === "item" ? <ItemPage itemId={itemId} me={me} door={door} inv={data.inv} store={inventory} tick={tick} today={today} timeZone={settings.timeZone} dateStyle={settings.dateStyle} back={() => setView("where")} toast={toast} openRegister={() => go("cd")} />
+            : view === "count" ? <Count inv={data.inv} me={me} state={count} setState={(f) => { setCount(f); setCountResult(null); }} save={saveCounts} result={countResult} />
             : view === "log" ? <Activity door={door} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} />
             : view === "settings" ? <Settings me={me} accounts={accounts} store={settingsStore} door={door} tick={tick} toast={toast} />
             : <Placeholder view={view} />}
         </main>
       </div>
+      {leaving ? (
+        <Dialog title="Counts not saved yet" onClose={() => setLeaving(null)} testid="leave-count" footer={<>
+          <button type="button" className="btn" onClick={() => setLeaving(null)}>Keep counting</button>
+          <button type="button" className="btn danger" onClick={() => { setCount(c => ({ ...c, drafts: {} })); const t = leaving; setLeaving(null); after(t); }}>Throw away</button>
+          <button type="button" className="btn primary" onClick={async () => { const t = leaving; if (await saveCounts()) { setLeaving(null); after(t); } else setLeaving(null); }}>Save counts</button></>}>
+          <p>You typed {typedCounts} {typedCounts === 1 ? "count" : "counts"} that {typedCounts === 1 ? "isn't" : "aren't"} saved yet.</p>
+        </Dialog>
+      ) : null}
       <Toasts items={toasts} drop={dropToast} />
       {demo ? <span className="demo-mark">DEMO DATA</span> : null}
     </div>

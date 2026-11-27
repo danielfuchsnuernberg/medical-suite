@@ -129,7 +129,7 @@ export function words(door, log) {
         if (e.data.kind === "dispense") return <>dispensed {Math.abs(by)} from {link}</>;
         return <>{by < 0 ? "took" : "added"} {Math.abs(by)} {by < 0 ? "from" : "to"} {link}</>;
       }
-      case "count": return <>counted {link}</>;
+      case "count": return e.changes.some(c => c.field === "qty") ? <>counted {link}</> : <>counted {link}: the same as before</>;
       case "archive": return <>archived {kind}{link}</>;
       case "restore": return <>restored {kind}{link}</>;
       case "delete": return <>deleted {kind}{link} for good{e.data.reason === "mistake" ? " (a mistake, within 24 hours)" : ""}</>;

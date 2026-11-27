@@ -179,3 +179,58 @@ describe("restock and dispense (F9)", () => {
     await expect(inv.adjust(anna(door), "demo-s1", "restock", 1)).rejects.toThrow("Reactivate the line first.");
   });
 });
+
+describe("count stock (F10)", () => {
+  it("F10.1 an empty box is 'not counted' and changes nothing (B16); typed counts are saved together", async () => {
+    const { door, inv, b } = await open();
+    const before = (await b.load()).changes.length;
+    const r = await inv.saveCounts(anna(door), { "demo-s1": "11", "demo-s2": "", "demo-s3": "  ", "demo-s4": "0" });
+    expect(r).toEqual({ changed: 1, same: 1 });                                      // Gauze 12 → 11; IV cannula 0 = 0
+    expect(line(door, "demo-s1").qty).toBe(11);
+    expect(line(door, "demo-s2").qty).toBe(4);                                     // empty: not set to 0
+    expect(line(door, "demo-s3").qty).toBe(2);
+    expect((await b.load()).changes.length).toBe(before + 2);
+    expect(await inv.saveCounts(anna(door), { "demo-s1": "" })).toEqual({ changed: 0, same: 0 });
+  });
+  it("F10.3 a count that isn't a whole number of 0 or more blocks the whole save", async () => {
+    const { door, inv, b } = await open();
+    const before = (await b.load()).changes.length;
+    for (const bad of ["-1", "2.5", "ten", "1,5"]) {
+      await expect(inv.saveCounts(anna(door), { "demo-s1": "11", "demo-s2": bad })).rejects.toThrow("1 count isn't a whole number of 0 or more. Fix the red box first. Nothing was saved.");
+    }
+    expect(line(door, "demo-s1").qty).toBe(12);
+    expect((await b.load()).changes.length).toBe(before);
+    expect(InventoryStore.countProblem("0")).toBeNull();
+    expect(InventoryStore.countProblem("")).toBeNull();
+    expect(InventoryStore.countProblem("-3")).toBe("It can't be below 0.");
+  });
+  it("F10.4 each change logged old → new; a count that matches is logged as the same", async () => {
+    const { door, inv } = await open();
+    await inv.saveCounts(anna(door), { "demo-s1": "9", "demo-s2": "4" });
+    const counts = door.log().filter(e => e.op === "count");
+    expect(counts.find(e => e.recordId === "demo-s1")!.changes).toEqual([{ field: "qty", from: 12, to: 9 }]);
+    expect(counts.find(e => e.recordId === "demo-s2")!.changes).toEqual([]);
+    expect(counts[0].by).toBe("demo-p1");
+  });
+  it("controlled drugs are counted in the register, not here; View level can't count", async () => {
+    const { door, inv } = await open();
+    await expect(inv.saveCounts(cara(door), { "demo-s7": "4" })).rejects.toThrow("controlled-drug register");
+    expect(line(door, "demo-s7").qty).toBe(5);
+    await door.apply({ recordType: "person", recordId: "demo-p4", op: "set", data: { level: "View" }, by: "demo-p3" });
+    await expect(inv.saveCounts(door.get("person", "demo-p4")!, { "demo-s1": "3" })).rejects.toThrow("View level");
+  });
+  it("two counts from the same starting point that disagree are flagged; a count made after seeing the other isn't (F3.5)", async () => {
+    const { door, inv } = await open();
+    const ben = door.get("person", "demo-p2")!;
+    await inv.saveCounts(anna(door), { "demo-s1": "11" });                            // Anna: based on no earlier count
+    // Dina counted on another computer at the same time, without seeing Anna's count: also based on no earlier count
+    await door.apply({ recordType: "line", recordId: "demo-s1", op: "count", data: { qty: 9, basedOn: null }, by: "demo-p4" });
+    expect(door.flags()).toHaveLength(1);
+    expect(door.flags()[0].counts.map(c => c.qty)).toEqual([11, 9]);
+    await inv.saveCounts(ben, { "demo-s2": "4" });                                  // another line: no flag
+    expect(door.flags()).toHaveLength(1);
+    await inv.saveCounts(ben, { "demo-s1": "10" });                                 // Ben counts after seeing them: his count is based on Dina's, not flagged again
+    expect(door.flags()).toHaveLength(1);
+    expect(line(door, "demo-s1").qty).toBe(10);
+  });
+});

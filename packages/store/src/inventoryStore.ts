@@ -77,6 +77,40 @@ export class InventoryStore {
     });
   }
 
+  /** F10: one count box. Empty = not counted (B16); otherwise a whole number, 0 or more. */
+  static countProblem(raw: unknown): string | null {
+    const s = String(raw ?? "").trim();
+    if (s === "") return null;
+    const q = wholeNumber(s, { min: 0, what: "count" });
+    return q.ok ? null : q.why;
+  }
+
+  /**
+   * F10: save typed counts. Empty boxes are "not counted" and change nothing (B16). Any box that isn't a whole number of 0 or more
+   * blocks the whole save (F10.3). Saved together; each count is logged old → new; a count based on the same earlier count as
+   * another computer's, that disagrees, is flagged (F3.5). Controlled drugs are counted in the register (Q8, F12.8), not here.
+   */
+  saveCounts(actor: StoredRecord, counts: Record<string, unknown>) {
+    return this.one(async () => {
+      const me = this.allowed(actor, "changeStock");
+      const typed = Object.entries(counts).filter(([, v]) => String(v ?? "").trim() !== "");
+      const bad = typed.filter(([, v]) => InventoryStore.countProblem(v));
+      if (bad.length) throw new Refused(`${bad.length} ${bad.length === 1 ? "count isn't" : "counts aren't"} a whole number of 0 or more. Fix the red ${bad.length === 1 ? "box" : "boxes"} first. Nothing was saved.`);
+      let changed = 0, same = 0;
+      const msgs: { recordType: string; recordId: string; op: "count"; data: Record<string, unknown>; by: string }[] = [];
+      for (const [id, v] of typed) {
+        const l = this.line(id);
+        if (l.state !== "Active") throw new Refused("A line you counted was archived meanwhile. Nothing was saved.");
+        if (this.controlled(l)) throw new Refused(InventoryStore.CD_REGISTER);
+        const n = Number(String(v).trim());
+        if (n === Number(l.qty)) same++; else changed++;
+        msgs.push({ recordType: "line", recordId: id, op: "count", data: { qty: n, basedOn: l.lastCountAt ?? null }, by: me.id });
+      }
+      if (msgs.length) await this.door.applyAll(msgs);
+      return { changed, same };
+    });
+  }
+
   /** F8.3: edit a line. The place can't be changed here (use Move). Only what changed is saved, so the log shows old → new. */
   editLine(actor: StoredRecord, lineId: string, v: LineValues & { locationId?: unknown }) {
     return this.one(async () => {

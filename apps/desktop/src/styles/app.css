@@ -303,3 +303,18 @@ button.att:hover{filter:brightness(.97)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .table.stock .rowlink+.badge{margin-left:6px}
 @media (max-width:720px){ .table.stock td.acts-cell{grid-column:1 / -1;text-align:right} }
+
+/* F10: count a bag */
+.count{display:flex;flex-direction:column;gap:16px}
+.findbox{display:flex;align-items:center;gap:6px;flex:1 1 180px;max-width:320px;padding:0 10px;border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--text-faint)}
+.findbox input{border:0;outline:0;background:none;font:inherit;font-size:var(--fs-sm);color:var(--text);padding:7px 0;flex:1;min-width:0}
+.findbox:focus-within{border-color:var(--accent)}
+.cnt-in{width:84px;font:inherit;font-size:var(--fs-body);padding:6px 8px;border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--text);text-align:right}
+.cnt-in.typed{border-color:var(--accent);background:var(--accent-soft)}
+.cnt-in.bad{border-color:var(--danger);background:var(--danger-soft);color:var(--danger)}
+.cnt-err{font-size:var(--fs-xs);color:var(--danger);margin-top:3px;max-width:220px}
+.delta-p{color:var(--success);font-weight:700} .delta-m{color:var(--danger);font-weight:700}
+.savebar{position:sticky;bottom:12px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:12px 16px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--accent-border);box-shadow:var(--shadow-md)}
+.savebar .spacer{flex:1}
+.counttable .lot{font-size:var(--fs-xs)}
+@media (max-width:720px){ .counttable td[data-label]::before{content:attr(data-label) ": ";font-size:var(--fs-xs);color:var(--text-muted)} }

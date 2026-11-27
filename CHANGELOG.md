@@ -1,5 +1,15 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — F10 built: count a bag
+- F9 committed and pushed first (e64b8ea).
+- Count a bag (menu › Count a bag): pick a bag or the Store (a bag first), find in the list, type what you find. Expected, counted and the difference show as you type. An empty box means “not counted” and changes nothing, even after typing in it and emptying it (B16). 0 is a real count.
+- Typed counts are kept by the program, not the screen: searching, switching place and coming back keep them (B16). Leaving the screen, signing out or closing the program with counts typed asks first: Save counts / Throw away / Keep counting (closing: Keep counting / Close and throw them away). The next person to sign in never sees someone else's typed counts.
+- A box that isn't a whole number of 0 or more turns red with the reason, and Save is refused for all of them (nothing saved).
+- After saving: “Saved: 2 changed, 1 the same, 3 not counted (left as they were, not set to 0).” Counts are saved together; each is in Activity (“counted … 30 → 28”, or “the same as before”). Two people counting the same line from the same start, who disagree, are flagged (F3.5).
+- Controlled drugs are shown in the count but counted in the register (F12): no box to type in.
+- Tests: 5 new unit tests, 6 program tests. 11 rules broken on purpose; two survived at first (an emptied box saved as 0; the next person seeing typed counts), so those tests were made stronger; now each fails when broken. 92 of 92 and 53 of 53 pass.
+- Found and fixed while building: signing out with typed counts would have left them for the next person (now asks, and always clears); closing the program would have lost them without a word (now asks).
+
 ## 2026-11-28 — F9 built: restock and dispense
 - F8 committed and pushed first (fa2b7f1).
 - + and − on every line in Store and bags, and Restock / Dispense on the item page. One box: a whole number, 1 or more; 0, negatives, decimals and an empty box are refused with a message and nothing changes (B17); taking out more than is there is refused. Every booking is logged as “restocked” or “dispensed”, old → new (B19).
