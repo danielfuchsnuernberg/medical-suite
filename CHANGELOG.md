@@ -1,5 +1,18 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — F12 built: controlled-drug register
+- Q25 committed first (c6cc96b).
+- Controlled drugs (menu): one card per drug with its balance and where it is; the register below with When, Line (Opening / In / Out / Moved / Correction), amount, running balance, by, doctor and how, witness, reason or case. Lines can't be edited or deleted; a doctor adds a correction line naming the original. Every booking also moves the stock line in Store and bags, saved together; if the two ever disagree, the register says so.
+- Taking out: a doctor takes it out personally (with a witness). A nurse, or a Manage-level person who isn't a doctor, needs a doctor: “Doctor is here” (the doctor types their own PIN on this screen), “Ask a doctor” (a request; nothing comes off until approved; red count on the doctor's menu; Approve / Ask / Refuse; a refusal stays, crossed out), or “Emergency, no doctor reachable” (reason and witness required; booked at once; red on Home and in the register until a doctor approves or asks about it).
+- Witness on every line: never yourself, never the approving doctor; a doctor who witnessed can't approve it.
+- Receive (witness, no doctor; joins the same lot or starts a line), Move between the Store and a bag (Q25 = A: a Moved line with a witness, no doctor, balance unchanged), more than the balance refused.
+- Who may approve: only a doctor gives the right, never to themselves; ✕ removes it; the last doctor can't be removed; changes are logged and listed for every doctor. With no doctor at all, Management sets the first one, once. Manage level gives no right here.
+- PIN: each doctor sets their own (4–8 digits, not a row), kept on this computer only as a check value. DEMO doctor Dr Ben Sample uses 1234 until he sets his own.
+- Data from before F12 (a drug with stock but no register): a doctor opens the register at what the shelves hold, with a witness, once.
+- DEMO data: Dr Ben Sample has the right; Morphine's register opens at 5. The “comes with F12” notes in F9 and F10 are gone.
+- Tests: 14 new unit tests, 12 program tests (one per F12 line, plus old data). 17 rules broken on purpose; one survived at first (Manage changing the list behind the screen), the test was made stronger; now each fails when broken. 110 of 110 and 69 of 69 pass.
+- Found and fixed while building: a take-out whose kind wasn't stated was booked as an emergency (now refused, never guessed); an older copy of the program had no way to open the register for stock already on the shelves.
+
 ## 2026-11-28 — Q25 answered: A
 - Danny typed the answer in chat (the page didn't save it). Moving a controlled drug between the Store and a bag will be a “Moved” line in the register, with a witness and no doctor; the balance doesn't change. F12.1 now lists the line type “moved”; new checklist line F12.11. Until F12 is built, a controlled drug still can't be moved.
 

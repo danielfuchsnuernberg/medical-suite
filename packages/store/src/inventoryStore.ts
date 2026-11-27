@@ -61,7 +61,7 @@ export class InventoryStore {
 
   /** A controlled drug moves only through the register (Q8: every movement; F12.8, F12.9). */
   private controlled(l: StoredRecord): boolean { return this.door.get("item", String(l.itemId))?.controlled === true; }
-  static CD_REGISTER = "This is a controlled drug. Its stock changes only through the controlled-drug register (with witness and running balance), which comes with F12.";
+  static CD_REGISTER = "This is a controlled drug. Its stock changes only through the controlled-drug register (Controlled drugs in the menu), with a witness and the running balance.";
 
   /** F9: restock (+) or dispense (−). A whole number, 1 or more; never more out than is there; logged old → new. */
   adjust(actor: StoredRecord, lineId: string, kind: "restock" | "dispense", amount: unknown) {
@@ -157,7 +157,7 @@ export class InventoryStore {
       const q = wholeNumber(qty, { min: 1, max: Number(l.qty) }); if (!q.ok) throw new Refused(q.why);
       const dest = matchingLine(this.door.records("line"), l, toLocationId);
       const destId = dest ? dest.id : newRecordId();
-      const msgs = [{ recordType: "line", recordId: lineId, op: "delta" as const, data: { field: "qty", by: -q.n, moveTo: destId }, by: me.id }];
+      const msgs: any[] = [{ recordType: "line", recordId: lineId, op: "delta" as const, data: { field: "qty", by: -q.n, moveTo: destId }, by: me.id }];
       if (!dest) msgs.push({ recordType: "line", recordId: destId, op: "create" as const, data: { itemId: l.itemId, locationId: toLocationId, qty: 0, required: null, lot: l.lot ?? "", expiry: l.expiry ?? null } as any, by: me.id });
       msgs.push({ recordType: "line", recordId: destId, op: "delta" as const, data: { field: "qty", by: q.n, moveFrom: lineId } as any, by: me.id });
       // Q24 = C: a line emptied by the move stays at 0 if it says what the place must carry (required amount / reorder level),

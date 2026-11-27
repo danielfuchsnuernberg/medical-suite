@@ -325,3 +325,43 @@ button.att:hover{filter:brightness(.97)}
 .badge svg{margin:0}
 @media (max-width:720px){ .thennow td[data-label]::before{content:attr(data-label) ": ";font-size:var(--fs-xs);color:var(--text-muted)} }
 .itempage>.panel{align-self:stretch}
+
+/* F12: controlled-drug register */
+.register{display:flex;flex-direction:column;gap:16px}
+.navbadge{margin-left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--danger);color:#fff;font-size:11px;font-weight:700;display:inline-grid;place-items:center}
+.home-alert{width:100%;margin-bottom:16px;cursor:pointer}
+.waitpanel{border-color:var(--danger)}
+.waitpanel h2{color:var(--danger)}
+.reqs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.reqs li{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-bottom:1px solid var(--border);font-size:var(--fs-sm)}
+.reqs li:last-child{border-bottom:0}
+.danger{color:var(--danger)}
+.btn.ok-fill{background:var(--success);border-color:var(--success);color:#fff}
+.iconbtn.danger{color:var(--danger)}
+.cdcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.cdcard{display:flex;flex-direction:column;gap:4px;text-align:left;padding:12px 14px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface);font:inherit;color:var(--text);cursor:pointer}
+.cdcard[aria-pressed="true"]{border:2px solid var(--accent);padding:11px 13px}
+.cdcard .cdname{font-weight:700;font-size:13.5px}
+.cdcard .bal{font-size:22px;font-weight:700}
+.cdcard .bal small{font-size:12px;color:var(--text-muted);font-weight:500}
+.cdcard .badge{align-self:flex-start}
+.tscroll{overflow-x:auto}
+.ledger td,.ledger th{white-space:normal}
+.ledger .n{text-align:right;font-variant-numeric:tabular-nums}
+.ledger .nowrap{white-space:nowrap}
+.ledger .reason{max-width:240px}
+.ledger tr.st-refused td{text-decoration:line-through;color:var(--text-muted)}
+.ledger tr.st-refused td:nth-child(2){text-decoration:none}
+.ledger tr.st-pending td{background:var(--warning-soft)}
+.ledger tr.st-emergency td{background:var(--danger-soft)}
+.ledger tr.k-correction td{background:var(--info-soft)}
+.cdmode{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:var(--r-md);background:var(--surface-2);border:1px solid var(--border)}
+.cdmode .k{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent)}
+.grantrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.grantrow select{font:inherit;font-size:var(--fs-sm);padding:6px 9px;border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--text)}
+.rightslog{display:flex;flex-direction:column;gap:3px;font-size:var(--fs-xs);color:var(--text-muted);padding-top:8px;border-top:1px solid var(--border)}
+.rightslog b{color:var(--text)}
+.myreq{display:block}
+.dialog .field select{width:100%}
+@media (max-width:720px){ .ledger{min-width:720px} }
+.cdmode .seg{border-radius:var(--r-md);flex-wrap:wrap;align-self:stretch}.cdmode .seg button{flex:1 1 auto}

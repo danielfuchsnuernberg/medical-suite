@@ -28,7 +28,7 @@ export function itemNameProblem(items: { id: string; name?: unknown; state?: unk
     : `“${String(same.name)}” is already there. Open it and add a place instead.`;
 }
 
-export interface LineLike { id: string; itemId: string; locationId: string; lot?: unknown; expiry?: unknown; state?: unknown }
+export interface LineLike { id: string; itemId?: unknown; locationId?: unknown; lot?: unknown; expiry?: unknown; state?: unknown }
 const lotOf = (l: LineLike) => String(l.lot ?? "").trim().toLowerCase();
 const expOf = (l: LineLike) => (l.expiry ? String(l.expiry) : "");
 

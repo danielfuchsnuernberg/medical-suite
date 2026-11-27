@@ -17,7 +17,6 @@ export default function AdjustDialog({ line, item, placeName, kind, store, me, c
         <button type="button" className="btn" onClick={close}>Close</button>
         <button type="button" className="btn primary" onClick={openRegister}>Open the register</button></>}>
         <p data-testid="cd-note">This is a <b>controlled drug</b>. {out ? "Taking it out" : "Receiving it"} goes through the controlled-drug register, with {out ? "a doctor's approval, " : ""}a witness and the running balance. There is no plain {out ? "dispense" : "restock"}.</p>
-        <p className="muted">The register comes with F12.</p>
       </Dialog>
     );
   }

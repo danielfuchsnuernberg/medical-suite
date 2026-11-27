@@ -42,7 +42,7 @@ test("F10.1 pick a bag or the Store and type what you find; an empty box means '
   await page.getByRole("button", { name: "Save counts" }).click();
   await expect.poll(() => qty("demo-s10")).toBe(0);
   // a controlled drug is shown but counted in the register
-  await expect(page.locator('tr[data-line="demo-s7"] [data-testid="cd-count"]')).toHaveText("Counted in the controlled-drug register (F12)");
+  await expect(page.locator('tr[data-line="demo-s7"] [data-testid="cd-count"]')).toHaveText("Counted in the controlled-drug register");
   await expect(page.locator('tr[data-line="demo-s7"] input')).toHaveCount(0);
 });
 

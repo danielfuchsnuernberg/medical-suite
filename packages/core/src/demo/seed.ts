@@ -28,7 +28,7 @@ export const demoCourses = [
 
 export const demoPeople = [
   { id: "demo-p1", staffNo: "S-001", name: "Anna Example", job: "Nurse", level: "Work", departmentId: "demo-d1", ...stamp },
-  { id: "demo-p2", staffNo: "S-002", name: "Dr Ben Sample", job: "Doctor", level: "Manage", departmentId: "demo-d1", ...stamp },
+  { id: "demo-p2", staffNo: "S-002", name: "Dr Ben Sample", job: "Doctor", level: "Manage", departmentId: "demo-d1", cdRight: true, ...stamp },   // the first doctor (F12.6)
   { id: "demo-p3", staffNo: "S-003", name: "Cara Demo", job: "Base manager", level: "Manage", departmentId: "demo-d2", ...stamp },
   { id: "demo-p4", staffNo: "S-004", name: "Dina Test", job: "Nurse", level: "Work", departmentId: "demo-d1", ...stamp },
   { id: "demo-p5", staffNo: "S-005", name: "Finn Former", job: "Nurse", level: "Work", departmentId: "demo-d4", ...stamp, state: "Archived" as const },
@@ -94,6 +94,9 @@ export function demoSeedChanges(at = Date.UTC(2026, 10, 1)): Change[] {
   demoItems.forEach(r => add("item", r));
   demoLines.forEach(r => add("line", { ...r, country: "PG" }));
   demoPeople.forEach(r => add("person", r));
+  // The register's opening balance for the DEMO Morphine (F12.1): the 5 ampoules in the Store, witnessed.
+  out.push({ messageId: "seed-cd-opening-demo-i5", at, by: "demo-p2", app: APP_CODE, recordType: "cdline", recordId: "demo-cd1", op: "create",
+    data: { itemId: "demo-i5", kind: "opening", qty: 5, witness: "demo-p3", reason: "Opening balance (DEMO)", demo: true } });
   // Archived DEMO records: created, then archived (the archive is its own message, as in real use).
   for (const [type, list] of [["item", demoItems], ["person", demoPeople]] as const)
     for (const r of list as readonly { id: string; state: string }[]) if (r.state === "Archived")

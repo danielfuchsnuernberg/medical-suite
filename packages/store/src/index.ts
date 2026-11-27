@@ -9,3 +9,4 @@ export { buildLog, areaOf, NOT_SHOWN, type LogEntry, type LogArea, type FieldCha
 export { step } from "./fold";
 export { SettingsStore } from "./settingsStore";
 export { InventoryStore, type LineValues } from "./inventoryStore";
+export { RegisterStore, DEMO_PIN } from "./registerStore";

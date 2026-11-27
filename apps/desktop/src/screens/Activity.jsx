@@ -6,7 +6,7 @@ import Icon from "../components/Icon.jsx";
 // The entries come from door.log() (worked out from the change messages). This screen only puts them into words.
 
 const AREAS = [["all", "Everything"], ["Inventory", "Inventory"], ["People", "People"], ["Settings", "Settings"], ["EDP", "EDP"]];
-const KIND = { item: "item", line: "stock line", location: "place", person: "person", case: "case", department: "department", category: "category", course: "course", stocktake: "stock take", settings: "" };
+const KIND = { item: "item", line: "stock line", location: "place", person: "person", case: "case", department: "department", category: "category", course: "course", stocktake: "stock take", cdline: "register line", cddecision: "register decision", settings: "" };
 const FIELD = { qty: "quantity", required: "required", expiry: "expiry", lot: "lot", name: "name", job: "job", level: "level", state: "state",
   itemId: "item", locationId: "place", category: "category", unit: "unit", kind: "kind", staffNo: "staff number", itemNo: "item number",
   controlled: "controlled drug", cdRight: "doctor's right", caseNo: "case number", baseName: "base name", country: "country", timeZone: "time zone",
@@ -118,6 +118,26 @@ export function words(door, log) {
     }
     // F11.1: a stock take never changes; a message that tried to is kept in the log, and says it was ignored
     if (e.recordType === "stocktake" && e.op !== "create") return <>tried to change stock take {link}: ignored, a stock take never changes</>;
+    // F12: the register. Lines and decisions never change; an attempt is kept and says it was ignored.
+    if ((e.recordType === "cdline" || e.recordType === "cddecision") && e.op !== "create") return <>tried to change the controlled-drug register: ignored, register lines never change</>;
+    if (e.recordType === "cdline") {
+      const d = e.data, drug = String(door.get("item", String(d.itemId))?.name ?? "a controlled drug"), w = d.witness ? ` (witness ${who(String(d.witness))})` : "";
+      if (d.kind === "opening") return <>opened the register for {drug}: {Number(d.qty)}{w}</>;
+      if (d.kind === "in") return <>received {Number(d.qty)} {drug} into the register{w}</>;
+      if (d.kind === "moved") return <>moved {Number(d.qty)} {drug}: {String(d.reason)}{w}</>;
+      if (d.kind === "correction") return <>corrected the register for {drug}: {Number(d.qty) > 0 ? "+" : ""}{Number(d.qty)}{w}</>;
+      if (d.how === "request") return <>asked {who(String(d.askedDoctor))} to approve taking out {Number(d.qty)} {drug}{w}</>;
+      if (d.how === "emergency") return <>took out {Number(d.qty)} {drug} as an emergency, waiting for a doctor{w}</>;
+      if (d.how === "pin") return <>took out {Number(d.qty)} {drug}, approved in the room by {who(String(d.doctor))}{w}</>;
+      return <>took out {Number(d.qty)} {drug} as a doctor{w}</>;
+    }
+    if (e.recordType === "cddecision") {
+      const l = door.get("cdline", String(e.data.cdlineId)), drug = l ? String(door.get("item", String(l.itemId))?.name ?? "") : "";
+      const what = l ? `${Number(l.qty)} ${drug} for ${who(String(l.createdBy))}` : "a register line";
+      if (e.data.decision === "approve") return <>approved {l?.how === "emergency" ? "afterwards the emergency of " : "taking out "}{what}</>;
+      if (e.data.decision === "refuse") return <>refused taking out {what}</>;
+      return <>asked about {what}: “{String(e.data.note ?? "")}”</>;
+    }
     switch (e.op) {
       case "create": return e.recordType === "stocktake" ? <>froze a stock take: {link} ({Array.isArray(e.data.lines) ? e.data.lines.length : 0} lines)</> : <>added {kind}{link}</>;
       case "set": return <>changed {kind}{link}</>;
@@ -127,6 +147,7 @@ export function words(door, log) {
         const placeOf = (lineId) => { const l = door.get("line", String(lineId)); return l ? String(door.get("location", l.locationId)?.name ?? "?") : "another place"; };
         if (e.data.moveTo) return <>moved {Math.abs(by)} from {link} to {placeOf(e.data.moveTo)}</>;
         if (e.data.moveFrom) return <>{Math.abs(by)} moved in to {link} from {placeOf(e.data.moveFrom)}</>;
+        if (e.data.cdline) return <>{by < 0 ? "took" : "added"} {Math.abs(by)} {by < 0 ? "from" : "to"} {link} (controlled-drug register)</>;
         if (e.data.kind === "restock") return <>restocked {Math.abs(by)} to {link}</>;
         if (e.data.kind === "dispense") return <>dispensed {Math.abs(by)} from {link}</>;
         return <>{by < 0 ? "took" : "added"} {Math.abs(by)} {by < 0 ? "from" : "to"} {link}</>;

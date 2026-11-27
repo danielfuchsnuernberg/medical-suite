@@ -52,11 +52,11 @@ export function checkArchivePerson(people: Person[], actor: Person, target: Pers
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
 /** Patient files, the change log and stock takes are never deleted (F2.7, F11.1). */
-export const NEVER_DELETED = new Set(["patient", "event", "log", "stocktake"]);
+export const NEVER_DELETED = new Set(["patient", "event", "log", "stocktake", "cdline", "cddecision"]);
 
 /** F2.7, REACH Q38: delete for good only a mistake, within 24 hours of creating it, by Manage level. */
 export function checkDelete(recordType: string, record: StoredRecord, actor: Person, now: number): Check {
-  if (NEVER_DELETED.has(recordType)) return no("Patient files, the change log and stock takes are never deleted.");
+  if (NEVER_DELETED.has(recordType)) return no("Patient files, the change log, stock takes and the controlled-drug register are never deleted.");
   if (!can(actor.level, "deleteMistake")) return no("Only Manage level can delete a mistake.");
   if (now - Number(record.createdAt) > DAY_MS) return no("Delete for good is only for a mistake, within 24 hours of creating it. After that, archive it instead.");
   return OK;

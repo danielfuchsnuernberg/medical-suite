@@ -1,0 +1,256 @@
+// F12 — the controlled-drug register behind the store door. Every rule is checked here, against people as stored now,
+// one change at a time (as Accounts, B27). Each booking is saved together with the stock line it changes, all or nothing,
+// so the register and Store and bags can never drift apart.
+//
+// Rights (F2.8, F12.2, Q16): the doctors' list (person.cdRight) decides, never the level. Manage level gives nothing here,
+// except setting the very first doctor once, while there is none (F12.6: "set once at setup").
+import { can, ledger, balanceOf, waiting, checkWitness, pinProblem, wholeNumber, matchingLine, expiryProblem, makeCredential, verifyPassword, newRecordId,
+  type CdLine, type CdDecision, type LedgerRow, type Credential, type StoredRecord } from "@md/core";
+import { Door } from "./door";
+import { Refused } from "./accounts";
+
+/** DEMO doctors (R11) approve with this PIN until they set their own on this computer, like the DEMO password. */
+export const DEMO_PIN = "1234";
+const pinKey = (id: string) => "pin:" + id;
+type Msg = { recordType: string; recordId?: string; op: "create" | "delta" | "set" | "archive"; data: Record<string, unknown>; by: string };
+
+export class RegisterStore {
+  private queue: Promise<unknown> = Promise.resolve();
+  constructor(private door: Door) {}
+  private one<T>(fn: () => Promise<T>): Promise<T> { const p = this.queue.then(fn, fn); this.queue = p.catch(() => undefined); return p; }
+
+  // ---- reading ----
+  person(id: string | null | undefined) { return id ? this.door.get("person", id) : undefined; }
+  isDoctor(id: string | null | undefined) { const p = this.person(id); return !!p && p.state === "Active" && p.cdRight === true; }
+  doctors() { return this.door.records("person").filter(p => p.state === "Active" && p.cdRight === true).sort((a, b) => String(a.name).localeCompare(String(b.name))); }
+  drugs() { return this.door.records("item").filter(i => i.controlled === true && i.state === "Active").sort((a, b) => String(a.name).localeCompare(String(b.name))); }
+  private lines() { return this.door.records("cdline") as unknown as CdLine[]; }
+  private decisions() { return this.door.records("cddecision") as unknown as CdDecision[]; }
+  ledger(itemId: string): LedgerRow[] { return ledger(this.lines(), this.decisions(), itemId); }
+  balance(itemId: string) { return balanceOf(this.ledger(itemId)); }
+  /** What the stock lines of this drug hold now; should equal the register balance. */
+  onShelves(itemId: string) { return this.door.records("line").filter(l => l.itemId === itemId && l.state === "Active").reduce((s, l) => s + Number(l.qty), 0); }
+  waitingAll(): LedgerRow[] { return this.drugs().flatMap(d => waiting(this.ledger(d.id))); }
+  placesOf(itemId: string) { return this.door.records("line").filter(l => l.itemId === itemId && l.state === "Active"); }
+  rightsLog() { return this.door.log().filter(e => e.recordType === "person" && e.changes.some(c => c.field === "cdRight")).slice(0, 10); }
+
+  // ---- checks ----
+  private worker(actor: StoredRecord): StoredRecord {
+    const p = this.person(actor.id);
+    if (!p || p.state !== "Active" || !can(p.level, "changeStock")) throw new Refused("View level can look but not change anything.");
+    return p;
+  }
+  private doctor(actor: StoredRecord): StoredRecord {
+    const p = this.worker(actor);
+    if (p.cdRight !== true) throw new Refused("Only a doctor can do this. Manage level gives no right here.");
+    return p;
+  }
+  private drug(itemId: string): StoredRecord {
+    const i = this.door.get("item", itemId);
+    if (!i || i.controlled !== true) throw new Refused("That isn't a controlled drug.");
+    return i;
+  }
+  private stockLine(lineId: string, itemId: string): StoredRecord {
+    const l = this.door.get("line", lineId);
+    if (!l || l.state !== "Active" || l.itemId !== itemId) throw new Refused("Pick where it is (the Store or a bag).");
+    return l;
+  }
+  private witnessOk(witness: string | null | undefined, actor: string, doctor?: string | null) {
+    const c = checkWitness(witness, actor, doctor); if (!c.ok) throw new Refused(c.why);
+    const w = this.person(witness); if (!w || w.state !== "Active") throw new Refused("Pick a witness from the people list.");
+  }
+  private amount(raw: unknown, max?: number) {
+    const q = wholeNumber(raw, max === undefined ? { min: 1 } : { min: 1, max }); if (!q.ok) throw new Refused(q.why);
+    return q.n;
+  }
+  private reason(r: unknown, what = "Give a reason or case.") { const s = String(r ?? "").trim(); if (!s) throw new Refused(what); return s; }
+  private async save(msgs: Msg[]) { await this.door.applyAll(msgs as any); }
+  private line(data: Record<string, unknown>, by: string, id = newRecordId()): Msg { return { recordType: "cdline", recordId: id, op: "create", data, by }; }
+  private take(lineId: string, n: number, cdlineId: string, by: string): Msg { return { recordType: "line", recordId: lineId, op: "delta", data: { field: "qty", by: -n, cdline: cdlineId }, by }; }
+  private add(lineId: string, n: number, cdlineId: string, by: string): Msg { return { recordType: "line", recordId: lineId, op: "delta", data: { field: "qty", by: n, cdline: cdlineId }, by }; }
+
+  // ---- PIN (Q13): a check value on this computer only, never sent anywhere ----
+  hasPin(personId: string): "own" | "demo" | "none" {
+    if (this.door.local<Credential>(pinKey(personId))) return "own";
+    return this.person(personId)?.demo === true ? "demo" : "none";
+  }
+  async setPin(actor: StoredRecord, pin: string, repeat: string) {
+    this.doctor(actor);
+    const why = pinProblem(pin, repeat); if (why) throw new Refused(why);
+    await this.door.setLocal(pinKey(actor.id), await makeCredential(pin, { mustChange: false, setBy: actor.id, at: this.door.now() }));
+  }
+  private async pinOk(doctorId: string, pin: string): Promise<boolean> {
+    const c = this.door.local<Credential>(pinKey(doctorId));
+    if (c) return verifyPassword(c, String(pin));
+    return this.person(doctorId)?.demo === true && String(pin) === DEMO_PIN;
+  }
+
+  // ---- taking out (F12.2, F12.3, F12.4, F12.10) ----
+  /**
+   * how: "self" (the actor is a doctor), "pin" (a doctor in the room types their PIN), "request" (sent to a doctor; nothing comes off
+   * until approved), "emergency" (no doctor reachable: booked at once, flagged until a doctor approves or queries it).
+   */
+  takeOut(actor: StoredRecord, p: { itemId: string; lineId: string; qty: unknown; witness: string; reason: string; how: "self" | "pin" | "request" | "emergency"; doctor?: string; pin?: string }) {
+    return this.one(async () => {
+      const me = this.worker(actor);
+      this.drug(p.itemId);
+      const l = this.stockLine(p.lineId, p.itemId);
+      const n = this.amount(p.qty, Math.min(Number(l.qty), this.balance(p.itemId)));
+      const reason = this.reason(p.reason);
+      const id = newRecordId();
+      const base = { itemId: p.itemId, kind: "out", qty: n, lineId: p.lineId, witness: p.witness, reason };
+      if (p.how === "self") {
+        this.doctor(me); this.witnessOk(p.witness, me.id);
+        await this.save([this.line({ ...base, how: "self", doctor: me.id }, me.id, id), this.take(p.lineId, n, id, me.id)]);
+      } else if (p.how === "pin") {
+        if (!this.isDoctor(p.doctor)) throw new Refused("Pick a doctor from the doctors' list.");
+        if (p.doctor === me.id) throw new Refused("You're the doctor: take it out yourself.");
+        this.witnessOk(p.witness, me.id, p.doctor);
+        if (!(await this.pinOk(String(p.doctor), String(p.pin ?? "")))) throw new Refused(`That isn't ${String(this.person(p.doctor)!.name)}'s PIN.`);
+        await this.save([this.line({ ...base, how: "pin", doctor: p.doctor }, me.id, id), this.take(p.lineId, n, id, me.id)]);
+      } else if (p.how === "request") {
+        if (!this.isDoctor(p.doctor)) throw new Refused("Pick a doctor from the doctors' list.");
+        if (p.doctor === me.id) throw new Refused("You're the doctor: take it out yourself.");
+        this.witnessOk(p.witness, me.id, p.doctor);
+        await this.save([this.line({ ...base, how: "request", askedDoctor: p.doctor }, me.id, id)]);   // nothing comes off yet
+      } else if (p.how === "emergency") {
+        this.witnessOk(p.witness, me.id);
+        await this.save([this.line({ ...base, how: "emergency" }, me.id, id), this.take(p.lineId, n, id, me.id)]);
+      } else throw new Refused("Say how it is approved: by you as a doctor, a doctor in the room, a request, or an emergency.");   // never guessed
+      return id;
+    });
+  }
+
+  /** A doctor answers a request or an emergency: approve, refuse (requests only) or query ("Ask"). */
+  decide(actor: StoredRecord, cdlineId: string, decision: "approve" | "refuse" | "query", note = "") {
+    return this.one(async () => {
+      const me = this.doctor(actor);
+      const l = this.door.get("cdline", cdlineId) as unknown as CdLine | undefined;
+      if (!l) throw new Refused("That register line isn't there.");
+      const row = this.ledger(l.itemId).find(r => r.line.id === cdlineId)!;
+      if (row.status !== "pending" && row.status !== "emergency" && row.status !== "queried") throw new Refused("This line has already been answered.");
+      if (l.createdBy === me.id) throw new Refused("A doctor can't approve their own request or emergency.");
+      if (l.witness === me.id) throw new Refused("You were the witness, so another doctor has to answer it.");
+      if (decision === "refuse" && l.how !== "request") throw new Refused("An emergency has already been given; approve it or ask about it.");
+      const msgs: Msg[] = [{ recordType: "cddecision", op: "create", data: { cdlineId, decision, note: String(note ?? "").trim() }, by: me.id }];
+      if (decision === "approve" && l.how === "request") {
+        const s = this.door.get("line", String(l.lineId));
+        if (!s || s.state !== "Active" || Number(s.qty) < l.qty || this.balance(l.itemId) < l.qty) throw new Refused("Not enough on the balance any more. Ask the nurse.");
+        msgs.push(this.take(String(l.lineId), l.qty, cdlineId, me.id));                        // it comes off now
+      }
+      await this.save(msgs);
+    });
+  }
+
+  // ---- receiving (F12.9), moving (F12.11, Q25 = A), correcting (F12.8) ----
+  receive(actor: StoredRecord, p: { itemId: string; locationId: string; qty: unknown; witness: string; reason: string; lot?: string; expiry?: string }) {
+    return this.one(async () => {
+      const me = this.worker(actor);
+      this.drug(p.itemId);
+      const place = this.door.get("location", p.locationId); if (!place || place.state !== "Active") throw new Refused("Pick where it goes (the Store or a bag).");
+      const n = this.amount(p.qty);
+      this.witnessOk(p.witness, me.id);
+      const reason = this.reason(p.reason, "Say where it came from.");
+      const lot = String(p.lot ?? "").trim(), expiry = String(p.expiry ?? "").trim();
+      const ep = expiryProblem(expiry); if (ep) throw new Refused(ep);
+      const probe = { id: "", itemId: p.itemId, locationId: p.locationId, lot, expiry: expiry || null };
+      const dest = matchingLine(this.door.records("line"), probe, p.locationId);
+      const id = newRecordId(), destId = dest ? dest.id : newRecordId();
+      const msgs: Msg[] = [this.line({ itemId: p.itemId, kind: "in", qty: n, lineId: destId, witness: p.witness, reason }, me.id, id)];
+      if (!dest) msgs.push({ recordType: "line", recordId: destId, op: "create", data: { itemId: p.itemId, locationId: p.locationId, qty: 0, required: null, lot, expiry: expiry || null }, by: me.id });
+      msgs.push(this.add(destId, n, id, me.id));
+      await this.save(msgs);
+      return id;
+    });
+  }
+
+  move(actor: StoredRecord, p: { itemId: string; lineId: string; toLocationId: string; qty: unknown; witness: string }) {
+    return this.one(async () => {
+      const me = this.worker(actor);
+      this.drug(p.itemId);
+      const from = this.stockLine(p.lineId, p.itemId);
+      if (from.locationId === p.toLocationId) throw new Refused("Pick a different place to move to.");
+      const place = this.door.get("location", p.toLocationId); if (!place || place.state !== "Active") throw new Refused("Pick a place that is in use.");
+      const n = this.amount(p.qty, Number(from.qty));
+      this.witnessOk(p.witness, me.id);
+      const dest = matchingLine(this.door.records("line"), from as any, p.toLocationId);
+      const id = newRecordId(), destId = dest ? dest.id : newRecordId();
+      const msgs: Msg[] = [this.line({ itemId: p.itemId, kind: "moved", qty: n, fromLineId: p.lineId, toLineId: destId, witness: p.witness,
+        reason: `${String(this.door.get("location", String(from.locationId))?.name)} → ${String(place.name)}` }, me.id, id)];
+      msgs.push(this.take(p.lineId, n, id, me.id));
+      if (!dest) msgs.push({ recordType: "line", recordId: destId, op: "create", data: { itemId: p.itemId, locationId: p.toLocationId, qty: 0, required: null, lot: from.lot ?? "", expiry: from.expiry ?? null }, by: me.id });
+      msgs.push(this.add(destId, n, id, me.id));
+      // Q24 = C, as for any move: an emptied line with no required amount is archived
+      if (n === Number(from.qty) && (from.required === null || from.required === undefined)) msgs.push({ recordType: "line", recordId: p.lineId, op: "archive", data: {}, by: me.id });
+      await this.save(msgs);
+      return id;
+    });
+  }
+
+  /** F12.8: a doctor adds a correction line naming the original, with a witness and a reason; nothing is edited; the balance can't go below 0. */
+  correct(actor: StoredRecord, p: { refId: string; change: unknown; witness: string; reason: string }) {
+    return this.one(async () => {
+      const me = this.doctor(actor);
+      const ref = this.door.get("cdline", p.refId) as unknown as CdLine | undefined;
+      if (!ref) throw new Refused("That register line isn't there.");
+      const row = this.ledger(ref.itemId).find(r => r.line.id === ref.id)!;
+      if (!row.counts) throw new Refused("Only a booked line can be corrected.");
+      if (ref.kind === "moved") throw new Refused("A move doesn't change the balance. Correct the line that does.");
+      const s = String(p.change ?? "").trim().replace("−", "-");
+      const n = /^[+-]?\d+$/.test(s) ? parseInt(s, 10) : NaN;
+      if (!Number.isInteger(n) || n === 0) throw new Refused("Type a whole number other than 0, like 1 or -1.");
+      if (this.balance(ref.itemId) + n < 0) throw new Refused("That would take the balance below 0.");
+      this.witnessOk(p.witness, me.id);
+      const reason = this.reason(p.reason, "Say what was wrong.");
+      const stockId = ref.lineId ? String(ref.lineId) : this.placesOf(ref.itemId)[0]?.id;
+      const stock = stockId ? this.door.get("line", stockId) : undefined;
+      if (!stock || stock.state !== "Active") throw new Refused("The stock line this line booked is gone. Reactivate it first.");
+      if (Number(stock.qty) + n < 0) throw new Refused(`That would take ${String(this.door.get("location", String(stock.locationId))?.name)} below 0.`);
+      const id = newRecordId();
+      await this.save([this.line({ itemId: ref.itemId, kind: "correction", qty: n, lineId: stock.id, ref: ref.id, witness: p.witness, reason, doctor: me.id, how: "self" }, me.id, id),
+        { recordType: "line", recordId: stock.id, op: "delta", data: { field: "qty", by: n, cdline: id }, by: me.id }]);
+      return id;
+    });
+  }
+
+  /**
+   * A drug with stock on the shelves but no register lines yet (data from before F12): a doctor opens the register at what is
+   * there now, with a witness. Only while the drug has no register line at all; after that, only corrections.
+   */
+  openRegister(actor: StoredRecord, itemId: string, witness: string) {
+    return this.one(async () => {
+      const me = this.doctor(actor);
+      this.drug(itemId);
+      if (this.ledger(itemId).length) throw new Refused("This drug's register is already open. Use a correction line.");
+      this.witnessOk(witness, me.id);
+      const n = this.onShelves(itemId);
+      await this.save([this.line({ itemId, kind: "opening", qty: n, witness, reason: "Opening balance: what the Store and bags held", doctor: me.id, how: "self" }, me.id)]);
+    });
+  }
+
+  // ---- the doctors' list (F12.6, F12.7, Q16 = B) ----
+  /** Only a doctor gives the right, never to themselves. While nobody has it, a Manage-level person sets the first doctor, once. */
+  grant(actor: StoredRecord, personId: string) {
+    return this.one(async () => {
+      const me = this.worker(actor);
+      const t = this.person(personId); if (!t || t.state !== "Active") throw new Refused("Pick someone from the people list.");
+      if (t.cdRight === true) throw new Refused(`${String(t.name)} already has the right.`);
+      const first = this.doctors().length === 0;
+      if (first) { if (!can(me.level, "changeLevels")) throw new Refused("The first doctor is set by Management, once."); }
+      else {
+        if (me.cdRight !== true) throw new Refused("Only a doctor can give this right. Manage level can't change the list.");
+        if (personId === me.id) throw new Refused("Nobody can give the right to themselves.");
+      }
+      await this.door.apply({ recordType: "person", recordId: personId, op: "set", data: { cdRight: true }, by: me.id });
+    });
+  }
+  /** A doctor removes someone's right (themselves included); logged and shown to every doctor; the last doctor can't be removed. */
+  revoke(actor: StoredRecord, personId: string) {
+    return this.one(async () => {
+      const me = this.doctor(actor);
+      const t = this.person(personId); if (!t || t.cdRight !== true) throw new Refused("That person doesn't have the right.");
+      if (this.doctors().length <= 1) throw new Refused(`${String(t.name)} is the only person who can approve controlled drugs. Give the right to someone else first.`);
+      await this.door.apply({ recordType: "person", recordId: personId, op: "set", data: { cdRight: false }, by: me.id });
+    });
+  }
+}

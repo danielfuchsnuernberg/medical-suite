@@ -45,7 +45,7 @@ export default function Count({ inv, me, state, setState, save, result }) {
                   <tr key={l.id} data-line={l.id}>
                     <td><b>{String(it?.name ?? "?")}</b>{it?.unit ? <span className="muted"> {String(it.unit)}</span> : null}{l.lot ? <div className="muted lot">Lot {String(l.lot)}</div> : null}</td>
                     <td data-label="Expected">{Number(l.qty)}</td>
-                    <td>{cd ? <span className="muted small" data-testid="cd-count">Counted in the controlled-drug register (F12)</span> : <>
+                    <td>{cd ? <span className="muted small" data-testid="cd-count">Counted in the controlled-drug register</span> : <>
                       <input className={`cnt-in${has ? (why ? " bad" : " typed") : ""}`} aria-label={`Counted ${String(it?.name ?? "")}${l.lot ? ` lot ${String(l.lot)}` : ""}`} aria-invalid={!!why}
                         inputMode="numeric" placeholder="—" value={v} disabled={!work} onChange={e => setDraft(l.id, e.target.value)} />
                       {why ? <div className="cnt-err" data-testid="count-error">{why}</div> : null}</>}</td>

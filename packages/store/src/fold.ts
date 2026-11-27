@@ -7,7 +7,7 @@ export interface CountFlag { recordType: string; recordId: string; counts: { mes
 export interface Folded { records: Map<string, Map<string, StoredRecord>>; flags: CountFlag[] }
 export type Tables = Map<string, Map<string, StoredRecord>>;
 /** Records that can never change after they are made (F11.1). */
-export const FROZEN = new Set(["stocktake"]);
+export const FROZEN = new Set(["stocktake", "cdline", "cddecision"]);   // F11.1; F12.8: register lines and doctors' decisions never change
 
 /** Applies one message. Returns the record before and after (undefined = didn't exist / was removed). */
 export function step(records: Tables, c: Change, country = "PG"): { before?: StoredRecord; after?: StoredRecord } {
