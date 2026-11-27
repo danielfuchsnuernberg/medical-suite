@@ -17,6 +17,7 @@
 - [x] Old "Medical Suite" folder (only .DS_Store and an empty sub-folder left) and the Dock app → Trash
 - [x] `index.html` removed from the repo, pushed
 - [ ] Live page checked after GitHub Pages rebuilds
+  - 27 Nov 2026, checked after push 6417723: https://danielfuchsnuernberg.github.io/medical-suite/ still answers 200 with the June app (last-modified 25 Nov 15:26, contains the stock list). Pages isn't rebuilding: a file pushed today returns 404. **Only fix: Danny unpublishes the site** (GitHub › medical-suite › Settings › Pages › Unpublish site, or Source: None).
 - History rewrite: **not done** (Q1 = leave)
 **Status:** 🟡 IN PROGRESS (last check pending)
 

@@ -16,6 +16,7 @@ Stage 3 signed off 26 Nov (all parts Right; answers in `PLAN.md` › Stage 3 ans
 Stage 2 questions page: https://claude.ai/artifact/QtfUXZpoz93kVKFcGKLzRv (answers in its `answers` collection; read with ArtifactData `list`).
 
 ## Known limits
+- **URGENT (27 Nov):** the public GitHub Pages site still serves the old June app with the real stock list (a 25 Nov copy; Pages isn't rebuilding). Danny must unpublish it: GitHub › medical-suite › Settings › Pages › Unpublish site (or Source: None). Then check the URL returns 404.
 - Old commits on GitHub still contain the June app with the real stock list and staff names (Q1: leave).
 
 ## Next steps
