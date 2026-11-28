@@ -410,3 +410,13 @@ button.att:hover{filter:brightness(.97)}
 .kv dt{color:var(--text-muted);font-size:var(--fs-sm)}
 .kv dd{margin:0;overflow-wrap:anywhere}
 @media (max-width:640px){.staff .stats{grid-template-columns:1fr 1fr}}
+/* F15 Training */
+.train-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.train-list li{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.train-list li:last-child{border-bottom:0}
+.train-list .ti{flex:1;min-width:160px;display:flex;flex-direction:column;gap:2px}
+.train-list .ti .muted{font-size:var(--fs-sm)}
+.staff .stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:640px){.staff .stats{grid-template-columns:1fr 1fr}}
+.readout{font-size:var(--fs-sm);padding:8px 10px;border-radius:var(--r-sm);background:var(--surface-2);margin-top:8px}
+@media (min-width:900px){.prof-grid [data-testid="prof-training"]{grid-column:span 2}}

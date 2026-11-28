@@ -1,17 +1,17 @@
 import { useMemo, useState } from "react";
-import { todayIn, formatCalendarDate, formatTimeIn } from "@md/core";
+import { todayIn, formatCalendarDate, formatTimeIn, isCalendarDate } from "@md/core";
 import Icon from "../components/Icon.jsx";
 
 // F4 — Activity: one log for all REACH apps, newest first, old → new, read-only.
 // The entries come from door.log() (worked out from the change messages). This screen only puts them into words.
 
 const AREAS = [["all", "Everything"], ["Inventory", "Inventory"], ["People", "People"], ["Settings", "Settings"], ["EDP", "EDP"]];
-const KIND = { item: "item", line: "stock line", location: "place", person: "person", case: "case", department: "department", category: "category", course: "course", stocktake: "stock take", cdline: "register line", cddecision: "register decision", importwait: "import row", settings: "" };
+const KIND = { item: "item", line: "stock line", location: "place", person: "person", case: "case", department: "department", category: "category", course: "course", stocktake: "stock take", cdline: "register line", cddecision: "register decision", importwait: "import row", training: "training", settings: "" };
 const FIELD = { qty: "quantity", required: "required", expiry: "expiry", lot: "lot", name: "name", job: "job", level: "level", state: "state",
   itemId: "item", locationId: "place", category: "category", unit: "unit", kind: "kind", staffNo: "staff number", itemNo: "item number",
   controlled: "controlled drug", cdRight: "doctor's right", caseNo: "case number", baseName: "base name", country: "country", timeZone: "time zone",
   dateStyle: "date style", dayShift: "day shift", nightShift: "night shift", departmentId: "department", categoryId: "category", validMonths: "valid for (months)",
-  profession: "profession", medicalCode: "medical code", headDoctor: "Head Doctor", controlledNote: "reason" };
+  profession: "profession", medicalCode: "medical code", headDoctor: "Head Doctor", controlledNote: "reason", status: "status", completedOn: "completed on", expires: "expires", courseId: "course", personId: "person" };
 const PAGE = 100;
 
 export default function Activity({ door, tick, timeZone, dateStyle }) {
@@ -20,7 +20,7 @@ export default function Activity({ door, tick, timeZone, dateStyle }) {
   const [shown, setShown] = useState(PAGE);
   const all = useMemo(() => door.log(), [door, tick]);
   const entries = all.filter(e => (area === "all" || e.area === area) && (!rec || (e.recordType === rec.type && e.recordId === rec.id)));
-  const w = useMemo(() => words(door, all), [door, all]);
+  const w = useMemo(() => words(door, all, dateStyle), [door, all, dateStyle]);
   const when = (at) => `${formatCalendarDate(todayIn(timeZone, at), dateStyle === "short" ? "short" : "long")}, ${formatTimeIn(at, timeZone)}`;
 
   return (
@@ -75,7 +75,7 @@ export function LogList({ entries, w, when, open, testid = "log" }) {
 }
 
 // Plain words for an entry. Names are looked up by ID now, so a renamed item shows its current name everywhere (F4.2).
-export function words(door, log) {
+export function words(door, log, dateStyle = "long") {
   // The last name each record had, from the log itself: a record deleted for good still has a name in its history.
   const lastName = new Map();
   for (let i = log.length - 1; i >= 0; i--) {
@@ -104,6 +104,9 @@ export function words(door, log) {
     if (k === "itemId") return String(door.get("item", v)?.name ?? v);
     if (k === "locationId") return String(door.get("location", v)?.name ?? v);
     if (k === "departmentId") return String(door.get("department", v)?.name ?? lastName.get("department|" + v) ?? v);
+    if ((k === "completedOn" || k === "expires") && isCalendarDate(v)) return formatCalendarDate(v, dateStyle === "short" ? "short" : "long");   // F15: plain dates read as dates
+    if (k === "courseId") return String(door.get("course", v)?.name ?? lastName.get("course|" + v) ?? v);
+    if (k === "personId") return String(person(v)?.name ?? lastName.get("person|" + v) ?? v);
     if (k === "categoryId") return String(door.get("category", v)?.name ?? lastName.get("category|" + v) ?? v);
     return String(v);
   };
@@ -125,6 +128,16 @@ export function words(door, log) {
     if (e.recordType === "importwait") {
       if (e.op === "create") return <>{String(e.data.item)} from {String(e.data.file)} waits for the Head Doctor ({Number(e.data.qty)})</>;
       return <>decided {String(door.get("importwait", e.recordId)?.item ?? "an import row")}: {e.data.decided === "controlled" ? "a controlled drug, into the register" : "not a controlled drug, loaded as ordinary stock"}</>;
+    }
+    // F15: training records read as sentences about the course and the person
+    if (e.recordType === "training") {
+      const t = door.get("training", e.recordId) ?? e.was ?? {};
+      const course = String(door.get("course", String(t.courseId ?? e.data.courseId))?.name ?? "a course"), whom = who(String(t.personId ?? e.data.personId));
+      if (e.op === "create") return <>assigned {course} to {whom}</>;
+      if (e.op === "set" && e.data.completedOn) {
+        const before = e.changes.find(c => c.field === "status")?.from;
+        return <>{before === "required" || before === "in progress" ? "completed" : "renewed"} {course} for {whom}</>;
+      }
     }
     if (e.recordType === "cdline") {
       const d = e.data, drug = String(door.get("item", String(d.itemId))?.name ?? "a controlled drug"), w = d.witness ? ` (witness ${who(String(d.witness))})` : "";

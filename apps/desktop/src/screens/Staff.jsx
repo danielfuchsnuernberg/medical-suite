@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { can, LEVELS, OFFICES, staffCounts, initials, formatCalendarDate, todayIn } from "@md/core";
+import { can, LEVELS, OFFICES, staffCounts, initials, formatCalendarDate, todayIn, personTrainingSummary, trainingCounts, expiryFor, completionProblem, validMonthsOf } from "@md/core";
 import Icon from "../components/Icon.jsx";
 import Dialog from "../components/Dialog.jsx";
 
@@ -7,9 +7,13 @@ import Dialog from "../components/Dialog.jsx";
 // stamps), to be merged into the one list Ops Management keeps later (REACH Q37).
 // Everyone may look. Manage level adds people, changes their details, archives, restores and deletes a mistake
 // (Q17 = B: people only by Manage). Levels, passwords and professions stay in Settings › People and access.
-// Every rule is checked again in Accounts, not only here. Training (F15) and the roster (F16) show where they will come.
+// Every rule is checked again in Accounts and TrainingStore, not only here. The roster (F16) shows where it will come.
+// F15 — Training and certificates: each course's status, Assign / Mark complete / Renew / Renew early (Manage level).
 
-export default function Staff({ door, me, accounts, tick, toast, timeZone, dateStyle, openId, setOpenId }) {
+const SUM_BADGE = { expired: "b-danger", due: "b-warning", ok: "b-success", none: "b-muted" };
+const KIND_BADGE = { required: "b-warning", inprogress: "b-accent", done: "b-success", valid: "b-success", soon: "b-warning", expired: "b-danger" };
+
+export default function Staff({ door, me, accounts, training, tick, toast, timeZone, dateStyle, openId, setOpenId }) {
   const [showArchived, setShowArchived] = useState(false);
   const [adding, setAdding] = useState(false);
   void tick;
@@ -19,16 +23,19 @@ export default function Staff({ door, me, accounts, tick, toast, timeZone, dateS
   const all = accounts.people(true);
   const person = openId ? accounts.person(openId) : null;
 
-  if (person) return <Profile p={person} me={me} accounts={accounts} manage={manage} departments={departments} deptName={deptName} back={() => setOpenId(null)} toast={toast} door={door} timeZone={timeZone} dateStyle={dateStyle} />;
+  const today = training.today();
+  if (person) return <Profile p={person} me={me} accounts={accounts} training={training} today={today} manage={manage} departments={departments} deptName={deptName} back={() => setOpenId(null)} toast={toast} door={door} timeZone={timeZone} dateStyle={dateStyle} />;
 
   const c = staffCounts(all, door.records("department"));
+  const tc = trainingCounts(all, training.records(), today);
   const list = all.filter(p => showArchived || p.state === "Active");
   return (
     <div className="staff">
       <div className="stats" data-testid="staff-stats">
         <div className="stat" data-st="staff"><div className="k"><Icon name="users" width={14} /> Staff</div><div className="v">{c.staff}</div></div>
         <div className="stat" data-st="archived"><div className="k"><Icon name="file" width={14} /> Archived</div><div className="v">{c.archived}</div></div>
-        <div className="stat" data-st="training"><div className="k"><Icon name="clock" width={14} /> Certificates</div><div className="v"><small>come with training (F15)</small></div></div>
+        <div className="stat" data-st="expired"><div className="k"><Icon name="clock" width={14} /> Certificates expired</div><div className="v">{tc.expired}</div></div>
+        <div className="stat" data-st="due"><div className="k"><Icon name="clock" width={14} /> Due in 30 days</div><div className="v">{tc.due}</div></div>
       </div>
       <p className="muted" data-testid="staff-counts">Counts never include archived staff{showArchived ? " (even with “Show archived” ticked)" : ""}. By department: {c.byDept.map(d => `${d.name} ${d.count}`).join(" · ") || "none"}{c.none ? ` · no department ${c.none}` : ""}</p>
       <section className="panel">
@@ -49,7 +56,7 @@ export default function Staff({ door, me, accounts, tick, toast, timeZone, dateS
                   <td>{p.departmentId ? deptName(p.departmentId) : <span className="muted">—</span>}</td>
                   <td>{p.office ? String(p.office) : <span className="muted">not set</span>}</td>
                   <td>{archived ? <span className="badge b-danger nodot">Archived</span> : <span className="badge b-accent nodot">{String(p.level)}</span>}</td>
-                  <td className="muted">comes with F15</td>
+                  <td>{(() => { const t = personTrainingSummary(training.records(p.id), today); return <span className={`badge nodot ${SUM_BADGE[t.kind]}`} data-train={t.kind}>{t.label}</span>; })()}</td>
                 </tr>
               );
             })}
@@ -97,7 +104,7 @@ function AddPerson({ accounts, me, departments, onDone, onClose }) {
   );
 }
 
-function Profile({ p, me, accounts, manage, departments, deptName, back, toast, door, timeZone, dateStyle }) {
+function Profile({ p, me, accounts, training, today, manage, departments, deptName, back, toast, door, timeZone, dateStyle }) {
   const archived = p.state !== "Active";
   const [editing, setEditing] = useState(false);
   const [confirm, setConfirm] = useState(null);    // "archive" | "delete"
@@ -137,10 +144,7 @@ function Profile({ p, me, accounts, manage, departments, deptName, back, toast, 
             <dt>Comes from</dt><dd>This app's people list (REACH shape). Ops Management keeps the one REACH list later.</dd>
           </dl>
         </section>
-        <section className="panel" data-testid="prof-training">
-          <div className="panel-head"><h2>Training</h2></div>
-          <p className="muted">Courses and certificates come with training (F15), next.</p>
-        </section>
+        <TrainingPanel p={p} me={me} training={training} today={today} door={door} dateStyle={dateStyle} toast={toast} />
         <section className="panel" data-testid="prof-duties">
           <div className="panel-head"><h2>This week on the roster</h2></div>
           <p className="muted">Duties come with the roster (F16, release 2).</p>
@@ -176,6 +180,76 @@ function EditDetails({ p, me, accounts, departments, onClose }) {
       <button type="button" className="btn" onClick={onClose}>Cancel</button>
       <button type="button" className="btn primary" onClick={save}>Save</button></>}>
       <DetailsFields v={v} set={set} departments={departments} />
+      {err ? <div className="form-err" role="alert" data-testid="refusal">{err}</div> : null}
+    </Dialog>
+  );
+}
+
+// F15 — one person's courses. Manage level assigns (archived people: none offered, F15.4) and completes or renews.
+function TrainingPanel({ p, me, training, today, door, dateStyle, toast }) {
+  const [assigning, setAssigning] = useState(false);
+  const [completing, setCompleting] = useState(null);   // the training record being completed or renewed
+  const manage = can(me.level, "manageTraining");
+  const archived = p.state !== "Active";
+  const offered = training.offered(p.id);
+  const fmt = (d) => formatCalendarDate(d, dateStyle === "short" ? "short" : "long");
+  const recs = training.records(p.id).map(r => ({ r, c: door.get("course", String(r.courseId)), s: training.status(r) }))
+    .sort((a, b) => String(a.c?.name ?? "").localeCompare(String(b.c?.name ?? "")));
+  const months = (c) => { const m = validMonthsOf(c); return m === null ? "never expires" : `valid ${m} month${m === 1 ? "" : "s"}`; };
+  return (
+    <section className="panel" data-testid="prof-training">
+      <div className="panel-head"><h2>Training and certificates</h2>
+        {manage && !archived && offered.length ? <button type="button" className="btn small" onClick={() => setAssigning(true)}><Icon name="plus" width={13} stroke={2.2} />Assign course</button> : null}</div>
+      {archived ? <p className="muted" data-testid="no-courses">Archived: no new courses are offered.</p> : null}
+      {recs.length ? <ul className="train-list">{recs.map(({ r, c, s }) => {
+        const what = r.status === "done" ? `Completed ${r.completedOn ? fmt(String(r.completedOn)) : "—"}${r.expires ? ` · expires ${fmt(String(r.expires))}` : ""}` : s.label;
+        const btn = !manage || archived ? null : s.kind === "expired" ? "Renew" : r.status !== "done" ? "Mark complete" : "Renew early";
+        return (
+          <li key={r.id} data-training={r.id} data-course={String(r.courseId)}>
+            <div className="ti"><b>{String(c?.name ?? "A course")}</b><span className="muted">{what} · {months(c)}</span></div>
+            <span className={`badge nodot ${KIND_BADGE[s.kind]}`} data-kind={s.kind}>{s.label}</span>
+            {btn ? <button type="button" className="btn small" onClick={() => setCompleting(r)}>{btn}</button> : null}
+          </li>);
+      })}</ul> : <p className="muted">No courses yet.</p>}
+      {assigning ? <AssignCourse p={p} me={me} training={training} offered={offered} onClose={() => setAssigning(false)} /> : null}
+      {completing ? <CompleteCourse r={completing} p={p} me={me} training={training} today={today} course={door.get("course", String(completing.courseId))} fmt={fmt}
+        onClose={() => setCompleting(null)} onDone={(word) => { setCompleting(null); toast(word); }} /> : null}
+    </section>
+  );
+}
+
+function AssignCourse({ p, me, training, offered, onClose }) {
+  const [courseId, setCourseId] = useState(offered[0]?.id ?? "");
+  const [err, setErr] = useState("");
+  const save = async () => { try { await training.assign(me, p.id, courseId); onClose(); } catch (e) { setErr(String(e.message || e)); } };
+  return (
+    <Dialog title={`Assign a course to ${p.name}`} onClose={onClose} testid="assign-course" footer={<>
+      <button type="button" className="btn" onClick={onClose}>Cancel</button>
+      <button type="button" className="btn primary" onClick={save}>Assign</button></>}>
+      <label className="field"><span>Course</span><select value={courseId} onChange={e => { setErr(""); setCourseId(e.target.value); }} aria-label="Course">
+        {offered.map(c => { const m = validMonthsOf(c); return <option key={c.id} value={c.id}>{String(c.name)} ({m === null ? "never expires" : `${m} month${m === 1 ? "" : "s"}`})</option>; })}</select></label>
+      {err ? <div className="form-err" role="alert" data-testid="refusal">{err}</div> : null}
+    </Dialog>
+  );
+}
+
+// F15.2, F15.3, F15.5: the date it was done; the new expiry is shown before saving, worked out month-safe.
+function CompleteCourse({ r, p, me, training, today, course, fmt, onClose, onDone }) {
+  const expired = training.status(r).kind === "expired";
+  const word = expired ? "Renew" : r.status === "done" ? "Renew early" : "Mark complete";
+  const [date, setDate] = useState(today);
+  const [err, setErr] = useState("");
+  const problem = completionProblem(date, today);
+  const exp = !problem ? expiryFor(date, course) : null;
+  const m = validMonthsOf(course);
+  const save = async () => { try { await training.complete(me, r.id, date); onDone(expired ? "Renewed" : "Saved"); } catch (e) { setErr(String(e.message || e)); } };
+  return (
+    <Dialog title={`${word}: ${course?.name ?? "course"}`} onClose={onClose} testid="complete-course" footer={<>
+      <button type="button" className="btn" onClick={onClose}>Cancel</button>
+      <button type="button" className="btn primary" onClick={save}>Save</button></>}>
+      <p className="muted">{String(p.name)} · {m === null ? "this course never expires" : `valid for ${m} month${m === 1 ? "" : "s"}`}</p>
+      <label className="field"><span>Completed on</span><input type="date" value={date} max={today} onChange={e => { setErr(""); setDate(e.target.value); }} aria-label="Completed on" /></label>
+      <div className="readout" data-testid="new-expiry">{problem ? problem : exp ? <>New expiry: <b>{fmt(exp)}</b> <span className="muted">(done {fmt(date)})</span></> : <>Done {fmt(date)}; it never expires.</>}</div>
       {err ? <div className="form-err" role="alert" data-testid="refusal">{err}</div> : null}
     </Dialog>
   );

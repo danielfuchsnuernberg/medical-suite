@@ -31,7 +31,7 @@ const crumbOf = (id) => {
 };
 
 export default function App() {
-  const { door, accounts, settings: settingsStore, inventory, register, backups, error, tick } = useDoor();
+  const { door, accounts, settings: settingsStore, inventory, register, training, backups, error, tick } = useDoor();
   // The base's settings (F5), from the store. Until they are set: the computer's own time zone, and it says so.
   const base = door ? door.get("settings", "base") : null;
   const settings = {
@@ -179,7 +179,7 @@ export default function App() {
             : view === "count" ? <Count inv={data.inv} me={me} state={count} setState={(f) => { setCount(f); setCountResult(null); }} save={saveCounts} result={countResult} />
             : view === "takes" ? <StockTakes key={nav} door={door} me={me} store={inventory} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} toast={toast} typedCounts={typedCounts} />
             : view === "cd" ? <Register door={door} me={me} reg={register} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} toast={toast} />
-            : view === "staff" ? <Staff door={door} me={me} accounts={accounts} tick={tick} toast={toast} timeZone={settings.timeZone} dateStyle={settings.dateStyle} openId={personId} setOpenId={setPersonId} />
+            : view === "staff" ? <Staff door={door} me={me} accounts={accounts} training={training} tick={tick} toast={toast} timeZone={settings.timeZone} dateStyle={settings.dateStyle} openId={personId} setOpenId={setPersonId} />
             : view === "log" ? <Activity door={door} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} />
             : view === "settings" ? <Settings me={me} accounts={accounts} store={settingsStore} door={door} tick={tick} toast={toast} backups={backups} register={register} inventory={inventory} />
             : <Placeholder view={view} />}

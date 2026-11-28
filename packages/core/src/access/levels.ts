@@ -15,10 +15,11 @@ export type Action =
   | "changeLevels"   // F2.2, F2.3
   | "managePeople"   // add people, give one-time passwords (Q22 = A)
   | "archivePeople"  // F2.7
-  | "deleteMistake"; // F2.7, REACH Q38
+  | "deleteMistake"  // F2.7, REACH Q38
+  | "manageTraining"; // F15.6: assign and complete courses (Q20 = A: Managers and Admins → Manage)
 const NEED: Record<Action, Level> = {
   changeStock: "Work", archiveStock: "Work",
-  changeSettings: "Manage", seePeopleAccess: "Manage", changeLevels: "Manage", managePeople: "Manage", archivePeople: "Manage", deleteMistake: "Manage",
+  changeSettings: "Manage", seePeopleAccess: "Manage", changeLevels: "Manage", managePeople: "Manage", archivePeople: "Manage", deleteMistake: "Manage", manageTraining: "Manage",
 };
 
 export function can(level: unknown, action: Action): boolean {

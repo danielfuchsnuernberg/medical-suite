@@ -20,6 +20,18 @@ export const slug = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^
 /** Category IDs come from the name, so data saved before categories were records gets the same IDs (migration 2). */
 export const categoryId = (name: string) => "cat-" + slug(name);
 export const demoCategories = ["Dressings", "Fluids", "Medication", "Airway and IV", "Controlled drugs", "Trauma", "PPE", "icu"].map(name => ({ id: categoryId(name), name }));
+// F15: training records (demo batch 4). Dates are fixed around 28 Nov 2026: Anna's ACLS expired, Dina's BLS due in 20 days.
+export const demoTraining = [
+  { id: "demo-t1", personId: "demo-p1", courseId: "demo-k1", status: "done", completedOn: "2026-02-01", expires: "2027-02-01" },
+  { id: "demo-t2", personId: "demo-p1", courseId: "demo-k2", status: "done", completedOn: "2024-11-18", expires: "2026-11-18" },
+  { id: "demo-t3", personId: "demo-p1", courseId: "demo-k3", status: "required" },
+  { id: "demo-t4", personId: "demo-p2", courseId: "demo-k2", status: "done", completedOn: "2026-05-12", expires: "2028-05-12" },
+  { id: "demo-t5", personId: "demo-p2", courseId: "demo-k4", status: "done", completedOn: "2026-08-20", expires: "2027-08-20" },
+  { id: "demo-t6", personId: "demo-p3", courseId: "demo-k3", status: "done", completedOn: "2026-10-09", expires: "2027-10-09" },
+  { id: "demo-t7", personId: "demo-p4", courseId: "demo-k1", status: "done", completedOn: "2025-12-18", expires: "2026-12-18" },
+  { id: "demo-t8", personId: "demo-p4", courseId: "demo-k5", status: "in progress" },
+  { id: "demo-t9", personId: "demo-p5", courseId: "demo-k1", status: "done", completedOn: "2024-07-16", expires: "2025-07-16" },
+];
 export const demoCourses = [
   { id: "demo-k1", name: "BLS (basic life support)", validMonths: 12 }, { id: "demo-k2", name: "ACLS", validMonths: 24 },
   { id: "demo-k3", name: "Fire safety", validMonths: 12 }, { id: "demo-k4", name: "Controlled-drug handling", validMonths: 12 },
@@ -94,6 +106,7 @@ export function demoSeedChanges(at = Date.UTC(2026, 10, 1)): Change[] {
   demoItems.forEach(r => add("item", r));
   demoLines.forEach(r => add("line", { ...r, country: "PG" }));
   demoPeople.forEach(r => add("person", r));
+  demoTraining.forEach(r => add("training", r));
   // The register's opening balance for the DEMO Morphine (F12.1): the 5 ampoules in the Store, witnessed.
   out.push({ messageId: "seed-cd-opening-demo-i5", at, by: "demo-p2", app: APP_CODE, recordType: "cdline", recordId: "demo-cd1", op: "create",
     data: { itemId: "demo-i5", kind: "opening", qty: 5, witness: "demo-p3", reason: "Opening balance (DEMO)", demo: true } });

@@ -4,6 +4,11 @@ What this app built or decided that touches the REACH ecosystem: the shared Peop
 
 ---
 
+## 28 Nov 2026 — Training records (F15)
+
+- Each certificate is a record `training` { personId, courseId, status (required / in progress / done), completedOn, expires }, pointing to the person and the course by hidden ID (R5). Dates are plain calendar dates (R6). Courses (with “valid for N months”) are this app's own Settings list.
+- **For REACH to note:** pilots and engineers have certificates too (medicals, type ratings). If Ops Management later keeps people, it may want one shared shape for certificates. This app's shape is offered as a starting point; nothing in EDP is affected now.
+
 ## 28 Nov 2026 — Staff list: email and office on each person (F14)
 
 **What changed in this app** (built and tested, not committed yet at the time of writing): each person now carries **email** (optional, unique across the whole list including archived people, stored in small letters) and **office** (one of the six REACH offices from Q10, set by Management; new people start as Medics). The staff screen shows the list, counts that never include archived people, and a profile.

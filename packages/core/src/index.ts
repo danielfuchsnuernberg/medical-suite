@@ -17,3 +17,4 @@ export * from "./importExport/stockList";
 export * from "./access/doctors";
 export * from "./importExport/loadPlan";
 export * from "./access/staff";
+export * from "./access/training";

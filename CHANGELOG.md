@@ -1,5 +1,14 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — F15: Training and certificates (release 1 is now fully built)
+- F14 committed first (2eca1aa).
+- Staff and training: two new counts, **Certificates expired** and **Due in 30 days** (active people only), and a Training column per person: Expired certificate, Due soon / required, All valid or No courses.
+- A profile's **Training and certificates** panel lists each course: Valid, Expires in N days (30 or fewer), Expired, Required or In progress, with when it was done, when it expires and how long it's valid.
+- Manage level: **Assign course** (only courses the person hasn't got; none for archived people), **Mark complete**, **Renew** (an expired one: the June app could never renew, B20) and **Renew early**. The date it was done is picked, can't be in the future, and the new expiry is shown before saving, worked out month-safe (31 Jan + 1 month = 28 Feb, not 3 March as in June, B26).
+- Every change is in Activity as a sentence (“assigned Fire safety to Dina Test”, “renewed ACLS for Anna Example”) with old → new dates, shown as dates (found while testing: they showed as 2026-11-28).
+- DEMO data: nine training records around 28 Nov 2026 (Anna's ACLS expired, Dina's BLS due in 20 days, Dina's Oxygen refresher in progress, archived Finn's BLS expired).
+- Tests: 8 new unit tests, 6 new program tests; 2 F14 tests changed from “comes with F15” to the real training. 13 rules broken on purpose, 12 failed; the one that survived is a second guard already covered by the first. 145 of 145 and 94 of 94 pass.
+
 ## 2026-11-28 — F14: Staff and training (the staff part)
 - F13.6 loading committed first (56899c0).
 - New screen “Staff and training” (menu › Team). Everyone may look: Staff and Archived counts, people per department, and a list with department, REACH office, level and training. “Show archived” shows archived people faded; the counts never include them.

@@ -14,7 +14,7 @@ export interface LogEntry {
   data: Record<string, unknown>;          // the message's own data (e.g. an event's "what")
 }
 
-const AREA: Record<string, LogArea> = { item: "Inventory", line: "Inventory", location: "Inventory", stocktake: "Inventory", cdline: "Inventory", cddecision: "Inventory", importwait: "Inventory", person: "People", event: "People", settings: "Settings", department: "Settings", category: "Settings", course: "Settings" };
+const AREA: Record<string, LogArea> = { item: "Inventory", line: "Inventory", location: "Inventory", stocktake: "Inventory", cdline: "Inventory", cddecision: "Inventory", importwait: "Inventory", person: "People", event: "People", settings: "Settings", department: "Settings", category: "Settings", course: "Settings", training: "People" };
 /** Stamps and bookkeeping, not "what changed". */
 export const NOT_SHOWN = new Set(["id", "createdAt", "createdBy", "changedAt", "changedBy", "demo", "lastCountAt", "lastCountBy"]);
 // The country stamp is set when a record is made; a later change to it (the base moving country, F5.1) is shown.

@@ -67,6 +67,9 @@
 | 2026-11-28 | F6: the cards open a first version of Store and bags (the lines they mean, verdict line, show all); F7 adds filters, sort, CSV | Wait for F7, or build F7 now | F6.1 needs a list to open; the rest is F7's own work |
 | 2026-11-28 | F8: a move is saved as one batch (take here, new line if needed, add there): all or nothing | Separate saves | if the second save failed, stock would vanish from the count |
 | 2026-11-28 | F8: a move joins only a line with the same item, place, lot (any capitals) and expiry; otherwise a new line without a required amount | Join any line of the item in that place | F8.2; mixing lots would lose track of expiry dates |
+| 2026-11-28 | F15: a training record keeps its expiry, worked out when it's completed (the course's months at that time) | Work it out every time from the course | changing a course's months later must not quietly move certificates people already hold; a renew works it out again |
+| 2026-11-28 | F15: "today" for training is the base's day (its time zone), checked in the store | The computer's own day | the same answer in PNG and on a computer elsewhere (B13) |
+| 2026-11-28 | F15: no button to set “In progress”; Mark complete works from Required or In progress | Add a Start button | the approved demo has none; In progress shows when it is there |
 | 2026-11-28 | F14: office is one of the six REACH offices (Q10), set per person; new people start as Medics | Leave office out | Core R3: one main office per person; F14.1 names office in the Core shape |
 | 2026-11-28 | F14: email optional, unique across archived people too, stored in small letters | Required email | not everyone at a base has one; Danny's approved demo refused only a duplicate |
 | 2026-11-28 | F14: training and duties shown as “comes with F15 / F16” on the profile and list | Hide them until built | the approved demo shows them; a visible gap, never a hidden one |

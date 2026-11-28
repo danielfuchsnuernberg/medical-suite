@@ -81,7 +81,7 @@ test("F14.2 directory shows department, office, level and training; Show archive
   await expect(row("demo-p1")).toContainText("Clinical");
   await expect(row("demo-p3")).toContainText("Management");
   await expect(row("demo-p1")).toContainText("Work");
-  await expect(row("demo-p1")).toContainText("comes with F15");
+  await expect(row("demo-p1")).toContainText("Expired certificate");
   await expect(row("demo-p5")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Add person" })).toHaveCount(0);   // Work level only looks
   await page.screenshot({ path: path.join(SHOTS, "f14-staff.png") });
@@ -158,7 +158,7 @@ test("F14.5 a profile shows training, details and this week's duties; search ope
   await expect(page.getByTestId("prof-name")).toHaveText("Dina Test");
   await expect(page.getByTestId("prof-email")).toHaveText("dina@example.org");
   await expect(page.getByTestId("prof-office")).toHaveText("Medics");
-  await expect(page.getByTestId("prof-training")).toContainText("F15");
+  await expect(page.getByTestId("prof-training")).toContainText("BLS (basic life support)");
   await expect(page.getByTestId("prof-duties")).toContainText("roster (F16, release 2)");
   await page.screenshot({ path: path.join(SHOTS, "f14-profile.png") });
   await page.click('.side [data-view="staff"]');                     // the menu goes back to the list
