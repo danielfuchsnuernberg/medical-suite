@@ -1,5 +1,12 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — Stage 9: handover of release 1
+- Stage 8 committed first (72a9c13).
+- `ARCHITECTURE.md`: new “As built” section (folders, every record type, how to build, run, test and make the installers) next to the approved target; the June folder layout marked as gone.
+- `HANDOVER.md` rewritten for a stranger: what exists, how to run from source and from the installers, how to test (181 + 105), current state, known limits (no server yet, unsigned installers, restore, Excel lists), next steps for Danny, the REACH chat and the medics.
+- `CHECKLIST.md` final: the archive block closed (the old public page answers 404), the June bug-hunt block closed (Q11), the ALL rules 8 of 9 (ALL.7 waits for signing and a Windows try).
+- Danny confirmed nothing is missing from his original brief: Stage 1 and Stage 9 signed off. Release 1 is done.
+
 ## 2026-11-28 — Stage 8: the 12 audit gaps fixed (Danny's GO, Q31 = A, Q32 = B)
 - **Real data:** B6's detailed list of real items moved to iCloud (BUGS.md keeps counts); `imports/` and installer output git-ignored; 0 real item names left in Git (B58).
 - **Doctors' list (Q31 = A):** Management can no longer change a listed doctor's profession; a doctor removes them first (B63).

@@ -1,6 +1,6 @@
 # ARCHITECTURE — REACH Medical Suite
 
-**Target design: APPROVED by Danny, 27 Nov 2026 (Stage 5 GO).** Shown visually on https://claude.ai/artifact/CDkrByh9ypq4YXu4sN7vBj (source `docs/stage5/medical-suite-blueprint.html`; answers in its `stage5` collection). Follows the REACH Core data rules (`../reach/CORE-DATA.md`, R1–R13). The June prototype as found is described further down, as a reference.
+**Target design: APPROVED by Danny, 27 Nov 2026 (Stage 5 GO).** What was actually built is in **“As built”** below (28 Nov 2026); where the two differ (folder grouping, record names), “As built” is right. Shown visually on https://claude.ai/artifact/CDkrByh9ypq4YXu4sN7vBj (source `docs/stage5/medical-suite-blueprint.html`; answers in its `stage5` collection). Follows the REACH Core data rules (`../reach/CORE-DATA.md`, R1–R13). The June prototype as found is described further down, as a reference.
 
 ## Layers
 ```
@@ -91,6 +91,75 @@ Electron (one Chromium engine on Mac and Windows: what is tested is what runs; o
 
 ---
 
+# As built — release 1 (Stage 9, 28 Nov 2026)
+
+What the code really is after Stages 6–8. Where it differs from the target above, this section is right. The layers, the store door, the two-computer rules and the dependencies above are as built (plus electron-builder now set up, B60).
+
+## Folders
+```
+medical-suite/
+├── PLAN.md CHECKLIST.md ARCHITECTURE.md DECISIONS.md BUGS.md AUDIT.md CHANGELOG.md HANDOVER.md CLAUDE.md
+├── package.json            npm workspaces; vitest.config.mjs, playwright.config.js
+├── packages/core/src/      rules only, TypeScript, no screens, no storage
+│   ├── reachCore/          ids (random UUID), stamps, change messages, dates (Moment / CalendarDate), readable numbers (B62)
+│   ├── access/             levels.ts (View/Work/Manage), password.ts, doctors.ts (profession, medical code, doctors' list,
+│   │                       Head Doctor), staff.ts (offices, email, counts), training.ts (status, month-safe expiry)
+│   ├── inventory/          readiness.ts (stock status, verdicts, filters, CSV), lines.ts (amounts, names, move),
+│   │                       stockTake.ts (then vs now), register.ts (ledger, balance, witness, PIN rules)
+│   ├── settings/lists.ts   departments, categories, courses, bags, countries, base settings, program name
+│   ├── importExport/       xlsx.ts (reads .xlsx, no library), stockList.ts (the check), loadPlan.ts (what loads where)
+│   ├── search/, shell/     search across staff and stock; the menu
+│   └── demo/seed.ts        DEMO data (R11), the first-run data only
+├── packages/store/src/     the store door and the stores that check every rule where it is saved
+│   ├── door.ts             one way in and out (R7): messages, outbox, sync, migrations, restore by setting back (Q32 = B)
+│   ├── fold.ts, log.ts     records and the activity log worked out from the messages; frozen records (F11.1, F12.8)
+│   ├── backend.ts, idbBackend.ts, transport.ts   memory / IndexedDB storage; the stand-in server for tests
+│   └── accounts.ts settingsStore.ts inventoryStore.ts registerStore.ts trainingStore.ts backup.ts backupStore.ts
+├── packages/*/test/        unit tests (Vitest), one file per area, plus stage7/stage8 for the fixed bugs
+├── apps/desktop/
+│   ├── electron/           main.cjs (window, backups folder, downloads), preload.cjs (only backups list/save/read)
+│   ├── src/screens/        Home, Overview, StockList, ItemPage, Count, StockTakes, Register, Staff, Activity,
+│   │                       Settings (+ BackupImport), SignIn (sign-in, set-up, own password, medical code), Placeholder
+│   ├── src/components/     Dialog, AdjustDialog, Sidebar, SearchBox, SyncLight, Banners, Toasts, ExpiryBadge, Icon
+│   ├── src/state/          useDoor (opens the door; test controls), useToday, saveGuard (one click saves once, B37),
+│   │                       appName (the name from Settings, B61)
+│   ├── src/styles/         tokens.css (June tokens), app.css
+│   └── package.json        installers: electron-builder settings; output in release/ (git-ignored)
+├── tests/app/              Playwright driving the real program: one or more tests per Master Checklist line
+└── docs/                   stage pages (stage3–stage8), reach-notes.md (for the REACH chat), foundation/, stocktake/
+```
+
+## Records (as stored; every one with the Core stamps, R4)
+| recordType | Fields | Notes |
+|---|---|---|
+| settings (id "base") | programName, baseName, country, timeZone, dateStyle, dayShift, nightShift | F5; B61 |
+| country | code, name, timeZone | added by Management (B59); two are built in |
+| department, category, course, location | name (course: validMonths; location: kind store / bag) | F5 lists; bags are locations of kind bag |
+| item | itemNo, name, categoryId, unit, controlled, controlledNote | catalogue keeper (R2) |
+| line | itemId, locationId, qty, required, lot, expiry, lastCountAt, lastCountBy | stock in one place |
+| person | staffNo, name, job, level, departmentId, office, email, profession, medicalCode, cdRight, headDoctor | cdRight and headDoctor are this app's rights (reach-notes) |
+| training | personId, courseId, status (required / in progress / done), completedOn, expires | F15 |
+| stocktake | name, lines [lineId, frozen names, qty, …] | frozen: never changed |
+| cdline | itemId, kind (opening / in / out / moved / correction), qty, lineId, witness, reason, how, doctor, askedDoctor, ref | frozen; the register |
+| cddecision | cdlineId, decision (approve / refuse / query), note | frozen |
+| importwait | the Excel row waiting for the Head Doctor | F13.6 |
+| event | what, personId, … | log-only facts (set-up, one-time password, imports, restores, PIN pauses, lockout repair) |
+
+Message ops: create, set, delta (movements add up), count (later count used, disagreements flagged), archive, restore, delete (only a mistake within 24 hours; never for frozen types or events).
+
+## How to build, run and test
+| What | Command (from the repo folder) |
+|---|---|
+| Unit tests | `npx vitest run` |
+| Program tests | `npm run test:app` (builds, then Playwright drives Electron in test mode) |
+| Run the program from source | `npm start` |
+| Mac installer | `npm run dist:mac -w apps/desktop` → `apps/desktop/release/REACH Medical Suite-0.1.0(-arm64).dmg` |
+| Windows installer | `npm run dist:win -w apps/desktop` → `apps/desktop/release/REACH Medical Suite Setup 0.1.0.exe` |
+
+Installers are unsigned until Danny makes a Developer ID certificate; both use Electron's default icon.
+
+---
+
 # The June prototype, as found (26 Nov 2026) — reference only
 
 This describes the prototype **as it is**. The target architecture is Stage 5 and comes after the Q&A.
@@ -102,7 +171,7 @@ This describes the prototype **as it is**. The target architecture is Stage 5 an
 - **Not a PWA:** no manifest, no service worker (both return 404 on the live site). It only works offline while the tab is already open.
 - **Look:** design tokens in `:root` (indigo accent `#4F46E5`, Inter or system font). Mirror of `docs/foundation/tokens.css`. Light mode only.
 
-### Folder layout (today)
+### Folder layout (June, gone since 26 Nov)
 ```
 medical-suite/
 ├── index.html            the whole app (incl. built-in real data, see B9)

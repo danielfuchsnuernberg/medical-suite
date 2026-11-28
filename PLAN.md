@@ -43,6 +43,9 @@ The project now lives at `~/Documents/GitHub/medical-suite`, cloned from GitHub.
 - **Store:** `Stock Take 2026.xlsx` exists in one version only.
 - **For the new app:** stock is loaded from the newest spreadsheets (bags: the Downloads copy; Store: Stock Take 2026), not from the June app's built-in list. Which month counts as "now" is a question for the data import (Stage 2).
 
+## Brief confirmed
+28 Nov 2026, Danny: “Nothing missing” (Stage 1 sign-off, asked at the Stage 9 handover).
+
 ## Q&A
 
 Asked on the illustrated questions page (26 Nov 2026). Answers read back from the page on 26 Nov 2026.

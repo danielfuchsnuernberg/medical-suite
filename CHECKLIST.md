@@ -1,5 +1,5 @@
 # CHECKLIST — REACH Medical Suite
-**Now:** Stage 8 — Audit · 🟢 done: the 12 gaps (B58–B69) fixed, 181 + 105 tests pass (not committed) · waiting for Danny: commit; a Developer ID certificate and one try of the Windows installer (B60); then Stage 9 (handover)
+**Now:** Done · release 1 built, tested, audited and handed over (28 Nov 2026) · waiting for Danny: a Developer ID certificate and one Windows try (B60); the server (REACH SD2) in the REACH chat
 
 ### ARCHIVE — clear away the June prototype (26 Nov 2026)
 **Goal:** only the new app is left in sight; nothing is lost.
@@ -16,10 +16,10 @@
 - [x] README.txt written in iCloud › AI Projects › REACH Inventory
 - [x] Old "Medical Suite" folder (only .DS_Store and an empty sub-folder left) and the Dock app → Trash
 - [x] `index.html` removed from the repo, pushed
-- [ ] Live page checked after GitHub Pages rebuilds
+- [x] Live page checked after GitHub Pages rebuilds ✅ 28 Nov 2026: https://danielfuchsnuernberg.github.io/medical-suite/ answers 404 (the June app and its stock list are gone from the live site)
   - 27 Nov 2026, checked after push 6417723: https://danielfuchsnuernberg.github.io/medical-suite/ still answers 200 with the June app (last-modified 25 Nov 15:26, contains the stock list). Pages isn't rebuilding: a file pushed today returns 404. **Only fix: Danny unpublishes the site** (GitHub › medical-suite › Settings › Pages › Unpublish site, or Source: None).
 - History rewrite: **not done** (Q1 = leave)
-**Status:** 🟡 IN PROGRESS (last check pending)
+**Status:** 🟢 DONE (28 Nov 2026)
 
 ### STEP 6 — Bug hunt (Workflow B) — closed 26 Nov 2026
 Danny: nobody uses the June app, so no patches. All 26 bugs are rules for the new app (`BUGS.md`).
@@ -30,9 +30,9 @@ Danny: nobody uses the June app, so no patches. All 26 bugs are rules for the ne
 - [x] Steps 1–3: all bugs read, reproduced, written into `BUGS.md` (B1–B26 + data list)
 - [x] Step 4: fix order planned (`BUGS.md` › Fix order)
 - [x] Step 5: before/after shown (page, tab 2)
-- [ ] Step 6: Danny's GO, and Q11 answered (is the June app in real use?)
-**Status:** 🟡 IN PROGRESS
-**Open questions:** Q1, Q11 (decide the patch set); Q2–Q10 (decide the rebuild)
+- [x] Step 6: Danny's GO, and Q11 answered (is the June app in real use?) ✅ 26 Nov: “No one uses the app or webpage” (Q11): no patches; all 26 bugs became rules for the new app
+**Status:** 🟢 CLOSED (26 Nov 2026; ticked 28 Nov)
+**Open questions:** none (Q1 = leave history, Q11 = not in use, Q2–Q10 answered in Stage 2)
 
 ### STAGE 1 — Plan Mode
 **Goal:** the brief is captured verbatim and the existing app is fully stock-taken.
@@ -43,12 +43,12 @@ Danny: nobody uses the June app, so no patches. All 26 bugs are rules for the ne
 - [x] Brief written verbatim into `PLAN.md`
 - [x] Stock-take: every line read, app run, measurements recorded (`ARCHITECTURE.md`, `BUGS.md`, `AUDIT.md`)
 - [x] Stock-take shown visually (map: green / amber / red)
-- [ ] Danny confirms nothing is missing from the brief
+- [x] Danny confirms nothing is missing from the brief ✅ 28 Nov 2026: “Nothing missing”
 **Tests for this stage:**
 - [x] Live page, repo and iCloud file have the same md5 (b065284d…)
 - [x] App opens with 0 console errors; every Inventory action tried once on a copy
 - [x] Ignored paths checked with `git check-ignore`
-**Status:** 🟡 IN PROGRESS
+**Status:** 🟢 SIGNED OFF (28 Nov 2026)
 **Open questions:** none for this stage (Q1–Q10 belong to Stage 2)
 
 ### STAGE 2 — Q&A
@@ -174,7 +174,18 @@ Danny: nobody uses the June app, so no patches. All 26 bugs are rules for the ne
 **Open questions:** none
 
 ### STAGE 9 — Handover
-**Status:** 🔴 OPEN
+**Goal:** a stranger, or next-session-me, can pick this up from the files alone.
+**Checklist:**
+- [x] `ARCHITECTURE.md`: “As built” section (folders, records, how to build, run and test) next to the approved target ✅ 28 Nov
+- [x] `HANDOVER.md` rewritten: what exists, how to run (source and installers), how to test, current state, known limits, next steps ✅ 28 Nov
+- [x] `CHANGELOG.md`: dated entry ✅ 28 Nov
+- [x] `CHECKLIST.md` statuses final; the old archive and bug-hunt blocks closed (live page 404, Q11) ✅ 28 Nov
+- [x] Every project file present and current (PLAN, CHECKLIST, ARCHITECTURE, DECISIONS, BUGS, AUDIT, CHANGELOG, HANDOVER) ✅ 28 Nov
+- [x] Stage 1's last item: Danny confirms nothing is missing from the brief ✅ 28 Nov: “Nothing missing”
+**Tests for this stage:**
+- [x] The handover followed as a stranger would, in a fresh copy of the repo: install, unit tests, program tests ✅ 28 Nov (see AUDIT.md)
+**Status:** 🟢 SIGNED OFF (28 Nov 2026)
+**Open questions:** none
 
 ## Master Feature Checklist
 **Approved by Danny, 27 Nov 2026 (Stage 4 signed off).** Changed the same day to line up with the REACH Core rules, on Danny's answers (Stage 5 alignment page: five points yes, Q20 = A, Q21 = A). This is the hard reference for Stages 6–8. A feature is done only when every line in its block is ✅, each proven by a test that can fail. In brackets after each line is where it comes from: a June bug (B…), an answer (Q…), Danny's own words, or the approved demo.
@@ -190,7 +201,7 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 - [~] ALL.7 Works on Mac and Windows as an installed program, phone and tablet sizes included. (Q3, Q4) 🟡 28 Nov: Mac installer built and tested (B60); Windows installer built, not yet tried on Windows; phone and tablet sizes tested; signing waits for Danny's certificate
 - [x] ALL.8 The program is called “REACH Medical Suite” (REACH code MD); Inventory is its first part (MD1). The name is a setting until the common REACH look (EDP F53). (Q21 = A, REACH D4) ✅ 28 Nov: the name is a setting (B61)
 - [x] ALL.9 Follows the REACH Core data rules (`../reach/CORE-DATA.md`): one store door, hidden random IDs plus readable numbers, the same stamps on every record (created / changed by and when, country), Active or Archived, changes sent as messages with their own ID. (REACH R4, R7, R8) ✅ 28 Nov: one store door, random IDs plus readable numbers (B62), stamps with the base's country (B59), Active/Archived, messages (audit)
-**Status:** 🔴 not built
+**Status:** 🟢 8 of 9 met (28 Nov 2026, Stage 8); ALL.7 waits for Danny's two steps (signing, a Windows try)
 
 ### F1 — Program window, menu and search · release 1 · June J1 · demo batch 1
 - [x] F1.1 Menu as in the June app: Home; Inventory (Overview, Store and bags, Item list, Count a bag, Stock takes, Controlled drugs, Activity); Team (Staff and training, Roster); Later (Patients); Settings at the bottom. Home has a card per section. (demo 1) ✅ 27 Nov: tests/app/f1-shell.spec.mjs › F1.1

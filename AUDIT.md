@@ -52,3 +52,10 @@
 - **Real data:** 0 of 574 real item names in tracked files after B58.
 - **Full pass:** 181 of 181 unit, 105 of 105 program, 28 Nov.
 - Result: ✅ release 1 matches the Master Checklist except ALL.7's two steps that are Danny's (signing, a Windows try).
+
+## 2026-11-28 — Stage 9: the handover followed as a stranger would
+
+- A fresh copy of the repo (`git clone` of 72a9c13) into a scratch folder: no `data/`, no `imports/`, no real data.
+- Followed `HANDOVER.md` › How to run it / How to test it, word for word: `npm install` (cache in a scratch folder) → Electron missing, so the documented `node node_modules/electron/install.js` → present.
+- `npx vitest run`: **181 of 181** pass. `npm run test:app`: **104 passed, 1 skipped** (the installed-app test skips itself when no installer was built: as designed).
+- Result: ✅ the files alone are enough to install, run and test the program.
