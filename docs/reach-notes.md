@@ -4,6 +4,15 @@ What this app built or decided that touches the REACH ecosystem: the shared Peop
 
 ---
 
+## 28 Nov 2026 — Staff list: email and office on each person (F14)
+
+**What changed in this app** (built and tested, not committed yet at the time of writing): each person now carries **email** (optional, unique across the whole list including archived people, stored in small letters) and **office** (one of the six REACH offices from Q10, set by Management; new people start as Medics). The staff screen shows the list, counts that never include archived people, and a profile.
+
+**Why it matters for REACH:**
+1. **People Core shape (R2, Q37).** For the later merge, the same person must be recognisable in every app's list. Email is the obvious match key. **For REACH to decide:** is `email` a Core People field (same name, small letters, unique), and is it the key Ops Management uses to merge the lists? Proposed by this app: yes.
+2. **Office (R3).** Stored as `office` with the exact six words of Q10 (Management, Dispatch, Pilots, Medics, Engineering, Ground Crew). **For REACH to confirm** the field name and words, so EDP stores it the same way.
+3. **Departments** (Clinical, Management, …) stay this app's own setting, not a Core list.
+
 ## 28 Nov 2026 — Doctors, medical codes and Head Doctors (Danny with the medical staff)
 
 **What changed in this app** (built and tested, not committed yet at the time of writing; checklist F12.12–F12.15):

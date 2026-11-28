@@ -1,5 +1,14 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — F14: Staff and training (the staff part)
+- F13.6 loading committed first (56899c0).
+- New screen “Staff and training” (menu › Team). Everyone may look: Staff and Archived counts, people per department, and a list with department, REACH office, level and training. “Show archived” shows archived people faded; the counts never include them.
+- A profile per person: details (email, REACH office, staff number, added when and by whom, where the list comes from), Training (comes with F15) and This week on the roster (comes with F16, release 2). Search opens it.
+- Manage level adds people (name, job, department, office, email, level), edits details, archives (with a confirm box), restores, and deletes a person added by mistake within 24 hours (logged). Levels, passwords and professions stay in Settings › People and access.
+- New on each person: **email** (optional; one already in the list, archived people too, is refused; stored in small letters) and **office** (one of the six REACH offices). The DEMO people got example.org emails and offices.
+- Tests: 5 new unit tests, 6 new program tests; the F1 menu test no longer expects Staff to be “coming”. 11 rules broken on purpose, each made its test fail. 137 of 137 and 88 of 88 pass.
+- Found while looking at the screenshots: the profile header was centred and the profession badge had no colour: both fixed.
+
 ## 2026-11-28 — F13.6: loading the Excel lists (Q26 = A, A, A)
 - F13 and the Head Doctor committed first (22a3fd0).
 - After the check, a list with no row to fix shows “Prepare loading…”: a preview of exactly what would be loaded, before anything is. Per sheet a place: the bag with the same name, the Store for the stock-take sheet, otherwise a new bag named after the sheet; each can be changed or the sheet skipped. Per row the newest month with a number, shown e.g. “28 pack (SOH FEB)”. Required amounts come in for bags only.

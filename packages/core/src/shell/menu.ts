@@ -17,7 +17,7 @@ export const MENU: MenuGroup[] = [
     { id: "log", label: "Activity", icon: "clock", feature: "F4", state: "built" },
   ] },
   { label: "Team", entries: [
-    { id: "staff", label: "Staff and training", icon: "users", feature: "F14", state: "coming" },
+    { id: "staff", label: "Staff and training", icon: "users", feature: "F14", state: "built" },
     { id: "roster", label: "Roster", icon: "roster", feature: "F16", state: "later", tag: "LATER" },
   ] },
   { label: "Later", entries: [

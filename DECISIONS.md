@@ -67,6 +67,10 @@
 | 2026-11-28 | F6: the cards open a first version of Store and bags (the lines they mean, verdict line, show all); F7 adds filters, sort, CSV | Wait for F7, or build F7 now | F6.1 needs a list to open; the rest is F7's own work |
 | 2026-11-28 | F8: a move is saved as one batch (take here, new line if needed, add there): all or nothing | Separate saves | if the second save failed, stock would vanish from the count |
 | 2026-11-28 | F8: a move joins only a line with the same item, place, lot (any capitals) and expiry; otherwise a new line without a required amount | Join any line of the item in that place | F8.2; mixing lots would lose track of expiry dates |
+| 2026-11-28 | F14: office is one of the six REACH offices (Q10), set per person; new people start as Medics | Leave office out | Core R3: one main office per person; F14.1 names office in the Core shape |
+| 2026-11-28 | F14: email optional, unique across archived people too, stored in small letters | Required email | not everyone at a base has one; Danny's approved demo refused only a duplicate |
+| 2026-11-28 | F14: training and duties shown as “comes with F15 / F16” on the profile and list | Hide them until built | the approved demo shows them; a visible gap, never a hidden one |
+| 2026-11-28 | F14: levels, passwords and professions stay in Settings › People and access; Staff handles details, archive, restore, delete | Move everything to Staff | touch only what F14 needs; one place each |
 | 2026-11-28 | F13.6: a sheet called “Sheet1” in a file whose name says stock take goes to the Store; any sheet's place can be changed or skipped in the preview | Ask for every sheet | the real Store sheet is called Sheet1; a wrong guess is visible and fixable before loading |
 | 2026-11-28 | F13.6: a line already there gets the imported number as a count (logged old → new), not added to it | Add the numbers | the list says what is on the shelf, like a count |
 | 2026-11-28 | F13.6: waiting rows are their own records; only the Head Doctor turns them into stock (through the register if controlled) | Load them blocked | controlled drugs never exist as ordinary stock, not even blocked |

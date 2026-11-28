@@ -15,6 +15,7 @@ import StockList from "./screens/StockList.jsx";
 import ItemPage from "./screens/ItemPage.jsx";
 import Count from "./screens/Count.jsx";
 import StockTakes from "./screens/StockTakes.jsx";
+import Staff from "./screens/Staff.jsx";
 import Register from "./screens/Register.jsx";
 import Dialog from "./components/Dialog.jsx";
 import { SignIn, ChooseOwn, SetUp, MedicalCode } from "./screens/SignIn.jsx";
@@ -47,6 +48,7 @@ export default function App() {
   const signedIn = !!(me && me.state === "Active" && !auth.mustChange);
   const [view, setView] = useState("home");
   const [filter, setFilter] = useState(null);     // the Store and bags filters (F7); the Overview opens it with one set (F6.1)
+  const [personId, setPersonId] = useState(null); // the profile open on Staff (F14.5); the menu goes back to the list
   const [itemId, setItemId] = useState(null);     // the item a row opened (F7.3; the page itself is F8)
   // F10: typed counts are kept here, not on the count screen, so searching and switching place never wipe them (B16)
   const [count, setCount] = useState({ locationId: null, q: "", drafts: {} });
@@ -68,7 +70,7 @@ export default function App() {
     return () => window.removeEventListener("beforeunload", ask);
   }, [typedCounts]);
   const [nav, setNav] = useState(0);              // every menu click starts the screen afresh (e.g. Stock takes goes back to the list)
-  const goNow = (id, f = null) => { setNav(n => n + 1); setView(id); setFilter(f); setDrawer(false); if (id !== "count") setCountResult(null); };
+  const goNow = (id, f = null) => { setNav(n => n + 1); setView(id); setPersonId(null); setFilter(f); setDrawer(false); if (id !== "count") setCountResult(null); };
   // F10.2: leaving with unsaved counts asks Save / Throw away / Keep counting
   const go = (id, f = null) => { if (view === "count" && id !== "count" && typedCounts) { setDrawer(false); setLeaving({ id, f }); return; } goNow(id, f); };
 
@@ -156,7 +158,7 @@ export default function App() {
   const noHead = can(me.level, "changeLevels") && register.heads().length === 0;
   const entry = findEntry(view);
   const title = view === "home" ? "Home" : view === "item" ? String(door.get("item", itemId)?.name ?? "Item") : entry ? entry.label : "";
-  const openResult = (kind) => go(kind === "person" ? "staff" : "where"); // F7/F8/F14 bring the real screens
+  const openResult = (kind, hit) => { if (kind === "person") { go("staff"); setPersonId(hit?.id ?? null); } else go("where"); };
   return (
     <div className={`shell${drawer ? " drawer" : ""}`}>
       <Sidebar view={view === "item" ? "where" : view} badges={{ cd: cdBadge }} go={go} baseName={settings.baseName} />
@@ -177,6 +179,7 @@ export default function App() {
             : view === "count" ? <Count inv={data.inv} me={me} state={count} setState={(f) => { setCount(f); setCountResult(null); }} save={saveCounts} result={countResult} />
             : view === "takes" ? <StockTakes key={nav} door={door} me={me} store={inventory} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} toast={toast} typedCounts={typedCounts} />
             : view === "cd" ? <Register door={door} me={me} reg={register} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} toast={toast} />
+            : view === "staff" ? <Staff door={door} me={me} accounts={accounts} tick={tick} toast={toast} timeZone={settings.timeZone} dateStyle={settings.dateStyle} openId={personId} setOpenId={setPersonId} />
             : view === "log" ? <Activity door={door} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} />
             : view === "settings" ? <Settings me={me} accounts={accounts} store={settingsStore} door={door} tick={tick} toast={toast} backups={backups} register={register} inventory={inventory} />
             : <Placeholder view={view} />}

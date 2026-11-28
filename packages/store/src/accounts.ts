@@ -5,7 +5,7 @@
 // - DEMO people (R11) sign in with "demo" until someone gives them a password on this computer.
 // Every rule is checked here, not only in the screens.
 import { can, checkLevelChange, checkArchivePerson, checkDelete, makeCredential, verifyPassword, passwordProblem,
-  oneTimePassword, normaliseOneTime, isLevel, type Credential, type Level, type StoredRecord, PROFESSIONS, medicalCodeProblem } from "@md/core";
+  oneTimePassword, normaliseOneTime, isLevel, type Credential, type Level, type StoredRecord, PROFESSIONS, medicalCodeProblem, emailProblem, normaliseEmail, isOffice } from "@md/core";
 import { Door, DoorError } from "./door";
 
 export const DEMO_PASSWORD = "demo";
@@ -14,6 +14,7 @@ export type SignInResult = { ok: true; mustChange: boolean } | { ok: false; why:
 export type PasswordState = "own" | "one-time" | "demo" | "none";
 
 const credKey = (id: string) => "cred:" + id;
+export type PersonInput = { name: string; job: string; level: Level; email?: string; office?: string; departmentId?: string | null };
 
 export class Accounts {
   constructor(private door: Door) {}
@@ -90,14 +91,15 @@ export class Accounts {
     return this.person(id)!;
   }
 
-  private async _addPerson(actor: StoredRecord, o: { name: string; job: string; level: Level }): Promise<StoredRecord> {
+  private async _addPerson(actor: StoredRecord, o: PersonInput): Promise<StoredRecord> {
     actor = this.current(actor);
     if (!can(actor.level, "managePeople")) throw new Refused("Only Manage level can add people.");
     const name = o.name.trim();
     if (!name) throw new Refused("Type a name.");
     if (!isLevel(o.level)) throw new Refused("A level is View, Work or Manage.");
     if (this.people(true).some(p => String(p.name).toLowerCase() === name.toLowerCase())) throw new Refused(`${name} is already in the list (look under archived too).`);
-    const ch = await this.door.apply({ recordType: "person", op: "create", data: { name, job: o.job.trim(), level: o.level }, by: actor.id });
+    const extra = this.details(o);
+    const ch = await this.door.apply({ recordType: "person", op: "create", data: { name, job: String(o.job ?? "").trim(), level: o.level, ...extra }, by: actor.id });
     return this.person(ch.recordId)!;
   }
 
@@ -148,6 +150,30 @@ export class Accounts {
     if (!p || p.state !== "Active") throw new Refused("You are no longer an active person here. Sign out and ask Management.");
     return p;
   }
+  // ---- Staff details (F14.1): email (unique, archived people too), office (one of the six REACH offices), department ----
+  private details(o: { email?: unknown; office?: unknown; departmentId?: unknown }, exceptId?: string): Record<string, unknown> {
+    const out: Record<string, unknown> = {};
+    if (o.email !== undefined) { const why = emailProblem(o.email, this.door.records("person"), exceptId); if (why) throw new Refused(why); out.email = normaliseEmail(o.email) || null; }
+    if (o.office !== undefined) { if (!isOffice(o.office)) throw new Refused("Pick one of the six REACH offices."); out.office = o.office; }
+    if (o.departmentId !== undefined) {
+      if (o.departmentId !== null && o.departmentId !== "") { const d = this.door.get("department", String(o.departmentId)); if (!d || d.state !== "Active") throw new Refused("Pick a department from the list."); out.departmentId = d.id; }
+      else out.departmentId = null;
+    }
+    return out;
+  }
+  private async _setDetails(actor: StoredRecord, targetId: string, o: { job?: string; email?: unknown; office?: unknown; departmentId?: unknown }): Promise<void> {
+    actor = this.current(actor);
+    if (!can(actor.level, "managePeople")) throw new Refused("Only Manage level changes a person's details.");
+    const t = this.person(targetId); if (!t) throw new Refused("Not found.");
+    if (t.state !== "Active") throw new Refused("That person is archived. Restore them first.");
+    const data = this.details(o, targetId);
+    if (o.job !== undefined) data.job = String(o.job).trim();
+    for (const k of Object.keys(data)) if ((t[k] ?? null) === (data[k] ?? null)) delete data[k];
+    if (!Object.keys(data).length) return;
+    await this.door.apply({ recordType: "person", recordId: targetId, op: "set", data, by: actor.id });
+  }
+  setDetails(actor: StoredRecord, targetId: string, o: { job?: string; email?: unknown; office?: unknown; departmentId?: unknown }) { return this.one(() => this._setDetails(actor, targetId, o)); }
+
   // ---- Profession and medical code (Danny with the medical staff, 28 Nov; F12.12) ----
   /** Management sets each person's profession: Doctor, Nurse or Other. */
   private async _setProfession(actor: StoredRecord, targetId: string, to: string): Promise<void> {
@@ -173,7 +199,7 @@ export class Accounts {
   setOwnPassword(personId: string, password: string, repeat?: string) { return this.one(() => this._setOwnPassword(personId, password, repeat)); }
   giveOneTime(actor: StoredRecord, targetId: string) { return this.one(() => this._giveOneTime(actor, targetId)); }
   setUp(o: { personId?: string; name?: string; job?: string }, password: string, repeat?: string) { return this.one(() => this._setUp(o, password, repeat)); }
-  addPerson(actor: StoredRecord, o: { name: string; job: string; level: Level }) { return this.one(() => this._addPerson(actor, o)); }
+  addPerson(actor: StoredRecord, o: PersonInput) { return this.one(() => this._addPerson(actor, o)); }
   setLevel(actor: StoredRecord, targetId: string, to: Level) { return this.one(() => this._setLevel(actor, targetId, to)); }
   archive(actor: StoredRecord, targetId: string) { return this.one(() => this._archive(actor, targetId)); }
   restore(actor: StoredRecord, targetId: string) { return this.one(() => this._restore(actor, targetId)); }
