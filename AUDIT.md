@@ -29,3 +29,26 @@
 - **Full pass:** 172 of 172 unit, 98 of 98 program, 28 Nov.
 - **Real data:** the Excel check run on the real files printed counts only (no names, no values, nothing stored).
 - Result: ✅ only the intended files changed; the fixes match the page Danny gave GO on, except one consequence found while testing and parked as Q30.
+
+## 2026-11-28 — Stage 8: release 1 (ALL, F1–F15) against the code
+
+- **How:** every Master Checklist line read against the code, not the ticks: two independent auditors (ALL and F1–F7 · F8–F15), each line with file:line, and my own checks of the nine ALL rules; a script matched every line to the tests that name it.
+- **Tests per line:** 89 feature lines (F1.1–F15.x), every one named by at least one test; 270 tests in all; 172 unit + 98 program pass (Stage 7, 28 Nov).
+- **Lines:** 98 in all. **71 met, 26 partly, 1 not met.** Of the 27: 12 wait for the shared server as planned (F2.1, F2.6, F3.1–F3.5, F4.1, F11.4, F13.1, F12.3 ×2), 1 is a placeholder by plan (F14.5), **12 are gaps: B58–B69** in BUGS.md (2 need Danny's answer: Q31, Q32).
+- **Real data (ALL.1):** 574 real item names (16+ letters) from the medics' files compared with every tracked file (counts only printed): 3 found, all in BUGS.md › B6 → B58. History still holds the June list (Danny's Q1 choice).
+- **Country (ALL.2):** every new record is stamped "PG" whatever the base's country → B59.
+- **Installer (ALL.7):** none; electron-builder chosen in Stage 5 but never set up → B60.
+- **Files:** everything tracked sits in the planned top-level places. Inside `packages/core` the code is grouped differently from the plan in ARCHITECTURE.md (register and stock takes in `inventory/`, staff and training in `access/`, unit tests in `packages/*/test`), and its “Folder layout (today)” still describes the June single file → ARCHITECTURE.md is brought up to date in Stage 9.
+- **Decisions:** Q27 and Q28 were missing from DECISIONS.md → added the same day.
+- Result: ⚠️ audit done; release 1 is **not** ready until B58–B69 are fixed (Workflow B, after Danny's GO).
+
+## 2026-11-28 — Stage 8 gap fixes (Workflow B step 9)
+
+- **Diff:** 35 tracked files changed plus 6 new (`apps/desktop/src/state/appName.js`, `packages/core/src/reachCore/numbers.ts`, `packages/store/test/stage8.test.ts`, `tests/app/stage8.spec.mjs`, `tests/app/b60-packaged.spec.mjs`, `docs/stage8/`). Every changed source file is named in a B58–B69 row, plus `Activity.jsx` (the restore's sentence) and `package-lock.json` (electron-builder 26.18.0, chosen in Stage 5). `imports/` untouched and now ignored; installers in `apps/desktop/release/`, ignored.
+- **Removed:** the store door's old “replace everything” restore (no longer used: Q32 = B); its one test now goes through the real restore.
+- **Tests changed to match the fixes, never weakened:** F12.13 and B45 (Q31), F13.4 and B29 (Q32: restore sets back), F13.5 (the entry stays), F4.3 (office and staff number on new people).
+- **Each fix proven:** 17 of 17 undo checks failed their test; 4 of them only after the test was made stronger (B59 both save paths, B61 a name not contained in the old one, B63 the old-right case, B66 no ignored changes).
+- **Installed program:** the packaged Mac app (Apple chip) opened, signed in and showed every main screen, 0 page errors. Intel Mac and Windows builds made, not run here.
+- **Real data:** 0 of 574 real item names in tracked files after B58.
+- **Full pass:** 181 of 181 unit, 105 of 105 program, 28 Nov.
+- Result: ✅ release 1 matches the Master Checklist except ALL.7's two steps that are Danny's (signing, a Windows try).

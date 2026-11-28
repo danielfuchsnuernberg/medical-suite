@@ -1,6 +1,6 @@
 // Settings (F5) behind the store door. Everyone may look; only Manage level changes (F5.7, Q23 = C).
 // Every rule is checked here, against the actor as stored now, one change at a time (as Accounts, B27).
-import { can, checkBaseSettings, checkListName, checkListDelete, checkBagArchive, usesOf, LIST_STORE, LIST_WORD,
+import { can, programName, checkBaseSettings, countryProblem, COUNTRIES, type Country, checkListName, checkListDelete, checkBagArchive, usesOf, LIST_STORE, LIST_WORD,
   type ListKind, type BaseSettings, type StoredRecord } from "@md/core";
 import { Door } from "./door";
 import { Refused } from "./accounts";
@@ -16,6 +16,19 @@ export class SettingsStore {
   }
 
   base(): StoredRecord | undefined { return this.door.get("settings", "base"); }
+
+  /** B59: the countries to pick from: the built-in two plus any Management added (Settings, not code). */
+  countries(): Country[] {
+    const added = this.door.records("country").filter(c => c.state === "Active").map(c => ({ code: String(c.code), name: String(c.name), timeZone: String(c.timeZone) }));
+    return [...COUNTRIES, ...added].sort((a, b) => a.name.localeCompare(b.name));
+  }
+  addCountry(actor: StoredRecord, c: { code: string; name: string; timeZone: string }) {
+    return this.one(async () => {
+      const me = this.manager(actor);
+      const why = countryProblem(c, this.countries()); if (why) throw new Refused(why);
+      await this.door.apply({ recordType: "country", op: "create", data: { code: c.code.trim().toUpperCase(), name: c.name.trim().replace(/\s+/g, " "), timeZone: c.timeZone, country: c.code.trim().toUpperCase() }, by: me.id });
+    });
+  }
 
   entries(kind: ListKind, withArchived = true): StoredRecord[] {
     const all = this.door.records(LIST_STORE[kind].recordType).filter(r => kind !== "bag" || r.kind === "bag");
@@ -36,11 +49,11 @@ export class SettingsStore {
     return this.one(async () => {
       const me = this.manager(actor);
       const v = { ...values, baseName: String(values.baseName ?? "").trim(), dayShift: String(values.dayShift ?? "").replace(/\s/g, "").replace("-", "–"), nightShift: String(values.nightShift ?? "").replace(/\s/g, "").replace("-", "–") };
-      const ok = checkBaseSettings(v); if (!ok.ok) throw new Refused(ok.why);
+      const ok = checkBaseSettings(v, this.countries()); if (!ok.ok) throw new Refused(ok.why);
       const cur = this.base();
-      const data = { baseName: v.baseName, country: v.country, timeZone: v.timeZone, dateStyle: v.dateStyle, dayShift: v.dayShift, nightShift: v.nightShift };
+      const data = { programName: programName(v), baseName: v.baseName, country: v.country, timeZone: v.timeZone, dateStyle: v.dateStyle, dayShift: v.dayShift, nightShift: v.nightShift };
       if (!cur) { await this.door.apply({ recordType: "settings", recordId: "base", op: "create", data, by: me.id }); return; }
-      const changed = Object.fromEntries(Object.entries(data).filter(([k, x]) => cur[k] !== x));
+      const changed = Object.fromEntries(Object.entries(data).filter(([k, x]) => k === "programName" ? x !== programName(cur) : cur[k] !== x));   // B61: the default name isn't a change
       if (Object.keys(changed).length) await this.door.apply({ recordType: "settings", recordId: "base", op: "set", data: changed, by: me.id });
     });
   }

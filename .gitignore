@@ -51,3 +51,9 @@ Icon?
 # Test output
 test-results/
 playwright-report/
+
+# B58: company SOPs and checklists brought in by hand; never committed (public repo)
+imports/
+
+# B60: installers built by electron-builder (apps/desktop/release)
+release/

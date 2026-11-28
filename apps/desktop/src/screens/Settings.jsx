@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { can, LEVELS, COUNTRIES, PROFESSIONS, formatCalendarDate, todayIn, mayApprove, needsMedicalCode } from "@md/core";
+import { can, programName, LEVELS, COUNTRIES, PROFESSIONS, formatCalendarDate, todayIn, mayApprove, needsMedicalCode } from "@md/core";
 import Icon from "../components/Icon.jsx";
 import BackupImport from "./BackupImport.jsx";
 
@@ -44,7 +44,7 @@ const offsetOf = (tz) => { try { return new Intl.DateTimeFormat("en-GB", { timeZ
 
 function BaseForm({ me, store, edit, toast, tick }) {
   const cur = store.base();
-  const fromStore = () => ({ baseName: String(cur?.baseName ?? ""), country: String(cur?.country ?? ""), timeZone: String(cur?.timeZone ?? ""), dateStyle: String(cur?.dateStyle ?? "long"), dayShift: String(cur?.dayShift ?? ""), nightShift: String(cur?.nightShift ?? "") });
+  const fromStore = () => ({ programName: programName(cur), baseName: String(cur?.baseName ?? ""), country: String(cur?.country ?? ""), timeZone: String(cur?.timeZone ?? ""), dateStyle: String(cur?.dateStyle ?? "long"), dayShift: String(cur?.dayShift ?? ""), nightShift: String(cur?.nightShift ?? "") });
   const [v, setV] = useState(fromStore);
   const [refusal, run] = useRun(toast);
   const [saved, setSaved] = useState(false);
@@ -53,18 +53,20 @@ function BaseForm({ me, store, edit, toast, tick }) {
   // Follow changes from other computers while nothing is being typed, and show what was stored after a save
   // (a shift typed with "-" is stored with "–").
   useEffect(() => { if (!dirty || saved) setV(fromStore()); }, [tick, saved]);
-  const set = (k) => (e) => { setSaved(false); const val = e.target.value; setV(o => k === "country" ? { ...o, country: val, timeZone: COUNTRIES.find(c => c.code === val)?.timeZone || o.timeZone } : { ...o, [k]: val }); };
+  const countries = store.countries();   // B59: the built-in ones plus those Management added
+  const set = (k) => (e) => { setSaved(false); const val = e.target.value; setV(o => k === "country" ? { ...o, country: val, timeZone: countries.find(c => c.code === val)?.timeZone || o.timeZone } : { ...o, [k]: val }); };
   const sample = todayIn(v.timeZone && ZONES.includes(v.timeZone) ? v.timeZone : "UTC");
   return (
     <section className="panel" data-testid="base-settings">
       <div className="panel-head"><div><h2>Country and base</h2><p className="muted">Every country thing is a setting. “Today” and every expiry follow this time zone.</p></div></div>
       <form className="form" onSubmit={async (e) => { e.preventDefault(); if (await run(() => store.saveBase(me, v))) setSaved(true); }}>
+        <label className="field"><span>Program name</span><input id="set-program" value={v.programName} onChange={set("programName")} disabled={!edit} aria-label="Program name" /><small className="hint">Shown in the menu, the sign-in screen and the window title. Until the common REACH look (EDP F53).</small></label>
         <label className="field"><span>Base name</span><input id="set-base" value={v.baseName} onChange={set("baseName")} disabled={!edit} aria-label="Base name" /></label>
         <div className="form-grid">
           <label className="field"><span>Country</span>
             <select id="set-country" value={v.country} onChange={set("country")} disabled={!edit} aria-label="Country">
               {v.country ? null : <option value="">Pick…</option>}
-              {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
+              {countries.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
             </select></label>
           <label className="field wide"><span>Time zone</span>
             <select id="set-tz" value={v.timeZone} onChange={set("timeZone")} disabled={!edit} aria-label="Time zone">
@@ -83,7 +85,28 @@ function BaseForm({ me, store, edit, toast, tick }) {
         {edit ? <div className="row"><button type="submit" className="btn primary" disabled={!dirty}>Save</button>
           {dirty ? <button type="button" className="btn" onClick={() => setV(stored)}>Undo changes</button> : saved ? <span className="saved" data-testid="saved">Saved</span> : null}</div> : null}
       </form>
+      {edit ? <AddCountry me={me} store={store} toast={toast} /> : null}
     </section>
+  );
+}
+
+// B59: a country not in the list is added here (code, name, time zone), never in the code.
+function AddCountry({ me, store, toast }) {
+  const [open, setOpen] = useState(false);
+  const [c, setC] = useState({ code: "", name: "", timeZone: "" });
+  const [refusal, run, setRefusal] = useRun(toast);
+  if (!open) return <button type="button" className="btn small" style={{ alignSelf: "flex-start" }} onClick={() => setOpen(true)}>Country not in the list? Add it</button>;
+  const set = (k) => (e) => { setRefusal(""); const val = e.target.value; setC(o => ({ ...o, [k]: val })); };
+  return (
+    <form className="form" data-testid="add-country" onSubmit={async (e) => { e.preventDefault(); if (await run(() => store.addCountry(me, c))) { setOpen(false); setC({ code: "", name: "", timeZone: "" }); toast("Country added. Pick it above and save."); } }}>
+      <div className="form-grid">
+        <label className="field"><span>Code</span><input value={c.code} onChange={set("code")} aria-label="Country code" placeholder="CL" maxLength={2} /></label>
+        <label className="field"><span>Name</span><input value={c.name} onChange={set("name")} aria-label="Country name" placeholder="Chile" /></label>
+        <label className="field wide"><span>Time zone</span><select value={c.timeZone} onChange={set("timeZone")} aria-label="Country time zone"><option value="">Pick…</option>{ZONES.map(z => <option key={z} value={z}>{z.replace(/_/g, " ")} ({offsetOf(z)})</option>)}</select></label>
+      </div>
+      {refusal ? <div className="form-err" role="alert" data-testid="refusal">{refusal}</div> : null}
+      <div className="row"><button type="submit" className="btn primary">Add country</button><button type="button" className="btn" onClick={() => setOpen(false)}>Cancel</button></div>
+    </form>
   );
 }
 

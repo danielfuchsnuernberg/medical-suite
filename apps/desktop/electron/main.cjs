@@ -15,7 +15,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); }
 function createWindow() {
   const win = new BrowserWindow({
     width: 1240, height: 820, minWidth: 360, minHeight: 560,
-    title: "REACH Medical Suite",
+    title: "REACH Medical Suite",   // until the page loads; then the name from Settings (B61) via document.title
     backgroundColor: "#F4F4F6",
     show: false,
     webPreferences: {

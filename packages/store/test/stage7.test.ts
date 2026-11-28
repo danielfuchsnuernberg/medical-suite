@@ -64,7 +64,7 @@ describe("group 1: controlled drugs only through the register", () => {
     const { door, reg, acc } = await open();
     await asDoctor(door, "demo-p1"); await asDoctor(door, "demo-p4");
     await reg.grant(P(door, "demo-p2"), "demo-p4");                     // Dina on the list too, so the list isn't empty
-    await acc.setProfession(P(door, "demo-p3"), "demo-p2", "Nurse");
+    await door.apply({ recordType: "person", recordId: "demo-p2", op: "set", data: { profession: "Nurse" }, by: "demo-p3" });   // an old record: Ben no longer a doctor, his right still stored
     await expect(reg.grant(P(door, "demo-p2"), "demo-p1")).rejects.toThrow(/Only a doctor can give this right/);
     expect(P(door, "demo-p1").cdRight).not.toBe(true);
   });
@@ -216,7 +216,7 @@ describe("group 4: backup, restore and two computers", () => {
     await bs.restore(cara, JSON.stringify(extra), true);
     await a.sync(); await b.sync(); await a.sync();
     expect(a.get("line", "demo-s1")!.qty).toBe(b.get("line", "demo-s1")!.qty);
-    expect(b.get("line", "demo-s1")!.qty).toBe(12 - 3 + 5);
+    expect(b.get("line", "demo-s1")!.qty).toBe(12 + 5);   // Q32 = B: every computer goes back to the backup (which held +5)
   });
   it("B30 two restores in the same second keep both safety copies", async () => {
     const { BackupStore, MemoryFiles } = await import("../src");

@@ -1,5 +1,20 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — Stage 8: the 12 audit gaps fixed (Danny's GO, Q31 = A, Q32 = B)
+- **Real data:** B6's detailed list of real items moved to iCloud (BUGS.md keeps counts); `imports/` and installer output git-ignored; 0 real item names left in Git (B58).
+- **Doctors' list (Q31 = A):** Management can no longer change a listed doctor's profession; a doctor removes them first (B63).
+- **Restore (Q32 = B):** a restore sets records back with new changes; every Activity entry stays and the restore is one entry; register lines and stock takes are never touched. With a server every computer rolls back too (answers Q30) (B66).
+- **Countries and names:** new records carry the base's country; Management can add a country in Settings (B59); the program's name is a setting (B61); new people and items get readable numbers (B62); set-up asks for the REACH office (B65).
+- **Installers (B60):** `npm run dist:mac -w apps/desktop` and `dist:win` make REACH Medical Suite for Mac (Apple chip and Intel) and Windows. The installed Mac app was started and tested here. Not yet signed; Windows not yet tried.
+- **Smaller:** the store checks must-fix rows itself (B64); a stock search result opens its item (B67); every Overview card opens a list and below zero lists only those lines (B68); Clear filters clears the place too (B69).
+- Tests: 9 new unit tests, 7 new program tests; 6 older tests changed to the new rules (Q31, Q32, numbers). Each fix undone on its own made its test fail (17 of 17; 4 tests made stronger on the way). 181 of 181 and 105 of 105 pass.
+
+## 2026-11-28 — Stage 8: audit of release 1
+- Stage 7 committed first (db312d3).
+- Every one of the 98 release-1 lines read against the code by two independent auditors and by me; every feature line has a test naming it (89 of 89). 71 met, 12 wait for the server as planned, 1 placeholder, 12 gaps: B58–B69 (real stock details in BUGS.md, the country stamp always PG, no installer, the name not a setting, no readable numbers for new records, Management changing the doctors' list through the profession, the store trusting the screen on Excel loading, set-up without an office, a restore cutting the log, and three small screen gaps).
+- Q27 and Q28 added to DECISIONS.md (they were missing).
+- Shown to Danny with Q31 and Q32: https://claude.ai/artifact/QVSu5zzS3C6S1KagJbw8oY. Nothing fixed before his GO.
+
 ## 2026-11-28 — Stage 7: all 29 bugs fixed (Danny's GO, Q27–Q29 = A)
 - **Controlled drugs:** archiving, restoring, adding a place, deleting as a mistake and importing can no longer change a controlled drug's stock outside the register (B35); unticking is refused while a take-out waits, and a drug that is no longer controlled can't be approved or corrected (B36); only a current doctor gives the right (B45); 5 wrong PINs pause PIN approval for that doctor for 15 minutes, logged, and the doctor sees a note (B46).
 - **Amounts:** “12,0”, “1,000” and other commas or points are refused with “for example 1000” (B32, B33, Q28 = A); above 1,000,000 is refused (B34). **Double clicks** save once, on every save button (B37).

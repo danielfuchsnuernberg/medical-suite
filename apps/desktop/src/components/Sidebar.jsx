@@ -1,3 +1,4 @@
+import { appName } from "../state/appName.js";
 import { MENU, MENU_BOTTOM } from "@md/core";
 import Icon from "./Icon.jsx";
 
@@ -14,7 +15,7 @@ export default function Sidebar({ view, go, baseName, badges = {} }) {
     <aside className="side" aria-label="Menu">
       <button type="button" className="logo" onClick={() => go("home")} aria-label="Home">
         <span className="mark"><Icon name="plus" stroke={2.4} /></span>
-        <span className="name">REACH Medical Suite<small>{baseName}</small></span>
+        <span className="name">{appName()}<small>{baseName}</small></span>
       </button>
       {MENU.map((g, i) => (
         <div key={i}>

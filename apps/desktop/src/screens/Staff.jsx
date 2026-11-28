@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { can, LEVELS, OFFICES, staffCounts, initials, formatCalendarDate, todayIn, personTrainingSummary, trainingCounts, expiryFor, completionProblem, validMonthsOf } from "@md/core";
+import { can, LEVELS, OFFICES, shownNumbers, staffCounts, initials, formatCalendarDate, todayIn, personTrainingSummary, trainingCounts, expiryFor, completionProblem, validMonthsOf } from "@md/core";
 import Icon from "../components/Icon.jsx";
 import Dialog from "../components/Dialog.jsx";
 
@@ -139,7 +139,7 @@ function Profile({ p, me, accounts, training, today, manage, departments, deptNa
           <dl className="kv">
             <dt>Email</dt><dd data-testid="prof-email">{p.email ? String(p.email) : <span className="muted">none</span>}</dd>
             <dt>Office (REACH)</dt><dd data-testid="prof-office">{p.office ? String(p.office) : <span className="muted">not set</span>}</dd>
-            {p.staffNo ? <><dt>Staff number</dt><dd>{String(p.staffNo)}</dd></> : null}
+            {p.staffNo ? <><dt>Staff number</dt><dd data-testid="prof-staffno">{shownNumbers(door.records("person"), "staffNo").get(p.id)}</dd></> : null}
             {added ? <><dt>Added</dt><dd>{added}{addedBy ? ` by ${addedBy}` : ""}</dd></> : null}
             <dt>Comes from</dt><dd>This app's people list (REACH shape). Ops Management keeps the one REACH list later.</dd>
           </dl>

@@ -62,8 +62,9 @@ export class BackupStore {
       let safety = `medical-suite-backup-${this.today()}-before-restore-${stamp}.json`;
       for (let n = 2; taken.has(safety); n++) safety = `medical-suite-backup-${this.today()}-before-restore-${stamp}-${n}.json`;   // B30
       await this.files.save(safety, this.text(me.id));
-      await this.door.restore(c.messages, c.dataVersion);
-      return { safety, summary: c.summary };
+      // Q32 = B (B66): set back with new changes; every log entry stays, the restore is one entry of its own
+      const records = await this.door.rollBackTo(c.messages, c.dataVersion, me.id, { made: this.madeAt(c.exportedAt), safety }, [me.id]);
+      return { safety, summary: c.summary, records };
     });
   }
 }

@@ -62,10 +62,25 @@ export function isTimeZone(tz: unknown): boolean {
   if (typeof tz !== "string" || !tz) return false;
   try { new Intl.DateTimeFormat("en-GB", { timeZone: tz }); return true; } catch { return false; }
 }
-export interface BaseSettings { baseName: string; country: string; timeZone: string; dateStyle: "long" | "short"; dayShift: string; nightShift: string }
-export function checkBaseSettings(s: Partial<BaseSettings>): Check {
+/** B61: the program's name, a setting until the common REACH look (ALL.8, EDP F53). */
+export const PROGRAM_NAME = "REACH Medical Suite";
+export const programName = (base: unknown) => String((base as { programName?: unknown } | null | undefined)?.programName ?? "").trim().replace(/\s+/g, " ") || PROGRAM_NAME;
+export interface BaseSettings { programName?: string; baseName: string; country: string; timeZone: string; dateStyle: "long" | "short"; dayShift: string; nightShift: string }
+export type Country = { code: string; name: string; timeZone: string };
+/** B59: a country Management adds in Settings: a two-letter code, a name and its usual time zone; neither code nor name twice. */
+export function countryProblem(c: Partial<Country>, existing: Country[]): string | null {
+  const code = String(c.code ?? "").trim().toUpperCase(), name = norm(c.name);
+  if (!/^[A-Z]{2}$/.test(code)) return "The country code is two letters, like CL for Chile.";
+  if (!name) return "Type the country's name.";
+  if (!isTimeZone(c.timeZone)) return "Pick the country's time zone.";
+  if (existing.some(e => e.code === code)) return `${code} is already in the list.`;
+  if (existing.some(e => e.name.toLowerCase() === name.toLowerCase())) return `“${name}” is already in the list.`;
+  return null;
+}
+export function checkBaseSettings(s: Partial<BaseSettings>, countries: Country[] = COUNTRIES): Check {
   if (!norm(s.baseName)) return { ok: false, why: "Type the base's name." };
-  if (!COUNTRIES.some(c => c.code === s.country)) return { ok: false, why: "Pick a country." };
+  if (norm(s.programName).length > 60) return { ok: false, why: "The program's name: at most 60 letters." };
+  if (!countries.some(c => c.code === s.country)) return { ok: false, why: "Pick a country." };
   if (!isTimeZone(s.timeZone)) return { ok: false, why: "Pick the base's time zone." };
   if (s.dateStyle !== "long" && s.dateStyle !== "short") return { ok: false, why: "Pick a date style." };
   for (const [k, w] of [["dayShift", "Day shift"], ["nightShift", "Night shift"]] as const)

@@ -5,7 +5,7 @@
 // - DEMO people (R11) sign in with "demo" until someone gives them a password on this computer.
 // Every rule is checked here, not only in the screens.
 import { can, checkLevelChange, checkArchivePerson, checkDelete, makeCredential, verifyPassword, passwordProblem,
-  oneTimePassword, normaliseOneTime, isLevel, type Credential, type Level, type StoredRecord, PROFESSIONS, medicalCodeProblem, emailProblem, normaliseEmail, isOffice } from "@md/core";
+  oneTimePassword, normaliseOneTime, isLevel, type Credential, type Level, type StoredRecord, PROFESSIONS, medicalCodeProblem, mayApprove, nextNumber, emailProblem, normaliseEmail, isOffice } from "@md/core";
 import { Door, DoorError } from "./door";
 
 export const DEMO_PASSWORD = "demo";
@@ -88,7 +88,7 @@ export class Accounts {
   }
 
   /** First start (Q22 = A): the first Management person, picked from the list or added, with their own password. */
-  private async _setUp(o: { personId?: string; name?: string; job?: string }, password: string, repeat?: string): Promise<StoredRecord> {
+  private async _setUp(o: { personId?: string; name?: string; job?: string; office?: string }, password: string, repeat?: string): Promise<StoredRecord> {
     if (!this.needsSetUp()) throw new Refused("This computer is already set up. Sign in instead.");
     const problem = passwordProblem(password, repeat);
     if (problem) throw new Refused(problem);
@@ -100,7 +100,7 @@ export class Accounts {
       const name = String(o.name ?? "").trim();
       if (!name) throw new Refused("Type your name.");
       if (this.people().some(p => p.level === "Manage")) throw new Refused("Pick your name from the list of Manage-level people.");
-      const ch = await this.door.apply({ recordType: "person", op: "create", data: { name, job: String(o.job ?? "").trim(), level: "Manage" }, by: "setup" });
+      const ch = await this.door.apply({ recordType: "person", op: "create", data: { name, job: String(o.job ?? "").trim(), level: "Manage", staffNo: nextNumber("S", this.door.records("person"), "staffNo", 3), office: isOffice(o.office) ? o.office : "Management" }, by: "setup" });
       id = ch.recordId;
     }
     await this.storePassword(id, password);
@@ -117,7 +117,7 @@ export class Accounts {
     if (name.length > 80) throw new Refused("A name of at most 80 letters, please.");   // B56
     if (this.people(true).some(p => sameName(p.name, name))) throw new Refused(`${name} is already in the list (look under archived too).`);
     const extra = this.details(o);
-    const ch = await this.door.apply({ recordType: "person", op: "create", data: { name, job: String(o.job ?? "").trim(), level: o.level, ...extra }, by: actor.id });
+    const ch = await this.door.apply({ recordType: "person", op: "create", data: { name, job: String(o.job ?? "").trim(), level: o.level, office: "Medics", ...extra, staffNo: nextNumber("S", this.door.records("person"), "staffNo", 3) }, by: actor.id });
     return this.person(ch.recordId)!;
   }
 
@@ -206,7 +206,10 @@ export class Accounts {
     if (!(PROFESSIONS as readonly string[]).includes(to)) throw new Refused("Pick Doctor, Nurse or Other.");
     const t = this.person(targetId); if (!t || t.state !== "Active") throw new Refused("Not found.");
     if (t.profession === to) return;
-    await this.door.apply({ recordType: "person", recordId: targetId, op: "set", data: { profession: to }, by: actor.id });
+    // Q31 = A (B63): only doctors change the doctors' list. Someone on it keeps the profession Doctor until a doctor removes them (✕);
+    // and someone off the list doesn't come back on it by being set to Doctor again (their old right is cleared).
+    if (mayApprove(t)) throw new Refused(`${String(t.name)} is on the doctors' list. A doctor removes them first (✕); then the profession can change.`);
+    await this.door.apply({ recordType: "person", recordId: targetId, op: "set", data: t.cdRight === true ? { profession: to, cdRight: false } : { profession: to }, by: actor.id });
   }
   /** A doctor types their own medical code (never someone else's). There has to be a level of trust: it is checked to be there and unique. */
   private async _setMedicalCode(actor: StoredRecord, code: string): Promise<void> {
@@ -222,7 +225,7 @@ export class Accounts {
 
   setOwnPassword(personId: string, current: string, password: string, repeat?: string) { return this.one(() => this._setOwnPassword(personId, current, password, repeat)); }
   giveOneTime(actor: StoredRecord, targetId: string) { return this.one(() => this._giveOneTime(actor, targetId)); }
-  setUp(o: { personId?: string; name?: string; job?: string }, password: string, repeat?: string) { return this.one(() => this._setUp(o, password, repeat)); }
+  setUp(o: { personId?: string; name?: string; job?: string; office?: string }, password: string, repeat?: string) { return this.one(() => this._setUp(o, password, repeat)); }
   addPerson(actor: StoredRecord, o: PersonInput) { return this.one(() => this._addPerson(actor, o)); }
   setLevel(actor: StoredRecord, targetId: string, to: Level) { return this.one(() => this._setLevel(actor, targetId, to)); }
   archive(actor: StoredRecord, targetId: string) { return this.one(() => this._archive(actor, targetId)); }

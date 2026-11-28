@@ -16,14 +16,14 @@ export default function Overview({ inv, today, dateStyle, open, openItem }) {
   return (
     <div className="overview">
       <div className="stats">
-        <Stat k="types"><div className="k"><Icon name="box" width={14} />Item types</div><div className="v">{o.itemTypes}</div></Stat>
-        <Stat k="units"><div className="k"><Icon name="check" width={14} />Units everywhere</div><div className="v">{o.units}</div></Stat>
+        <Stat k="types" filter={{}}><div className="k"><Icon name="box" width={14} />Item types</div><div className="v">{o.itemTypes}</div></Stat>
+        <Stat k="units" filter={{}}><div className="k"><Icon name="check" width={14} />Units everywhere</div><div className="v">{o.units}</div></Stat>
         <Stat k="out" filter={{ stock: "out" }}><div className="k"><Icon name="alertC" width={14} />Out of stock</div><div className="v">{o.out}</div></Stat>
         <Stat k="expired" filter={{ expiry: "expired" }}><div className="k"><Icon name="alertT" width={14} />Expired</div><div className="v">{o.expired} <small>/ {o.soon} soon</small></div></Stat>
       </div>
 
       <div className="attention" data-testid="attention">
-        {o.below ? <button type="button" className="att att-danger" data-att="below" onClick={() => open({ stock: "out" })}><Icon name="alertC" width={16} stroke={2} /><span><b>{o.below}</b> below zero: two computers took the same stock. Count {o.below === 1 ? "it" : "them"}.</span></button> : null}
+        {o.below ? <button type="button" className="att att-danger" data-att="below" onClick={() => open({ stock: "below" })}><Icon name="alertC" width={16} stroke={2} /><span><b>{o.below}</b> below zero: two computers took the same stock. Count {o.below === 1 ? "it" : "them"}.</span></button> : null}
         {o.out ? <button type="button" className="att att-danger" data-att="out" onClick={() => open({ stock: "out" })}><Icon name="alertC" width={16} stroke={2} /><span><b>{o.out}</b> out of stock, everywhere</span></button> : null}
         {o.low ? <button type="button" className="att att-warning" data-att="low" onClick={() => open({ stock: "low" })}><Icon name="alertT" width={16} stroke={2} /><span><b>{o.low}</b> below required or reorder level</span></button> : null}
         {o.expired + o.soon ? <button type="button" className="att att-danger" data-att="expsoon" onClick={() => open({ expiry: "expiredOrSoon" })}><Icon name="alertT" width={16} stroke={2} /><span><b>{o.expired + o.soon}</b> expired or expiring soon</span></button> : null}

@@ -10,7 +10,7 @@ export type Tables = Map<string, Map<string, StoredRecord>>;
 export const FROZEN = new Set(["stocktake", "cdline", "cddecision"]);   // F11.1; F12.8: register lines and doctors' decisions never change
 
 /** Applies one message. Returns the record before and after (undefined = didn't exist / was removed). */
-export function step(records: Tables, c: Change, country = "PG"): { before?: StoredRecord; after?: StoredRecord } {
+export function step(records: Tables, c: Change, country = ""): { before?: StoredRecord; after?: StoredRecord } {
   let t = records.get(c.recordType);
   if (!t) { t = new Map(); records.set(c.recordType, t); }
   const cur = t.get(c.recordId);
@@ -39,8 +39,19 @@ export function step(records: Tables, c: Change, country = "PG"): { before?: Sto
   return { before: cur, after: next };
 }
 
-export function fold(changes: Change[], country = "PG"): Folded {
+/**
+ * B59: the base's country as its settings say (the latest settings/base message with a country), for records whose own
+ * message carries none (made before B59). New records carry it themselves (the door stamps it), so it never moves later.
+ */
+export function baseCountry(changes: Change[]): string {
+  let country = "";
+  for (const c of [...changes].sort(changeOrder)) if (c.recordType === "settings" && c.recordId === "base" && typeof (c.data as any)?.country === "string") country = (c.data as any).country;
+  return country;
+}
+
+export function fold(changes: Change[], country?: string): Folded {
   const sorted = [...changes].sort(changeOrder);
+  if (country === undefined) country = baseCountry(sorted);
   const records: Tables = new Map();
   const countsByBase = new Map<string, Change[]>(); // key: type|id|basedOn
   for (const c of sorted) {

@@ -2,7 +2,7 @@
 // It is worked out from the change messages with the same steps as the records (fold.step), so it can't disagree
 // with the data. Nothing here can change or remove a message: the log is read-only (F4.4).
 import { changeOrder, APP_CODE, type Change, type StoredRecord } from "@md/core";
-import { step, type Tables } from "./fold";
+import { step, type Tables, baseCountry } from "./fold";
 
 export type LogArea = "Inventory" | "People" | "Settings" | string;   // or another app's code, e.g. "EDP"
 export interface FieldChange { field: string; from: unknown; to: unknown }
@@ -14,7 +14,7 @@ export interface LogEntry {
   data: Record<string, unknown>;          // the message's own data (e.g. an event's "what")
 }
 
-const AREA: Record<string, LogArea> = { item: "Inventory", line: "Inventory", location: "Inventory", stocktake: "Inventory", cdline: "Inventory", cddecision: "Inventory", importwait: "Inventory", person: "People", event: "People", settings: "Settings", department: "Settings", category: "Settings", course: "Settings", training: "People" };
+const AREA: Record<string, LogArea> = { item: "Inventory", line: "Inventory", location: "Inventory", stocktake: "Inventory", cdline: "Inventory", cddecision: "Inventory", importwait: "Inventory", person: "People", event: "People", settings: "Settings", department: "Settings", category: "Settings", course: "Settings", training: "People", country: "Settings" };
 /** Stamps and bookkeeping, not "what changed". */
 export const NOT_SHOWN = new Set(["id", "createdAt", "createdBy", "changedAt", "changedBy", "demo", "lastCountAt", "lastCountBy"]);
 // The country stamp is set when a record is made; a later change to it (the base moving country, F5.1) is shown.
@@ -29,7 +29,7 @@ export function areaOf(c: Pick<Change, "app" | "recordType">): LogArea {
 }
 
 /** Newest first. */
-export function buildLog(changes: Change[], country = "PG"): LogEntry[] {
+export function buildLog(changes: Change[], country = baseCountry(changes)): LogEntry[] {
   const records: Tables = new Map();
   const out: LogEntry[] = [];
   for (const c of [...changes].sort(changeOrder)) {

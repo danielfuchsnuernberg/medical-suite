@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { MIN_PASSWORD } from "@md/core";
+import { MIN_PASSWORD, OFFICES } from "@md/core";
 import Icon from "../components/Icon.jsx";
+import { appName } from "../state/appName.js";
 
 // F2 — before the program opens: first start (set up), sign in, and "choose your own password" after a one-time one.
 // Until the server exists, passwords live on this computer only (Q22 = A). There is no "Acting as" (B12).
@@ -11,7 +12,7 @@ function Frame({ title, sub, children, demo, testid }) {
       <div className="signin-card">
         <div className="signin-head">
           <span className="mark"><Icon name="plus" stroke={2.4} /></span>
-          <div><div className="signin-app">REACH Medical Suite</div><h1>{title}</h1></div>
+          <div><div className="signin-app">{appName()}</div><h1>{title}</h1></div>
         </div>
         {sub ? <p className="signin-sub">{sub}</p> : null}
         {children}
@@ -116,14 +117,14 @@ export function MedicalCode({ accounts, person, demo, onDone, onCancel }) {
 export function SetUp({ accounts, baseName, demo, onDone }) {
   const managers = accounts.people().filter(p => p.level === "Manage");
   const [who, setWho] = useState(managers.length ? "" : "new");
-  const [name, setName] = useState(""); const [job, setJob] = useState("");
+  const [name, setName] = useState(""); const [job, setJob] = useState(""); const [office, setOffice] = useState("Management");
   const [pw, setPw] = useState(""); const [again, setAgain] = useState("");
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
   const submit = async (e) => {
     e.preventDefault(); setBusy(true); setErr("");
     try {
       if (!who) throw new Error("Pick your name from the list.");
-      const p = await accounts.setUp(who === "new" ? { name, job } : { personId: who }, pw, again);
+      const p = await accounts.setUp(who === "new" ? { name, job, office } : { personId: who }, pw, again);
       onDone(p.id);
     } catch (e2) { setErr(String(e2.message || e2)); }
     finally { setBusy(false); }
@@ -140,6 +141,7 @@ export function SetUp({ accounts, baseName, demo, onDone }) {
         ) : (<>
           <label className="field"><span>Your name</span><input value={name} onChange={e => setName(e.target.value)} aria-label="Your name" autoComplete="name" /></label>
           <label className="field"><span>Your job</span><input value={job} onChange={e => setJob(e.target.value)} aria-label="Your job" placeholder="e.g. Base manager" /></label>
+          <label className="field"><span>Your REACH office</span><select value={office} onChange={e => setOffice(e.target.value)} aria-label="Your REACH office">{OFFICES.map(o => <option key={o}>{o}</option>)}</select></label>
           <p className="form-note">You get Manage level.</p>
         </>)}
         <label className="field"><span>Your password (at least {MIN_PASSWORD} characters)</span>

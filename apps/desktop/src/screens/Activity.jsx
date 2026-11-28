@@ -118,6 +118,7 @@ export function words(door, log, dateStyle = "long") {
       const about = e.data.personId ? name("person", String(e.data.personId)) : "";
       if (e.data.what === "one-time password given") return <>gave {about} a one-time password on this computer</>;
       if (e.data.what === "this computer set up") return <>set up this computer</>;
+      if (e.data.what === "restored a backup") return <>restored the backup made {String(e.data.made ?? "")}: {Number(e.data.records)} {Number(e.data.records) === 1 ? "record" : "records"} set back; every earlier entry is still here</>;
       if (e.data.what === "imported a stock list") return <>imported the stock list {String(e.data.file)}: {Number(e.data.lines)} {Number(e.data.lines) === 1 ? "line" : "lines"} loaded, {Number(e.data.waiting)} waiting for the Head Doctor</>;
       return <>{String(e.data.what)}{about ? ` (${about})` : ""}</>;
     }

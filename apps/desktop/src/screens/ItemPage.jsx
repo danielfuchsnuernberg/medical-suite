@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { can, stockStatus, todayIn, formatCalendarDate, formatTimeIn, isCalendarDate } from "@md/core";
+import { can, shownNumbers, stockStatus, todayIn, formatCalendarDate, formatTimeIn, isCalendarDate } from "@md/core";
 import Icon from "../components/Icon.jsx";
 import ExpiryBadge from "../components/ExpiryBadge.jsx";
 import Dialog from "../components/Dialog.jsx";
@@ -57,6 +57,7 @@ export default function ItemPage({ itemId, me, door, inv, store, tick, today, ti
           <div className="muted">{cat || "No category"}{item.unit ? ` · counted in ${String(item.unit)}` : ""}</div>
           <div className="badges">
             <span className="badge b-accent nodot" data-testid="total">{total} on hand · {active.length} {active.length === 1 ? "line" : "lines"}</span>
+            {item.itemNo ? <span className="badge b-muted nodot" data-testid="item-no">{shownNumbers(door.records("item"), "itemNo").get(item.id)}</span> : null}
             {item.controlled ? <span className="badge b-warning nodot">Controlled drug</span> : null}
             {item.controlled !== true && item.controlledNote ? <span className="badge b-muted nodot">no longer controlled: {String(item.controlledNote)}</span> : null}
             {item.state !== "Active" ? <span className="badge b-muted nodot">Archived</span> : null}

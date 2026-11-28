@@ -84,7 +84,7 @@ test("F4.3 every delete for good is logged with who, when and what was there (B1
   const del = entries().nth(0);
   await expect(del).toHaveAttribute("data-op", "delete");
   await expect(del).toContainText("deleted person Typo Persn for good (a mistake, within 24 hours)");
-  await expect(del.getByTestId("was")).toHaveText("What was there: name Typo Persn · job Nurse · level Work · state Active");
+  await expect(del.getByTestId("was")).toHaveText("What was there: name Typo Persn · job Nurse · level Work · office Medics · staff number S-006 · state Active");   // B62, B65
   await expect(del.locator(".src")).toContainText("Cara Demo · ");
   await expect(entries().nth(1)).toContainText("added person Typo Persn");                         // its creation stays too
 });

@@ -6,8 +6,17 @@
 import { makeChange, APP_CODE, categoryId, type Change, type ChangeOp, type StoredRecord, type Moment } from "@md/core";
 import type { Backend } from "./backend";
 import type { Transport } from "./transport";
-import { fold, type CountFlag } from "./fold";
+import { fold, FROZEN, type CountFlag } from "./fold";
 import { buildLog, type LogEntry } from "./log";
+
+/** Q32 = B: the fields a restore compares and sets back (stamps and bookkeeping left out; a base's own country is a field). */
+const NOT_SET_BACK = new Set(["id", "createdAt", "createdBy", "changedAt", "changedBy", "state", "lastCountAt", "lastCountBy"]);
+function fieldsOf(type: string, r: StoredRecord): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(r)) if (!NOT_SET_BACK.has(k) && !(k === "country" && type !== "settings" && type !== "country")) out[k] = v;
+  return out;
+}
+const sameValue = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 
 /** A message, once stored, can't be changed by anyone holding it (F4.4). */
 function deepFreeze<T>(o: T): T { if (o && typeof o === "object" && !Object.isFrozen(o)) { Object.freeze(o); for (const v of Object.values(o as object)) deepFreeze(v); } return o; }
@@ -99,7 +108,38 @@ export class Door {
   private async counted<T>(fn: () => Promise<T>): Promise<T> { const done = this.hold(); try { const r = await fn(); this.savedN++; return r; } finally { done(); } }
   apply(p: Parameters<Door["_apply"]>[0]) { return this.counted(() => this._apply(p)); }
   applyAll(ps: Parameters<Door["_applyAll"]>[0]) { return this.counted(() => this._applyAll(ps)); }
-  restore(changes: Change[], fromVersion: number) { return this.counted(() => this._restore(changes, fromVersion)); }
+
+  /**
+   * Q32 = B (B66): a restore that keeps every log entry. It works out how each record looked in the backup and adds
+   * ordinary changes that set it back (fields, Active / Archived; a record deleted since is made again; a record made
+   * since is archived, never deleted). Register lines, doctors' decisions and stock takes are never touched (F11.1, F12.8),
+   * nor the log itself. One save, all or nothing; with a server, these changes reach every computer (Q30).
+   * Returns how many records were set back. `keep` is never archived (the person restoring).
+   */
+  async rollBackTo(changes: Change[], fromVersion: number, by: string, note: Record<string, unknown>, keep: string[] = []): Promise<number> {
+    if (!Number.isInteger(fromVersion) || fromVersion < 0 || fromVersion > SCHEMA_VERSION) throw new DoorError("This backup is damaged. Refused: nothing was changed.");
+    let cs = changes;
+    for (let v = fromVersion; v < SCHEMA_VERSION; v++) cs = MIGRATIONS[v](cs);
+    const want = fold(cs).records, have = this.folded.records;
+    const msgs: { recordType: string; recordId?: string; op: ChangeOp; data?: Record<string, unknown>; by: string }[] = [];
+    const touched = new Set<string>();
+    for (const t of new Set([...want.keys(), ...have.keys()])) {
+      if (FROZEN.has(t) || t === "event") continue;
+      const W = want.get(t) ?? new Map(), H = have.get(t) ?? new Map();
+      for (const [id, w] of W) {
+        const h = H.get(id), wd = fieldsOf(t, w);
+        if (!h) { msgs.push({ recordType: t, recordId: id, op: "create", data: wd, by }); if (w.state === "Archived") msgs.push({ recordType: t, recordId: id, op: "archive", by }); touched.add(t + id); continue; }
+        const hd = fieldsOf(t, h), diff: Record<string, unknown> = {};
+        for (const k of new Set([...Object.keys(wd), ...Object.keys(hd)])) if (!sameValue(wd[k], hd[k])) diff[k] = wd[k] ?? null;
+        if (Object.keys(diff).length) { msgs.push({ recordType: t, recordId: id, op: "set", data: diff, by }); touched.add(t + id); }
+        if (w.state !== h.state) { msgs.push({ recordType: t, recordId: id, op: w.state === "Active" ? "restore" : "archive", by }); touched.add(t + id); }
+      }
+      for (const [id, h] of H) if (!W.has(id) && h.state === "Active" && !keep.includes(id)) { msgs.push({ recordType: t, recordId: id, op: "archive", data: { reason: "restore" }, by }); touched.add(t + id); }
+    }
+    msgs.push({ recordType: "event", op: "create", data: { what: "restored a backup", records: touched.size, ...note }, by });
+    await this.applyAll(msgs);
+    return touched.size;
+  }
   records(type: string): StoredRecord[] { return [...(this.folded.records.get(type)?.values() ?? [])]; }
   get(type: string, id: string): StoredRecord | undefined { return this.folded.records.get(type)?.get(id); }
   flags(): CountFlag[] { return this.folded.flags; }
@@ -118,7 +158,7 @@ export class Door {
 
   /** Saves one change. Throws DoorError if this computer couldn't store it; then nothing changed. */
   private async _apply(p: { recordType: string; recordId?: string; op: ChangeOp; data?: Record<string, unknown>; by: string }): Promise<Change> {
-    const c = makeChange({ ...p, at: this.o.now ? this.o.now() : Date.now(), device: this.o.device });
+    const c = makeChange({ ...this.stamped(p), at: this.o.now ? this.o.now() : Date.now(), device: this.o.device });
     try {
       await this.o.backend.commit([c], { toOutbox: true });
     } catch (e) {
@@ -136,10 +176,17 @@ export class Door {
     return c;
   }
 
+  /** B59: a new record is stamped with the base's country (Settings), once, in its own message. */
+  private stamped<T extends { op: ChangeOp; data?: Record<string, unknown>; recordType: string }>(p: T): T {
+    if (p.op !== "create" || p.recordType === "settings" || (p.data && typeof p.data.country === "string" && p.data.country)) return p;
+    const country = String(this.get("settings", "base")?.country ?? "");
+    return country ? { ...p, data: { ...(p.data ?? {}), country } } : p;
+  }
+
   /** Saves several changes together: all of them or none (a move is a take here and an add there, F8.2). */
   private async _applyAll(ps: { recordType: string; recordId?: string; op: ChangeOp; data?: Record<string, unknown>; by: string }[]): Promise<Change[]> {
     const at = this.o.now ? this.o.now() : Date.now();
-    const cs = ps.map((p, i) => makeChange({ ...p, at: at + i, device: this.o.device }));     // one after the other, in this order
+    const cs = ps.map((p, i) => makeChange({ ...this.stamped(p), at: at + i, device: this.o.device }));     // one after the other, in this order
     try {
       await this.o.backend.commit(cs, { toOutbox: true });
     } catch (e) {
@@ -154,26 +201,6 @@ export class Door {
     this.emit();
     if (this.o.transport && this.o.transport.online()) void this.sync();
     return cs;
-  }
-
-  /**
-   * F13.4/F13.5: replaces everything on this computer with these messages (a restore), all or nothing, and every screen
-   * shows it at once (B2). Messages from an older version are carried forward first (B3).
-   */
-  private async _restore(changes: Change[], fromVersion: number): Promise<void> {
-    let cs = changes;
-    if (!Number.isInteger(fromVersion) || fromVersion < 0 || fromVersion > SCHEMA_VERSION) throw new DoorError("This backup is damaged. Refused: nothing was changed.");
-    for (let v = fromVersion; v < SCHEMA_VERSION; v++) cs = MIGRATIONS[v](cs);
-    const send = !!this.o.transport;   // B29: with a server, the restored messages go to it and everything is fetched again
-    try { await this.o.backend.replace(cs, { toOutbox: send }); }
-    catch { this.st.error = "Not restored. This computer couldn't store the backup, so nothing was changed."; this.emit(); throw new DoorError(this.st.error); }
-    this.st.error = null;
-    this.changes = new Map(cs.map(c => [c.messageId, frozen(c)]));
-    this.outbox = new Set(send ? cs.map(c => c.messageId) : []); this.st.waiting = this.outbox.size;
-    if (send) { this.meta.cursor = 0; await this.o.backend.setMeta({ cursor: 0 }); }
-    this.refold();
-    this.emit();
-    if (send) await this.sync().catch(() => undefined);
   }
 
   /** Sends what's waiting and fetches what other computers sent. Safe to call any time; does nothing without a server. */

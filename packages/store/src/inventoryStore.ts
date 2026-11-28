@@ -1,7 +1,7 @@
 // Inventory (F8) behind the store door: add, edit, move, archive, restore, delete for good.
 // Every rule is checked here, against the actor as stored now, one change at a time (as Accounts, B27).
 // Rights (F2.7): View looks only; Work and Manage change and archive stock; delete for good only Manage, a mistake, within 24 hours.
-import { can, checkDelete, wholeNumber, itemNameProblem, matchingLine, expiryProblem, newRecordId, type StoredRecord, type Plan } from "@md/core";
+import { can, checkDelete, nextNumber, wholeNumber, itemNameProblem, matchingLine, expiryProblem, newRecordId, type StoredRecord, type Plan } from "@md/core";
 import { Door } from "./door";
 import { Refused } from "./accounts";
 
@@ -41,7 +41,7 @@ export class InventoryStore {
       const itemId = newRecordId();
       const cat = p.categoryId && this.door.get("category", p.categoryId)?.state === "Active" ? p.categoryId : null;
       await this.door.applyAll([
-        { recordType: "item", recordId: itemId, op: "create", data: { name: p.name.trim().replace(/\s+/g, " "), categoryId: cat, unit: String(p.unit ?? "").trim(), controlled: false }, by: me.id },
+        { recordType: "item", recordId: itemId, op: "create", data: { itemNo: nextNumber("I", this.door.records("item"), "itemNo", 4), name: p.name.trim().replace(/\s+/g, " "), categoryId: cat, unit: String(p.unit ?? "").trim(), controlled: false }, by: me.id },
         { recordType: "line", op: "create", data: { itemId, locationId: p.locationId, qty: q.n, required: null, lot: "", expiry: null }, by: me.id },
       ]);
       return itemId;
@@ -141,6 +141,7 @@ export class InventoryStore {
     return this.one(async () => {
       const p = this.door.get("person", actor.id);
       if (!p || p.state !== "Active" || !can(p.level, "changeSettings")) throw new Refused("Only Manage level imports stock lists.");
+      blocking = Math.max(blocking, plan.sheets.flatMap(sh => sh.rows).filter(r => r.blocking).length);   // B64: counted here, not taken from the screen
       if (blocking > 0) throw new Refused(`${blocking} ${blocking === 1 ? "row has" : "rows have"} to be fixed in the spreadsheet first. Nothing was loaded.`);
       const msgs: any[] = [];
       const by = p.id;
@@ -167,7 +168,7 @@ export class InventoryStore {
           }
           if (controlledNames.has(norm(r.item))) throw new Refused(`${r.item} is a controlled drug: it can only wait for the Head Doctor. Nothing was loaded.`);
           let itemId = r.itemId ?? itemIds.get(norm(r.item)) ?? null;
-          if (!itemId) { itemId = newRecordId(); itemIds.set(norm(r.item), itemId); msgs.push({ recordType: "item", recordId: itemId, op: "create", data: { name: r.item, categoryId: null, unit: r.unit, controlled: false }, by }); }
+          if (!itemId) { itemId = newRecordId(); itemIds.set(norm(r.item), itemId); const itemNo = nextNumber("I", [...this.door.records("item"), ...msgs.filter(m => m.recordType === "item").map(m => ({ id: m.recordId, ...m.data }))], "itemNo", 4); msgs.push({ recordType: "item", recordId: itemId, op: "create", data: { itemNo, name: r.item, categoryId: null, unit: r.unit, controlled: false }, by }); }
           else if (this.door.get("item", itemId)?.controlled === true) throw new Refused(`${r.item} is a controlled drug: it can only wait for the Head Doctor. Nothing was loaded.`);
           const same = lines.find(l => l.itemId === itemId && l.locationId === placeId && String(l.lot ?? "").trim().toLowerCase() === r.lot.trim().toLowerCase() && String(l.expiry ?? "") === String(r.expiry ?? ""));
           if (same) msgs.push({ recordType: "line", recordId: same.id, op: "count", data: { qty: r.qty, basedOn: same.lastCountAt ?? null, from: fileName }, by });

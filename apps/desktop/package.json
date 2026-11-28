@@ -8,17 +8,60 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "electron": "electron ."
-  },
-  "dependencies": {
-    "@md/core": "0.1.0",
-    "@md/store": "0.1.0",
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "electron": "electron .",
+    "dist:mac": "vite build && electron-builder --mac",
+    "dist:win": "vite build && electron-builder --win"
   },
   "devDependencies": {
+    "@md/core": "0.1.0",
+    "@md/store": "0.1.0",
     "@vitejs/plugin-react": "4.7.0",
     "electron": "45.5.0",
+    "electron-builder": "26.18.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
     "vite": "5.4.21"
+  },
+  "build": {
+    "appId": "org.reach.medicalsuite",
+    "productName": "REACH Medical Suite",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "category": "public.app-category.medical",
+      "identity": null
+    },
+    "dmg": {
+      "title": "REACH Medical Suite"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

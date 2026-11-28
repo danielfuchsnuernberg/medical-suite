@@ -44,7 +44,7 @@ describe("backup and restore (F13)", () => {
     await expect(bk.restore(cara(door), noStock, true)).rejects.toThrow("no stock");
     expect(door.messages().length).toBe(all.length);
   });
-  it("F13.4 a restore needs the tick, saves a backup of today first, and replaces everything", async () => {
+  it("F13.4 a restore needs the tick, saves a backup of today first, and sets everything back (Q32 = B)", async () => {
     const { door, bk, files, inv } = await open();
     const before = bk.exportFile(cara(door)).text;                                        // the state to go back to
     await inv.adjust(anna(door), "demo-s1", "dispense", 5);
@@ -55,7 +55,9 @@ describe("backup and restore (F13)", () => {
     expect(r.safety).toMatch(/^medical-suite-backup-2026-11-28-before-restore-\d{6}\.json$/);
     expect(JSON.parse(await files.read(r.safety)).data.messages.some((m: Change) => m.recordId === "demo-s1" && m.op === "delta")).toBe(true);   // today's state was kept
     expect(door.get("line", "demo-s1")!.qty).toBe(12);
-    expect(door.waiting()).toEqual([]);
+    // Q32 = B (B66): the restore is new changes; the dispense stays in the log, and the restore is one entry
+    expect(door.log().some(e => e.recordId === "demo-s1" && e.op === "delta")).toBe(true);
+    expect(door.records("event").some(e => e.what === "restored a backup")).toBe(true);
   });
   it("F13.5 after a restore the data is there at once, for everyone listening; a failed restore changes nothing", async () => {
     const { door, bk, b } = await open();
@@ -68,10 +70,10 @@ describe("backup and restore (F13)", () => {
     expect(door.get("line", "demo-s2")!.qty).toBe(4);
     b.failNext = 1;
     await door.apply({ recordType: "line", recordId: "demo-s2", op: "delta", data: { field: "qty", by: -1 }, by: "demo-p1" }).catch(() => {});
-    const n = door.messages().length;
+    const m = door.messages().length;
     b.failNext = 1;
-    await expect(door.restore(JSON.parse(text).data.messages, SCHEMA_VERSION)).rejects.toThrow("Not restored.");
-    expect(door.messages().length).toBe(n);
+    await expect(bk.restore(cara(door), text, true)).rejects.toThrow("Not saved.");   // even its own log entry isn't saved: nothing changes
+    expect(door.messages().length).toBe(m);
     // and on disk too: the next start sees the restored data
     const again = await Door.open({ backend: b, seed: demoSeedChanges, now });
     expect(again.get("line", "demo-s2")!.qty).toBe(4);

@@ -58,10 +58,11 @@ export function readinessLine(r: Readiness, store: boolean): string {
 }
 
 /** What a card or warning on the Overview opens: the lines it means (F6.1). */
-export interface LineFilter { locationId?: string; stock?: StockStatus; expiry?: "expired" | "expiredOrSoon" }
+export interface LineFilter { locationId?: string; stock?: StockStatus | "below"; expiry?: "expired" | "expiredOrSoon" }
 export function matches(line: StockLine, f: LineFilter, today: CalendarDate): boolean {
   if (f.locationId && line.locationId !== f.locationId) return false;
-  if (f.stock && stockStatus(line) !== f.stock) return false;
+  if (f.stock === "below") { if (!(Number(line.qty) < 0)) return false; }   // B68: only the lines below zero
+  else if (f.stock && stockStatus(line) !== f.stock) return false;
   if (f.expiry === "expired" && !isExpired(line, today)) return false;
   if (f.expiry === "expiredOrSoon" && !(isExpired(line, today) || isExpiringSoon(line, today))) return false;
   return true;
@@ -100,7 +101,8 @@ export function listLines(active: StockLine[], archived: StockLine[], f: ListFil
   const out = pool.filter(l => {
     if (f.locationId && l.locationId !== f.locationId) return false;
     if (f.categoryId && itemOf(l.itemId)?.categoryId !== f.categoryId) return false;
-    if (f.stock && stockStatus(l) !== f.stock) return false;
+    if (f.stock === "below") { if (!(Number(l.qty) < 0)) return false; }   // B68
+    else if (f.stock && stockStatus(l) !== f.stock) return false;
     const ex = isExpired(l, today), soon = isExpiringSoon(l, today);
     if (f.expiry === "expired" && !ex) return false;
     if (f.expiry === "soon" && !soon) return false;

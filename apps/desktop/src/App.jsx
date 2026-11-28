@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { findEntry, MENU, can, needsMedicalCode } from "@md/core";
+import { findEntry, MENU, can, needsMedicalCode, programName } from "@md/core";
 import Sidebar from "./components/Sidebar.jsx";
 import SearchBox from "./components/SearchBox.jsx";
 import SyncLight from "./components/SyncLight.jsx";
@@ -17,6 +17,7 @@ import Count from "./screens/Count.jsx";
 import StockTakes from "./screens/StockTakes.jsx";
 import Staff from "./screens/Staff.jsx";
 import { installSaveGuard } from "./state/saveGuard.js";
+import { setAppName } from "./state/appName.js";
 import Register from "./screens/Register.jsx";
 import Dialog from "./components/Dialog.jsx";
 import { SignIn, ChooseOwn, SetUp, MedicalCode } from "./screens/SignIn.jsx";
@@ -35,6 +36,7 @@ export default function App() {
   const { door, accounts, settings: settingsStore, inventory, register, training, backups, error, tick } = useDoor();
   // The base's settings (F5), from the store. Until they are set: the computer's own time zone, and it says so.
   const base = door ? door.get("settings", "base") : null;
+  setAppName(programName(base));   // B61: the name from Settings, before any screen draws
   const settings = {
     baseName: base?.baseName ? String(base.baseName) : "Base not named yet",
     timeZone: base?.timeZone ? String(base.timeZone) : Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -164,7 +166,11 @@ export default function App() {
   const lockout = lockEv ? String(door.get("person", String(lockEv.personId))?.name ?? "someone") : null;
   const entry = findEntry(view);
   const title = view === "home" ? "Home" : view === "item" ? String(door.get("item", itemId)?.name ?? "Item") : entry ? entry.label : "";
-  const openResult = (kind, hit) => { if (kind === "person") { go("staff"); setPersonId(hit?.id ?? null); } else go("where"); };
+  const openResult = (kind, hit) => {
+    if (kind === "person") { go("staff"); setPersonId(hit?.id ?? null); return; }
+    const l = hit ? door.get("line", hit.id) : null;   // B67: a stock result opens its item page
+    go("where"); if (l) { setItemId(String(l.itemId)); setView("item"); }
+  };
   return (
     <div className={`shell${drawer ? " drawer" : ""}`}>
       <Sidebar view={view === "item" ? "where" : view} badges={{ cd: cdBadge }} go={go} baseName={settings.baseName} />

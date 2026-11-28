@@ -29,7 +29,7 @@ export default function StockList({ inv, today, dateStyle, filter, setFilter, op
   const archivedIds = new Set(archivedLines.map(l => l.id));
   const shown = listLines(lines, archivedLines, f, today, itemOf);
   const r = loc ? readiness(lines.filter(l => l.locationId === loc.id), today) : null;
-  const filtered = !!(f.categoryId || f.stock || f.expiry);
+  const filtered = !!(f.locationId || f.categoryId || f.stock || f.expiry);   // B69: the place is a filter too
   const usedCats = new Set([...lines, ...archivedLines].map(l => items.get(l.itemId)?.categoryId).filter(Boolean));
   const catList = categories.filter(c => usedCats.has(c.id) || c.id === f.categoryId);
 
@@ -68,6 +68,7 @@ export default function StockList({ inv, today, dateStyle, filter, setFilter, op
         </select>
         <select aria-label="Stock level" value={f.stock ?? ""} onChange={e => set("stock", e.target.value)}>
           <option value="">Any stock level</option>
+          <option value="below">Below zero</option>
           <option value="out">Out of stock</option>
           <option value="low">Below required / reorder level</option>
           <option value="ok">At or above</option>
@@ -88,7 +89,7 @@ export default function StockList({ inv, today, dateStyle, filter, setFilter, op
           <option value="qtyLow">Amount (lowest first)</option>
         </select>
         <label className="check inline small"><input type="checkbox" checked={!!f.archived} onChange={e => set("archived", e.target.checked)} /><span>Show archived</span></label>
-        {filtered ? <button type="button" className="btn small" onClick={() => setFilter({ locationId: f.locationId, sort: f.sort, archived: f.archived })}>Clear filters</button> : null}
+        {filtered ? <button type="button" className="btn small" onClick={() => setFilter({ sort: f.sort, archived: f.archived })}>Clear filters</button> : null}
       </div>
       <section className="panel">
         <div className="panel-head">

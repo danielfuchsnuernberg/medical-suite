@@ -4,7 +4,7 @@
 //
 // Rights (F2.8, F12.2, Q16): the doctors' list (person.cdRight) decides, never the level. Manage level gives nothing here,
 // except setting the very first doctor once, while there is none (F12.6: "set once at setup").
-import { can, ledger, balanceOf, waiting, checkWitness, pinProblem, wholeNumber, matchingLine, expiryProblem, makeCredential, verifyPassword, newRecordId,
+import { can, nextNumber, ledger, balanceOf, waiting, checkWitness, pinProblem, wholeNumber, matchingLine, expiryProblem, makeCredential, verifyPassword, newRecordId,
   mayApprove, isDoctorByProfession, needsMedicalCode, headDoctors,
   type CdLine, type CdDecision, type LedgerRow, type Credential, type StoredRecord } from "@md/core";
 import { Door } from "./door";
@@ -333,7 +333,7 @@ export class RegisterStore {
       const qty = Number(w.qty) || 0;
       const msgs: Msg[] = [];
       const itemId = item ? item.id : newRecordId();
-      if (!item) msgs.push({ recordType: "item", recordId: itemId, op: "create", data: { name: String(w.item), categoryId: null, unit: String(w.unit ?? ""), controlled }, by: me.id });
+      if (!item) msgs.push({ recordType: "item", recordId: itemId, op: "create", data: { itemNo: nextNumber("I", this.door.records("item"), "itemNo", 4), name: String(w.item), categoryId: null, unit: String(w.unit ?? ""), controlled }, by: me.id });
       else if (controlled && item.controlled !== true) msgs.push({ recordType: "item", recordId: itemId, op: "set", data: { controlled: true, controlledNote: "" }, by: me.id });
       const probe = { id: "", itemId, locationId: place.id, lot: String(w.lot ?? ""), expiry: (w.expiry as string) ?? null };
       const dest = item ? matchingLine(this.door.records("line"), probe, place.id) : undefined;

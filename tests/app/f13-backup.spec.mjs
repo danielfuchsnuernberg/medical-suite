@@ -122,7 +122,8 @@ test("F13.5 after a restore every screen shows the restored data at once, with n
   await page.click('.side [data-view="where"]');
   await expect(page.locator('tr[data-line="demo-s1"] td').nth(3)).toContainText("12");
   await page.click('.side [data-view="log"]');
-  await expect(page.getByTestId("log").locator("li.entry", { hasText: "took 12 from Gauze" })).toHaveCount(0);
+  await expect(page.getByTestId("log").locator("li.entry", { hasText: "took 12 from Gauze" })).toHaveCount(1);          // Q32 = B: every entry stays
+  await expect(page.getByTestId("log").locator("li.entry").first()).toContainText("restored the backup made");
   expect(await page.evaluate(() => document.body.innerText.includes("undefined"))).toBe(false);
 });
 

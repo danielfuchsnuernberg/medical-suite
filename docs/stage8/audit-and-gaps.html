@@ -1,0 +1,252 @@
+<title>Stage 8 Audit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Danny: Stage 8 audit, 12 gaps (B58–B69), Q31–Q32 and GO (Workflow B steps 4–6). Answers save to db collection "stage8". */
+:root{--bg:#F4F4F6;--surface:#FFFFFF;--surface-2:#FAFAFB;--border:#E4E4EA;--border-strong:#D2D2DA;--text:#1B1B23;--muted:#6B6B78;--faint:#9B9BA6;--accent:#4F46E5;--accent-soft:#EEEDFD;--accent-border:#C9C6F7;--on-accent:#FFFFFF;--ok:#1E9E62;--ok-soft:#E7F5EE;--warn:#C77A12;--warn-soft:#F8EFDF;--bad:#D14343;--bad-soft:#FAEAEA;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121218;--surface:#1B1B23;--surface-2:#20202A;--border:#2C2C38;--border-strong:#3A3A48;--text:#ECECF2;--muted:#A3A3B2;--faint:#76768A;--accent:#8B85F5;--accent-soft:#25234A;--accent-border:#3F3B7A;--on-accent:#121218;--ok:#4CC48A;--ok-soft:#173326;--warn:#E0A247;--warn-soft:#352812;--bad:#EE7474;--bad-soft:#3A1C1C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121218;--surface:#1B1B23;--surface-2:#20202A;--border:#2C2C38;--border-strong:#3A3A48;--text:#ECECF2;--muted:#A3A3B2;--faint:#76768A;--accent:#8B85F5;--accent-soft:#25234A;--accent-border:#3F3B7A;--on-accent:#121218;--ok:#4CC48A;--ok-soft:#173326;--warn:#E0A247;--warn-soft:#352812;--bad:#EE7474;--bad-soft:#3A1C1C;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;margin:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:64px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0} h1{font-size:27px;font-weight:700;letter-spacing:-.4px} h2{font-size:19px;font-weight:700}
+p{margin:0;max-width:72ch}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:13px}
+header{padding-top:32px;display:flex;flex-direction:column;gap:10px}
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:780px){.why{grid-template-columns:1fr}}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:5px;font-size:14px;min-width:0}
+.k{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.risk{border-color:var(--bad);background:var(--bad-soft)} .risk .k{color:var(--bad)}
+.flow{display:flex;gap:0;align-items:stretch;overflow-x:auto;padding-bottom:4px}
+.fs{flex:1 0 170px;min-width:170px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:3px}
+.fs .w{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent)}
+.fs.bad{border-color:var(--bad)} .fs.bad .w{color:var(--bad)} .fs.good{border-color:var(--ok)} .fs.good .w{color:var(--ok)}
+.to{flex:none;display:flex;align-items:center;padding:0 6px;color:var(--faint)}
+.qgrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.qgrid{grid-template-columns:1fr}}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:12px;border:1px solid var(--border-strong);background:var(--surface)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt[aria-pressed="true"]{border:2px solid var(--accent);background:var(--accent-soft);padding:11px 13px}
+.opt .l{font-weight:600;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.opt .d{font-size:13px;color:var(--muted)}
+.opt .cons{font-size:12.5px;display:flex;flex-direction:column;gap:2px;margin-top:3px}
+.opt .cons span::before{content:"+ ";color:var(--ok);font-weight:700} .opt .cons span.minus::before{content:"− ";color:var(--bad)}
+.prop{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--ok);color:#fff}
+.ans{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--border-strong)}
+.ans .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13.5px}
+.ans button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.ans button[aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:#fff}
+.ans textarea{min-height:54px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);resize:vertical}
+.ans .state{font-size:12px;color:var(--faint)}
+.note{font-size:13px;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--border)}
+/* mock screens (June look) */
+.mocks{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.mocks{grid-template-columns:1fr}}
+.m{color-scheme:light;background:#F4F4F6;color:#1B1B23;border:1px solid #D2D2DA;border-radius:12px;overflow:hidden;font-size:12px;line-height:1.4}
+.m .cap{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#9B9BA6;padding:6px 10px;background:#F0F0F3;border-bottom:1px solid #E4E4EA}
+.m .body{padding:10px;display:flex;flex-direction:column;gap:7px}
+.m .card{background:#fff;border:1px solid #E4E4EA;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.m .t{font-weight:700;font-size:13px}
+.m .f{display:flex;flex-direction:column;gap:2px} .m .f span{font-size:10.5px;font-weight:600;color:#6B6B78} .m .f i{font-style:normal;border:1px solid #D2D2DA;border-radius:6px;padding:4px 7px;background:#fff;color:#6B6B78}
+.m .btn{align-self:flex-start;font-weight:600;font-size:11.5px;padding:5px 10px;border-radius:6px;background:#4F46E5;color:#fff}
+.m .ghost{background:#fff;color:#1B1B23;border:1px solid #E4E4EA}
+.m .warn{background:#FAEAEA;color:#D14343;border-radius:7px;padding:6px 8px;font-size:11px}
+.m .okm{background:#E7F5EE;color:#14663f;border-radius:7px;padding:6px 8px;font-size:11px}
+.m .pick{display:flex;flex-direction:column;gap:4px}
+.m .pick b{font-weight:600;border:1px solid #E4E4EA;border-radius:7px;padding:5px 8px;background:#FAFAFB}
+footer{padding-top:18px;font-size:12.5px;color:var(--faint)}
+</style>
+<style>
+.steps{display:flex;gap:6px;flex-wrap:wrap}
+.steps button{font:inherit;font-size:13px;padding:7px 12px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.steps button[aria-current="step"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.steps .done{margin-left:6px;color:var(--ok);font-weight:700}
+.steps button[aria-current="step"] .done{color:var(--on-accent)}
+.navrow{display:flex;justify-content:space-between;gap:8px}
+.navrow button{font:inherit;font-size:14px;padding:8px 14px;border-radius:10px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.navrow button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.navrow button:disabled{opacity:.4;cursor:default}
+.chg{display:flex;flex-direction:column;gap:3px}
+.saved{color:var(--ok);font-weight:600}
+.sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:700px){.sum{grid-template-columns:1fr 1fr}}
+.sum .box b{font-size:24px;letter-spacing:-.5px}
+.grp{display:flex;flex-direction:column;gap:8px}
+.grp h3{font-size:16px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.grp h3 .muted{font-weight:500;font-size:13px}
+.bug{display:grid;grid-template-columns:62px minmax(0,1fr) minmax(0,1fr);gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-size:13.5px}
+@media (max-width:700px){.bug{grid-template-columns:1fr}}
+.bug .id{font-family:var(--mono);font-weight:600;font-size:13px;display:flex;flex-direction:column;gap:4px}
+.sev{font-family:var(--sans);font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 6px;border-radius:5px;align-self:flex-start}
+.sev.d{background:var(--bad-soft);color:var(--bad)} .sev.s{background:var(--warn-soft);color:var(--warn)} .sev.b{background:var(--accent-soft);color:var(--accent)} .sev.m{background:var(--surface-2);color:var(--muted);border:1px solid var(--border)}
+.bug .now,.bug .aft{display:flex;flex-direction:column;gap:3px;min-width:0}
+.bug .now .k{color:var(--bad)} .bug .aft .k{color:var(--ok)}
+.ex{font-family:var(--mono);font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:5px 8px;overflow-wrap:anywhere}
+.qref{font-size:11px;font-weight:700;color:var(--warn)}
+.go{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:12px;border:2px solid var(--accent);background:var(--accent-soft)}
+.go .row{display:flex;gap:8px;flex-wrap:wrap}
+.go button{font:inherit;font-size:14px;font-weight:600;padding:9px 16px;border-radius:10px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.go button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.m .row2{display:flex;justify-content:space-between;align-items:center;gap:8px;border:1px solid #E4E4EA;border-radius:8px;padding:6px 8px;background:#fff}
+.m .neg{color:#D14343;font-weight:700}
+.m .pill{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px}
+.m .p-ok{background:#E7F5EE;color:#14663f} .m .p-bad{background:#FAEAEA;color:#D14343} .m .p-warn{background:#F8EFDF;color:#9a5d0c}
+.m .hole{background:#F8EFDF;color:#9a5d0c;border-radius:7px;padding:6px 8px;font-size:11px}
+details.more{font-size:13px} details.more summary{cursor:pointer;color:var(--accent);font-weight:600}
+details.more ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+</style>
+<div class="wrap">
+<header>
+  <span class="eyebrow">REACH Medical Suite · Stage 8 · audit of release 1</span>
+  <h1>98 promises checked against the code: 12 gaps. Two questions, then your GO</h1>
+  <p class="muted">Every line of the Master Checklist for release 1 was read against the program's code (not against the ticks) by two auditors who hadn't seen my work, and by me. <b>Nothing is fixed yet.</b></p>
+  <div class="sum">
+    <div class="box"><span class="k">Met</span><b>71</b><span class="small muted">does exactly what the line says</span></div>
+    <div class="box"><span class="k">Waits for the server</span><b>12</b><span class="small muted">sync, EDP, backups off this computer (SD2, as planned)</span></div>
+    <div class="box"><span class="k">Placeholder by plan</span><b>1</b><span class="small muted">duties on a profile (roster, release 2)</span></div>
+    <div class="box"><span class="k">Gaps to fix</span><b>12</b><span class="small muted">B58–B69 below</span></div>
+  </div>
+</header>
+<nav class="steps" id="steps" role="tablist" aria-label="Parts"></nav>
+<section id="part"></section>
+<footer>Answers save for Claude (collection “stage8”). Source: <code>docs/stage8/audit-and-gaps.html</code>; the full list with causes is in <code>BUGS.md</code> (B58–B69) and <code>AUDIT.md</code>.</footer>
+</div>
+<script>
+(function(){
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+// ---- the three questions ----
+const Q = {
+  q31: { title: "Q31 · Who can take a doctor off the doctors' list?", bug: "B63",
+    about: "Management sets each person's profession (Doctor, Nurse, Other). Only a doctor with a medical code can be on the doctors' list, the people who approve controlled drugs. So when Cara (Management) changes Dr Ben from Doctor to Nurse, he silently drops off the list.",
+    why: "You decided: only doctors control the list, Management can't change it. Through the profession, Management can: it can even empty the list, then name a new “first doctor” itself (the auditor found it, I made it happen). Setting Ben back to Doctor puts him straight back on.",
+    changes: "A keeps the list in the doctors' hands: Management can't change the profession of someone on the list until a doctor has removed them (✕). B lets Management change it, but only after the Head Doctor confirms. C leaves it as it is.",
+    opts: {
+      A: { l: "A doctor removes them first", prop: true, d: "Cara can't change the profession of someone on the doctors' list: “Dr Ben is on the doctors' list. A doctor removes him first (✕).” The “first doctor” can be named by Management only once, ever.", pro: ["Only doctors change the list, as you decided", "Nobody can empty the list behind the doctors' backs"], con: ["If the only doctor leaves suddenly, Management archives him (archiving is still allowed) and names the next one as before"], lines: ["profession of a listed doctor: locked for Management", "a doctor's ✕ first, then the profession can change", "first doctor: Management names one only if there never was one"] },
+      B: { l: "Head Doctor confirms", d: "Management can change it, but it only takes effect once the Head Doctor confirms.", pro: ["Management can start it"], con: ["A waiting state and a second screen", "The Head Doctor can't confirm their own change"], lines: ["profession change waits", "the Head Doctor confirms or refuses"] },
+      C: { l: "Leave as it is", d: "Management keeps changing professions freely.", pro: [], con: ["Management controls the list through the side door"], lines: ["no change"] },
+    },
+    mock(o){ const msg = o==="A" ? `<div class="warn">Dr Ben Sample is on the doctors' list. A doctor removes him first (✕); then his profession can change.</div>` : o==="B" ? `<div class="hole">Waiting for the Head Doctor to confirm: Dr Ben Sample → Nurse.</div>` : `<div class="hole">Saved. Dr Ben Sample is no longer on the doctors' list. Nobody can approve controlled drugs now.</div>`;
+      return `<div class="m"><div class="cap">Settings › People and access · Cara (Management)</div><div class="body"><div class="card"><div class="row2"><span>Dr Ben Sample · on the doctors' list</span><span>Profession: <b>Nurse ▾</b></span></div>${msg}</div></div></div>`; } },
+  q32: { title: "Q32 · What a restore does to the Activity log", bug: "B66",
+    about: "A restore takes the program back to a backup. Today it does that by replacing everything with what the backup holds, and the Activity log is part of everything.",
+    why: "You decided: nobody can delete a log entry, Management included. But after a restore, every entry made since the backup is gone from Activity, and the restore itself isn't logged. (Today the entries survive only in the safety copy saved before the restore.) It is also tied to Q30: once there is a server, a replace can't reach the other computers.",
+    changes: "A keeps the replace but logs the restore and says what was removed. B restores by adding new changes that set everything back to the backup, so the log keeps every entry and, with a server, every computer rolls back too (this would also answer Q30).",
+    opts: {
+      A: { l: "Replace, but log it", d: "Restore works as now. Afterwards Activity starts with “Cara restored the backup of 12 Nov; 37 entries since then are only in the safety copy”.", pro: ["Small change", "The safety copy keeps the full log"], con: ["Entries still disappear from Activity", "Q30 stays open"], lines: ["log entries after the backup: gone from Activity, kept in the safety copy", "the restore itself is logged"] },
+      B: { l: "Set back, keep every entry", prop: true, d: "A restore adds new changes that put every item, line and person back to how the backup had them. Nothing is deleted; Activity shows the restore as one entry with old → new.", pro: ["The log is never cut, as you decided", "With a server every computer rolls back too (answers Q30)"], con: ["More work to build", "Register lines and stock takes made after the backup stay: they can never be removed, by your rule"], lines: ["every log entry stays", "records set back to the backup's values", "register lines and stock takes after the backup stay (legal record)"] },
+    },
+    mock(o){ return `<div class="m"><div class="cap">Activity after a restore</div><div class="body"><div class="card">${o==="A" ? `<div class="row2"><span>Cara restored the backup of 12 Nov</span><span>today</span></div><div class="hole">37 entries since 12 Nov are only in the safety copy now.</div><div class="row2" style="opacity:.5"><span>(entries before 12 Nov)</span><span></span></div>` : `<div class="row2"><span>Cara restored the backup of 12 Nov: 14 records set back</span><span>today</span></div><div class="row2"><span>Anna dispensed 2 Gauze from Bag 1</span><span>27 Nov</span></div><div class="row2"><span>Dina counted Bag 2</span><span>20 Nov</span></div><div class="okm">Every entry is still there.</div>`}</div></div></div>`; } },
+};
+const G = [
+  { t: "1 · Real data and the controlled-drug list", why: "Rules you set; these first.", bugs: [
+    ["B58","s","The public repo holds real stock details: BUGS.md › B6 names real items with lot numbers, dates and amounts in named bags (since June). The company SOPs in imports/ could be committed by accident.","3 real item names found in BUGS.md (out of 574 checked).","B6's detail list moves to iCloud › REACH Inventory › Source data (real); BUGS.md keeps only the counts. imports/ goes into .gitignore. (Git history keeps the June data, as you chose in Q1.)","0 real names in the files on GitHub."],
+    ["B63","s","Management can take a doctor off the doctors' list through the profession, even the last one, then name a new first doctor. (Q31)","Ben → Nurse: list empty; Cara names Anna.","As you answer Q31 (proposed: a doctor removes them first; first doctor named once ever).","“Dr Ben is on the doctors' list. A doctor removes him first.”"],
+  ]},
+  { t: "2 · Country, names and numbers", why: "Peru and other countries must work without a programmer.", bugs: [
+    ["B59","d","A base set to Peru stamps every new item, line and person “PG”; a third country needs a programmer.","Peru base: new item stamped PG.","Every new record gets the base's country from Settings. The country list becomes a Settings list Management can add to (name, code, time zone).","Peru base: stamped PE. Chile added in Settings."],
+    ["B62","m","New items and people get no readable number; only the DEMO ones have one.","New person: no staff number.","New people get the next staff number (S-006 …) and items the next item number; if two computers offline pick the same one, the later one gets “-2”.","New person: S-006."],
+    ["B61","m","The program's name can't be changed in Settings.","Typed into 5 places.","The name comes from one place in Settings › Country and base (“Program name”, default REACH Medical Suite).","Changed once, shows everywhere."],
+    ["B65","m","The person who sets up a new computer has no REACH office.","Set-up: office empty.","Set-up asks for the office (default Management); the store refuses a person without one.","Office: Management."],
+  ]},
+  { t: "3 · Log and restore", why: "", bugs: [
+    ["B66","b","After a restore, Activity loses every entry since the backup, and the restore isn't logged. (Q32)","37 entries gone, no trace.","As you answer Q32 (proposed: a restore sets records back with new changes; every entry stays).","Every entry still there."],
+    ["B64","m","“Nothing loads while a row must be fixed” is checked on the screen; the store trusts the number the screen sends.","Store accepts 0 when told 0.","The store checks the rows itself and refuses.","Refused behind the screen."],
+  ]},
+  { t: "4 · Screens", why: "", bugs: [
+    ["B67","m","Picking a stock result in the search opens the whole Store and bags list, not that item.","Search “Gauze” → full list.","A stock result opens its item page.","Search “Gauze” → the Gauze page."],
+    ["B68","m","Two Overview cards (Item types, Units everywhere) open nothing; the “below zero” warning lists lines at 0 too.","Click “Item types”: nothing.","Item types opens the item list; Units opens Store and bags; below zero shows only the lines below zero.","Each card opens its list."],
+    ["B69","m","“Clear filters” leaves the place filter set.","Bag 1 + Expired → Clear → still Bag 1.","Clear filters clears every filter, the place included.","Back to everything."],
+  ]},
+  { t: "5 · The installer", why: "Needs you for the Apple and Windows steps.", bugs: [
+    ["B60","b","There is no installer: the program only runs from the source folder on this Mac, and has never been built for Windows.","No .dmg, no .exe.","electron-builder (chosen in Stage 5) makes a Mac app and a Windows installer. I build and test the Mac one here. Your part: a “Developer ID Application” certificate (Apple Developer portal › Certificates, Identifiers & Profiles) so Macs open it without a warning, and one try on a Windows computer.","Mac: REACH Medical Suite.dmg; Windows: setup .exe."],
+  ]},
+];
+const SEV = { d:["d","data"], s:["s","security"], b:["b","broken"], m:["m","minor"] };
+
+const KEYS = ["q31","q32","fixes"];
+let part = "q31", answers = {}, notes = {}, savedAt = null, db = null, pending = 0;
+function qPart(k){
+  const P = Q[k], pick = answers[k], shown = pick && P.opts[pick] ? pick : Object.keys(P.opts).find(o=>P.opts[o].prop);
+  return `<div style="display:flex;flex-direction:column;gap:14px">
+    <h2>${esc(P.title)} <span class="muted small">(bug ${P.bug})</span></h2>
+    <div class="why">
+      <div class="box"><span class="k">What it's about</span><p>${esc(P.about)}</p></div>
+      <div class="box risk"><span class="k">Why it matters</span><p>${esc(P.why)}</p></div>
+      <div class="box"><span class="k">What each answer changes</span><p>${esc(P.changes)}</p></div>
+    </div>
+    <div class="qgrid">
+      <div class="mocks" style="grid-template-columns:1fr">${P.mock(shown)}</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="opts">${Object.entries(P.opts).map(([o,v])=>`<button type="button" class="opt" data-o="${o}" aria-pressed="${pick===o}"><span class="l">${o} · ${esc(v.l)}${v.prop?' <span class="prop">Proposed</span>':""}</span><span class="d">${esc(v.d)}</span><span class="cons">${v.pro.map(p=>`<span>${esc(p)}</span>`).join("")}${v.con.map(p=>`<span class="minus">${esc(p)}</span>`).join("")}</span></button>`).join("")}</div>
+        <div class="ans"><div class="row"><b>Your answer:</b> <span>${pick ? (pick==="unsure"?"Not sure":pick+" · "+esc(P.opts[pick].l)) : "not picked yet (showing the proposed one)"}</span></div>
+          <div class="row"><button type="button" id="unsure" aria-pressed="${pick==="unsure"}">Not sure</button></div>
+          <textarea id="note" placeholder="Anything to add? (optional)"></textarea><span class="state" id="st"></span></div>
+        <div class="note chg"><span><b>${esc(shown)}</b> means:</span>${P.opts[shown].lines.map(l=>`<span>· ${esc(l)}</span>`).join("")}</div>
+      </div>
+    </div></div>`;
+}
+function fixPart(){
+  const pick = answers.fixes;
+  return `<div style="display:flex;flex-direction:column;gap:18px">
+    <h2>The 12 gaps, in the order I'd fix them</h2>
+    <p class="muted">Your rules first (real data, the doctors' list), then what Peru needs, the log, the screens, and the installer last because it needs you. Each fix gets a test that fails before it; then all 270 tests run again.</p>
+    ${G.map(g=>`<div class="grp"><h3>${esc(g.t)} ${g.why?`<span class="muted">${esc(g.why)}</span>`:""}</h3>
+      ${g.bugs.map(([id,s,what,ex,fix,ex2])=>`<div class="bug"><div class="id">${id}<span class="sev ${SEV[s][0]}">${SEV[s][1]}</span></div>
+        <div class="now"><span class="k">Now</span><span>${esc(what)}</span><span class="ex">${esc(ex)}</span></div>
+        <div class="aft"><span class="k">After the fix</span><span>${esc(fix)}</span><span class="ex">${esc(ex2)}</span></div></div>`).join("")}</div>`).join("")}
+    <details class="more"><summary>The 12 lines that wait for the server, and the placeholder (not gaps)</summary>
+      <ul><li><b>Wait for the shared server (SD2), as planned:</b> one REACH account (F2.1), first sign-in on a new computer (F2.6), syncing and its light (F3.1–F3.5), EDP entries in Activity (F4.1), stock takes kept on the server (F11.4), nightly backups on the server (F13.1), a doctor's PIN on every computer and requests to a phone (F12.3).</li>
+      <li><b>Placeholder by plan:</b> this week's duties on a profile (F14.5) come with the roster, release 2.</li></ul></details>
+    <div class="go"><b>Your GO</b><span class="small">GO means: fix all 12 in this order, with your answers to Q31 and Q32.</span>
+      <div class="row"><button type="button" data-go="GO" aria-pressed="${pick==="GO"}">GO: fix all 12, in this order</button><button type="button" data-go="hold" aria-pressed="${pick==="hold"}">Not yet: I have notes</button></div>
+      <textarea id="note" placeholder="Notes: a fix to change, skip or do first (optional)" style="min-height:54px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text)"></textarea>
+      <span class="state" id="st"></span></div>
+  </div>`;
+}
+function render(){
+  document.getElementById("steps").innerHTML = KEYS.map(k=>`<button type="button" role="tab" data-part="${k}" ${k===part?'aria-current="step"':""}>${k==="fixes"?"The 12 gaps and GO":esc(Q[k].title.split(" · ")[0])}${answers[k]?'<span class="done">✓</span>':""}</button>`).join("");
+  const el = document.getElementById("part");
+  el.innerHTML = (part==="fixes" ? fixPart() : qPart(part)) + `<div class="navrow" style="margin-top:14px"><button type="button" id="prev" ${part===KEYS[0]?"disabled":""}>← Previous</button><button type="button" id="next" class="primary" ${part===KEYS[KEYS.length-1]?"disabled":""}>Next →</button></div>`;
+  document.getElementById("note").value = notes[part] ?? "";
+  status();
+  document.querySelectorAll("[data-part]").forEach(b=>b.onclick=()=>{ part=b.dataset.part; render(); scrollTo(0,0); });
+  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{ answers[part]=b.dataset.o; render(); save(); });
+  document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{ answers.fixes=b.dataset.go; render(); save(); });
+  const u = document.getElementById("unsure"); if (u) u.onclick=()=>{ answers[part]="unsure"; render(); save(); };
+  let t; document.getElementById("note").oninput=e=>{ notes[part]=e.target.value; clearTimeout(t); t=setTimeout(save,800); };
+  document.getElementById("prev").onclick=()=>{ part=KEYS[Math.max(0,KEYS.indexOf(part)-1)]; render(); scrollTo(0,0); };
+  document.getElementById("next").onclick=()=>{ part=KEYS[Math.min(KEYS.length-1,KEYS.indexOf(part)+1)]; render(); scrollTo(0,0); };
+}
+function status(msg){
+  const st = document.getElementById("st"); if (!st) return;
+  if (msg) { st.textContent = msg; return; }
+  const n = KEYS.filter(k=>answers[k]).length;
+  st.innerHTML = !db ? "Can't be saved in this view. Open the page from its link, or type your answers in chat."
+    : pending ? "Saving…" : savedAt ? `<span class="saved">✓ Saved for Claude</span> · ${n} of ${KEYS.length} answered · ${new Date(savedAt).toLocaleTimeString()}` : "Not answered yet.";
+}
+// B28: every save sends all answers; a copy coming back from the server never overwrites a newer click.
+async function save(){
+  if (!db) { status(); return; }
+  const rec = {q:"stage8", answers:{...answers}, notes:{...notes}, at:new Date().toISOString()};
+  pending++; status();
+  try { await db.collection("stage8").doc("stage8").set(rec); savedAt = rec.at; }
+  catch(e){ pending--; status("Not saved ("+(e&&e.code||"error")+"). Type your answers in chat instead."); return; }
+  pending--; status();
+}
+render();
+(async function(){
+  try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : null); }catch(e){ db=null; }
+  status();
+  if (!db) return;
+  db.collection("stage8").onSnapshot(s=>{ (s.docs||[]).forEach(d=>{ const r=typeof d.data==="function"?d.data():d.data;
+    if (!r || r.q!=="stage8" || pending) return;
+    if (savedAt && r.at && r.at < savedAt) return;
+    answers = {...(r.answers||{}), ...answers}; notes = {...(r.notes||{}), ...notes}; savedAt = r.at; render(); }); }, ()=>{});
+})();
+})();
+</script>

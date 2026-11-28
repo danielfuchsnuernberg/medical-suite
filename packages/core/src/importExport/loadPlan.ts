@@ -11,7 +11,7 @@ export interface PlacePick { kind: "place"; id: string }
 export type Target = PlacePick | { kind: "new"; name: string } | { kind: "skip" };
 export interface KnownPlace { id: string; name: string; kind?: unknown; state?: unknown }
 export interface KnownItem { id: string; name: string; unit?: unknown; controlled?: unknown; state?: unknown }
-export interface PlanRow { key: string; sheet: string; row: number; item: string; itemId: string | null; unit: string; qty: number; month: string | null; lot: string; expiry: string | null; required: number | null; waits: "controlled" | "suggested" | null }
+export interface PlanRow { key: string; sheet: string; row: number; item: string; itemId: string | null; unit: string; qty: number; month: string | null; lot: string; expiry: string | null; required: number | null; waits: "controlled" | "suggested" | null; blocking: boolean }
 export interface PlanSheet { name: string; target: Target; rows: PlanRow[] }
 export interface Plan { sheets: PlanSheet[]; load: number; waiting: number; newItems: number; newBags: string[]; skipped: number }
 
@@ -52,7 +52,7 @@ export function planImport(c: Checked, fileName: string, places: KnownPlace[], i
       const { qty, month } = newestCount(r, labels);
       const key = rowKey(r);
       const waits = it?.controlled === true || controlledNames.has(norm(r.tidied)) ? "controlled" as const : choices.suggested?.has(key) ? "suggested" as const : null;
-      return { key, sheet: s.name, row: r.row, item: r.tidied, itemId: it?.id ?? null, unit: r.unit, qty, month, lot: r.lot, expiry: r.expiry || null, required: bag ? r.required ?? null : null, waits };
+      return { key, sheet: s.name, row: r.row, item: r.tidied, itemId: it?.id ?? null, unit: r.unit, qty, month, lot: r.lot, expiry: r.expiry || null, required: bag ? r.required ?? null : null, waits, blocking: (r.flags ?? []).some(fl => fl.blocking) };   // B64: the store checks this itself
     });
     if (target.kind === "skip") { skipped += rows.length; }
     else {

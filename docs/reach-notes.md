@@ -4,6 +4,13 @@ What this app built or decided that touches the REACH ecosystem: the shared Peop
 
 ---
 
+## 28 Nov 2026 — Stage 8: decisions that touch the REACH Core
+
+- **Q30 answered by Danny (Q32 = B):** a restore never replaces data; it adds ordinary changes that set records back to the backup (records made since are archived, never deleted; legal records like the controlled-drug register are never touched). So with the shared server, a restore rolls back on every computer and every log stays whole. **For REACH to consider** as the R10 rule for every app's restore.
+- **Countries (R12):** the country list is a Settings list here (Management adds one: code, name, time zone). **For REACH to align** with EDP F81 (country settings) when the Core country list is decided.
+- **Readable numbers (R4):** staff S-NNN and items I-NNNN; when two computers offline pick the same number, the later one is shown with -2. **For REACH to note** the same clash rule for EDP's case numbers (EDP B4/F63).
+- **Doctors' list (Q31 = A):** Management can't change the profession of someone on this app's doctors' list. **For REACH to note** when profession becomes a Core People field (Ops Management): changing a listed doctor's profession must go through this app's doctors first.
+
 ## 28 Nov 2026 — Stage 7: things the shared server (SD2) will have to decide
 
 - **Q30, what a restore means once there is a server.** Today a restore replaces everything on one computer. With a server, this app now sends the backup's messages and fetches everything again, so all computers agree; but that means a restore can't undo what other computers already have. Whether a restore should roll back on every computer is a server rule. **For REACH to decide with SD2**, for every app's restore (R10).

@@ -226,7 +226,12 @@ describe("doctors, medical codes and Head Doctors (F12.12–F12.15)", () => {
     await acc.setMedicalCode(dina(door), "MD-44");
     await reg.grant(ben(door), "demo-p4");
     expect(reg.isDoctor("demo-p4")).toBe(true);
+    // Q31 = A: Management can't change a listed doctor's profession; a doctor removes them first
+    await expect(acc.setProfession(cara(door), "demo-p4", "Nurse")).rejects.toThrow("Dina Test is on the doctors' list. A doctor removes them first");
+    await reg.revoke(ben(door), "demo-p4");
     await acc.setProfession(cara(door), "demo-p4", "Nurse");                                 // no longer entered as a doctor
+    expect(reg.isDoctor("demo-p4")).toBe(false);
+    await acc.setProfession(cara(door), "demo-p4", "Doctor");                                // back to Doctor: not back on the list
     expect(reg.isDoctor("demo-p4")).toBe(false);
     await expect(reg.takeOut(dina(door), out({ how: "self" }))).rejects.toThrow("Only a doctor");
   });
