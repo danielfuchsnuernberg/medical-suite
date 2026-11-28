@@ -7,11 +7,11 @@ import ExpiryBadge from "../components/ExpiryBadge.jsx";
 
 const VERDICT_CLASS = { empty: "b-muted", notReady: "b-danger", short: "b-warning", notSetUp: "b-info", ready: "b-success" };
 
-export default function Overview({ inv, today, dateStyle, open, openItem }) {
+export default function Overview({ inv, today, dateStyle, open, openItem, openItems }) {
   const { lines, items, locations } = inv;
   const o = overview(lines, today);
   const Stat = ({ k, icon, children, filter }) => filter
-    ? <button type="button" className="stat click" data-ov={k} onClick={() => open(filter)}>{children}</button>
+    ? <button type="button" className="stat click" data-ov={k} onClick={() => (k === "types" && openItems ? openItems() : open(filter))}>{children}</button>
     : <div className="stat" data-ov={k}>{children}</div>;
   return (
     <div className="overview">

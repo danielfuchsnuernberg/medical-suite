@@ -44,7 +44,7 @@ test("F14.1 a new person in the Core shape; an email already in the list is refu
   await expect(page.getByTestId("prof-email")).toHaveText("eva@example.org");
   await expect(page.getByTestId("prof-office")).toHaveText("Medics");
   await expect(page.getByTestId("prof-details")).toContainText("Added28 Nov 2026 by Cara Demo");
-  await page.getByRole("button", { name: "All staff" }).click();
+  await page.getByRole("button", { name: "Back to Staff and training" }).click();
   // the same email again, and Finn's (archived)
   let d = await add({ name: "Eva Two", email: "eva@example.org" });
   await expect(d.getByTestId("refusal")).toContainText("Someone already has that email");
@@ -115,14 +115,14 @@ test("F14.4 archive keeps the history and can be undone; delete for good only a 
   await page.getByTestId("confirm-archive").getByRole("button", { name: "Archive" }).click();
   await expect(page.getByTestId("prof-archived")).toBeVisible();
   await expect(page.getByRole("button", { name: "Edit details" })).toHaveCount(0);
-  await page.getByRole("button", { name: "All staff" }).click();
+  await page.getByRole("button", { name: "Back to Staff and training" }).click();
   await expect(row("demo-p4")).toHaveCount(0);
   await expect(page.locator('[data-st="staff"] .v')).toHaveText("3");
   await page.getByLabel("Show archived staff").check();
   await row("demo-p4").click();
   await page.getByRole("button", { name: "Restore" }).click();
   await expect(page.getByTestId("prof-archived")).toHaveCount(0);
-  await page.getByRole("button", { name: "All staff" }).click();
+  await page.getByRole("button", { name: "Back to Staff and training" }).click();
   // a mistake: added and deleted at once
   await add({ name: "Oops Person", email: "oops@example.org" });
   await expect(page.getByTestId("prof-name")).toHaveText("Oops Person");

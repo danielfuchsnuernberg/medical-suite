@@ -1,5 +1,36 @@
 # CHECKLIST — REACH Medical Suite
-**Now:** Done · release 1 built, tested, audited and handed over (28 Nov 2026) · waiting for Danny: a Developer ID certificate and one Windows try (B60); the server (REACH SD2) in the REACH chat
+**Now:** Workflow B · A1–A6 built, tested, committed (28 Nov) · A9 restock rights next (round 2: GO given; answers 3 and 4 did not arrive on the page) on https://claude.ai/artifact/SMKox2VzjdMtXexbohYv4q; the A8 plan review (https://claude.ai/artifact/Cy5EPGd4HDZ8uCQa7kGb5Z); commit when he asks; his B60 steps; the server (REACH SD2)
+
+### STEP 6 — Requests A1–A8: wait for approval (Workflow B, 28 Nov 2026)
+**Goal:** Danny answers the questions on A1–A7, reviews the A8 plan, and says GO before anything is built.
+**Checklist:**
+- [x] Steps 1–2: all eight requests read and checked against the code (Icon.jsx, Sidebar.jsx, App.jsx, menu.ts, styles, Staff.jsx, the importer run on the two real files: counts only, nothing copied into the project)
+- [x] Step 3: written down as B70–B77 in `BUGS.md`
+- [x] Step 4: order planned (`BUGS.md` › B70–B77, “Order planned”)
+- [x] Step 5: shown: questions page (9 questions, live pictures, proposed answers, GO button; tested: every answer redraws its picture, 0 errors) and the A8 plan page (6 sections, three hand-over lists)
+- [x] Step 6: Danny's answers and GO ✅ 28 Nov: all nine A, GO (Q33–Q41). New the same day: A9 restock rights (B78) and real people in the trial (Q42): round 2 shown, waiting
+**Tests for this stage:**
+- [x] Both pages open with 0 console errors; every question has a picture for every answer
+- [x] Danny's answers read back from the page (`requests` collection, version 37) and logged in `PLAN.md` › Q&A
+**Status:** 🟡 IN PROGRESS
+**Open questions:** none for A1–A7 (answered 28 Nov); A8 review open
+**Status:** 🟢 GO given (28 Nov 2026)
+
+### STEP 7–10 — Requests A1–A6: build, test, audit, files (Workflow B, 28 Nov 2026)
+**Goal:** build what Danny approved (Q35–Q41 = A), each with a test that fails without it.
+**Checklist:**
+- [x] B70 (A1) icons: one Lucide family (ISC, notice kept in the built program), a gear for Settings, 12 different menu icons. ✅ requests.spec › B70 + unit test (menu icons distinct)
+- [x] B72 (A3) the look: teal #0E7490, plain-case labels, 14 px body, no bar beside the menu entry, “Later” tags; every drop-down shaped like the text boxes, its open list drawn by the program (click, arrows, Space, Enter, letters, Escape). ✅ requests.spec › B72
+- [x] B71 (A2) sidebar: drag 180–320 px, double-click 220, fold to 56 px icons (names on pointing), ⌘\ / Ctrl+\, remembered on this computer. ✅ requests.spec › B71
+- [x] B73 (A4) Back: to where you came from, named, filters and scroll kept, ⌘[ / Alt+←; the menu starts afresh; typed counts ask first. ✅ requests.spec › B73 ×2
+- [x] B75 (A6) Head Doctor mark on the profile (with who named them and when) and in the staff list. ✅ requests.spec › B75
+- [x] B74 (A5) Item list: F22 above. ✅
+- [x] Full test pass (unit + program) recorded ✅ 28 Nov: 188 of 188 unit, 113 of 113 program
+- [x] Each fix undone on its own makes its test fail ✅ 10 of 10
+- [x] Audit: diff touches only the planned files (AUDIT.md) ✅ (plus 6 screenshots the tests redraw)
+- [x] Files: BUGS, CHANGELOG, DECISIONS, HANDOVER, reach-notes (F53) ✅
+**Not in this step:** A7 real-data trial (waits for round 2: Q42, and A9 comes first), A9 restock rights (waits for round-2 answers and GO), A8 (Danny's review).
+**Status:** 🟢 DONE (28 Nov 2026), committed on Danny's word
 
 ### ARCHIVE — clear away the June prototype (26 Nov 2026)
 **Goal:** only the new app is left in sight; nothing is lost.
@@ -364,3 +395,11 @@ Status per block: 🔴 not built · 🟡 building · 🟢 built and tested. Feat
 ### F21 — SOPs (MD6) · later · no demo
 - [ ] F21.1 Its own run through the stages: the medical side's standard operating procedures. (Q21 = A, REACH D4, Q24)
 **Status:** ⚪ later
+
+### F22 — Item list · B74 (A5, Q41 = A) · added 28 Nov 2026 (it never had a block: the audit counted the placeholder as fine)
+- [x] F22.1 One row per item (the catalogue): item number, name, category, unit, controlled mark, total on hand over the Store and every bag, in how many places, the next expiry, and the stock over all places (In stock / Short somewhere / Out of stock / No amount set / Below zero). ✅ 28 Nov: tests/app/requests.spec.mjs › B74 (every DEMO item's total checked against its lines) + unit tests (itemList.test.ts)
+- [x] F22.2 Search by name or item number, a category filter, archived items only with “Show archived”, Clear filters. ✅ › B74 + unit tests
+- [x] F22.3 A row opens the item page; Back returns to the Item list with the search kept; the menu marks Item list while its item is open. ✅ › B74
+- [x] F22.4 Add item here (Work level and up; View level sees no button); Export CSV of exactly the rows shown. ✅ › B74, B74 View level + unit test (CSV, formulas never run)
+- [x] F22.5 The Overview's “Item types” card opens it, with the same count. ✅ › B74, stage8 › B68 (changed)
+**Status:** 🟢 built and tested (28 Nov 2026)

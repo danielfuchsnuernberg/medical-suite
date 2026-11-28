@@ -39,7 +39,7 @@ test("F15.1 each course shows Valid, Expires in N days, Expired, Required or In 
   await expect(course("demo-t2")).toContainText("Completed 18 Nov 2024 · expires 18 Nov 2026 · valid 24 months");
   await expect(course("demo-t3").locator(".badge")).toHaveText("Required");
   await expect(page.getByTestId("prof-training").getByRole("button")).toHaveCount(0);   // Work level only looks
-  await page.getByRole("button", { name: "All staff" }).click();
+  await page.getByRole("button", { name: "Back to Staff and training" }).click();
   await openPerson("demo-p4");
   await expect(course("demo-t7").locator(".badge")).toHaveText("Expires in 20 days");
   await expect(course("demo-t8").locator(".badge")).toHaveText("In progress");
@@ -62,7 +62,7 @@ test("F15.2 an expired certificate can be renewed, and a valid one renewed early
   await expect(d.getByTestId("new-expiry")).toContainText("New expiry: 20 Nov 2027");
   await d.getByRole("button", { name: "Save" }).click();
   await expect(course("demo-t1")).toContainText("expires 20 Nov 2027");
-  await page.getByRole("button", { name: "All staff" }).click();
+  await page.getByRole("button", { name: "Back to Staff and training" }).click();
   await expect(page.locator('[data-st="expired"] .v')).toHaveText("0");
   await expect(page.locator('tr[data-person="demo-p1"] [data-train]')).toHaveText("Due soon / required");   // Fire safety still required
   await page.click('.side [data-view="log"]');

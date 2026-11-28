@@ -6,6 +6,7 @@
 - **F1–F5 foundation:** window, menu and search; sign-in and levels (View / Work / Manage); works without internet (store door); Activity log; Settings (country, base, lists, program name).
 - **F6–F13 stock:** overview, Store and bags, item page, restock / dispense / move, counting, stock takes, the controlled-drug register (doctors, witness, PIN, Head Doctor), backup, restore and the Excel check and loading.
 - **F14–F15 people:** staff list and profiles, training and certificates.
+- **After release 1 (28 Nov, Danny's requests A1–A6):** the Item list (F22), the teal medical look with the program's own drop-down lists, a resizable and foldable menu, Back to where you came from, the Head Doctor shown on profiles. Still waiting: the real-data trial (A7), restock rights (A9), the privacy and legal plan's review (A8).
 - **Not in release 1 (planned):** the roster F16 (release 2, after Danny's roster rules), EDP's "used on a case" F17, Patient Archive F18, Calendar, Medical Library and SOPs F19–F21.
 
 It runs with DEMO data (invented people and stock, marked DEMO). The June prototype is archived (iCloud › AI Projects › REACH Inventory › Archive – June 2026 prototype), a reference only. Real source data: iCloud › AI Projects › REACH Inventory › Source data (real) — never in Git.
@@ -17,8 +18,8 @@ It runs with DEMO data (invented people and stock, marked DEMO). The June protot
 - **A new, empty computer:** the first Management person sets it up (name, office, own password); everyone else gets a one-time password from Settings › People and access.
 
 ## How to test it
-- **Unit tests:** `npx vitest run` → 181 tests (rules and stores).
-- **Program tests, in the real program:** `npm run test:app` → 105 tests (every Master Checklist line, the Stage 7 and 8 bugs, and the installed Mac app when one is built). They run in test mode (MD_TEST=1: a stand-in server and a second "computer") with their own data folder (MD_USER_DATA), so they run even while the program is open. Never set test mode by hand.
+- **Unit tests:** `npx vitest run` → 188 tests (rules and stores).
+- **Program tests, in the real program:** `npm run test:app` → 113 tests (every Master Checklist line, the Stage 7 and 8 bugs, Danny's requests A1–A6, and the installed Mac app when one is built). They run in test mode (MD_TEST=1: a stand-in server and a second "computer") with their own data folder (MD_USER_DATA), so they run even while the program is open. Never set test mode by hand.
 - **Real Excel files:** Settings › Backup and import › Check a stock list. The check lists every problem; loading is refused while a row must be fixed.
 - How the tests were proven able to fail (each rule broken on purpose): `CHECKLIST.md` › Stage 6–8 and `AUDIT.md`.
 

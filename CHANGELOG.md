@@ -1,5 +1,16 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — Danny's requests A1–A6 built (Workflow B, GO on the page, all answers A)
+- **A1 icons (B70):** one icon family (Lucide, ISC licence kept in the built program); Settings is a gear; every menu entry has its own icon (Activity and Stock takes, Item list and Patient Archive no longer share one).
+- **A3 look (B72):** teal #0E7490 instead of indigo; labels in plain case; body text 14 px; no bar beside the selected menu entry; tags read “Later”. Every drop-down has the shape and height of a text box, and its open list is the program's own (mouse, arrows, Space, Enter, letters, Escape). Written up for EDP F53 in docs/reach-notes.md.
+- **A2 sidebar (B71):** drag its edge (180–320 px; double-click: 220), fold it to a strip of icons with the button at the bottom or ⌘\ / Ctrl+; remembered on this computer.
+- **A4 Back (B73):** every screen opened from another has “Back to <where you came from>”, with filters and scroll kept; ⌘[ (Mac) / Alt+← (Windows); the menu starts a new path; typed counts still ask first.
+- **A6 (B75):** “Head Doctor” on the person's profile (with who named them and when) and in the staff list.
+- **A5 Item list (B74, F22):** one row per item with the total over every place, places, next expiry and stock; search, category, archived; opens the item page; Add item; Export CSV; the Overview's “Item types” opens it.
+- **A8 plan page** shown (v2 adds Europe and the U.S. at Danny's request). **Round 2** shown: restock rights (A9) and real people in the trial (Q42).
+- Tests: 188 unit (7 new), 113 program (8 new); 5 older tests changed (the Item list is no longer a placeholder; “All staff” is now “Back to Staff and training”; the fold button sits next to Settings; “Later” tags). Each fix undone on its own made its test fail (10 of 10). The program tests also redraw 6 screenshots in docs/stage6 and docs/stage7 (DEMO data, new look).
+- Not yet: A7 real-data trial (after round 2), A9 restock rights (round-2 GO given 28 Nov). Committed on Danny's word: “Yes. Commit.”
+
 ## 2026-11-28 — Stage 9: handover of release 1
 - Stage 8 committed first (72a9c13).
 - `ARCHITECTURE.md`: new “As built” section (folders, every record type, how to build, run, test and make the installers) next to the approved target; the June folder layout marked as gone.

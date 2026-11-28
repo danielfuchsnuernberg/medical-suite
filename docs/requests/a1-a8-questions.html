@@ -1,0 +1,411 @@
+<title>Requests A1–A7</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Danny's requests A1–A7 after release 1 (Workflow B step 5): one question at a time, live mock, proposed answer. Answers save to db collection "requests". A8 has its own page. */
+:root{--bg:#F4F4F6;--surface:#FFFFFF;--surface-2:#FAFAFB;--border:#E4E4EA;--border-strong:#D2D2DA;--text:#1B1B23;--muted:#6B6B78;--faint:#9B9BA6;--accent:#0E7490;--accent-soft:#E3F2F5;--accent-border:#A9D6DF;--on-accent:#FFFFFF;--ok:#1E9E62;--ok-soft:#E7F5EE;--warn:#C77A12;--warn-soft:#F8EFDF;--bad:#D14343;--bad-soft:#FAEAEA;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121218;--surface:#1B1B23;--surface-2:#20202A;--border:#2C2C38;--border-strong:#3A3A48;--text:#ECECF2;--muted:#A3A3B2;--faint:#76768A;--accent:#4FB3C8;--accent-soft:#143038;--accent-border:#2A5966;--on-accent:#121218;--ok:#4CC48A;--ok-soft:#173326;--warn:#E0A247;--warn-soft:#352812;--bad:#EE7474;--bad-soft:#3A1C1C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121218;--surface:#1B1B23;--surface-2:#20202A;--border:#2C2C38;--border-strong:#3A3A48;--text:#ECECF2;--muted:#A3A3B2;--faint:#76768A;--accent:#4FB3C8;--accent-soft:#143038;--accent-border:#2A5966;--on-accent:#121218;--ok:#4CC48A;--ok-soft:#173326;--warn:#E0A247;--warn-soft:#352812;--bad:#EE7474;--bad-soft:#3A1C1C;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;margin:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:64px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0} h1{font-size:27px;font-weight:700;letter-spacing:-.4px} h2{font-size:19px;font-weight:700}
+p{margin:0;max-width:72ch}
+.eyebrow{font-size:12px;font-weight:600;color:var(--accent)}
+.muted{color:var(--muted)}
+header{padding-top:32px;display:flex;flex-direction:column;gap:10px}
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:780px){.why{grid-template-columns:1fr}}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:5px;font-size:14px;min-width:0}
+.k{font-size:12px;font-weight:700;color:var(--accent)}
+.risk{border-color:var(--bad);background:var(--bad-soft)} .risk .k{color:var(--bad)}
+.qgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:880px){.qgrid{grid-template-columns:1fr}}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:12px;border:1px solid var(--border-strong);background:var(--surface)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt[aria-pressed="true"]{border:2px solid var(--accent);background:var(--accent-soft);padding:11px 13px}
+.opt .l{font-weight:600;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.opt .d{font-size:13px;color:var(--muted)}
+.opt .cons{font-size:12.5px;display:flex;flex-direction:column;gap:2px;margin-top:3px}
+.opt .cons span::before{content:"+ ";color:var(--ok);font-weight:700} .opt .cons span.minus::before{content:"− ";color:var(--bad)}
+.prop{font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;background:var(--ok);color:#fff}
+.ans{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--border-strong)}
+.ans .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13.5px}
+.ans button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.ans button[aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:#fff}
+.ans textarea{min-height:54px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);resize:vertical}
+.ans .state{font-size:12px;color:var(--faint)}
+.note{font-size:13px;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;flex-direction:column;gap:3px}
+.steps{display:flex;gap:6px;flex-wrap:wrap}
+.steps button{font:inherit;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.steps button[aria-current="step"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.steps button .done{color:var(--ok);margin-left:4px}
+.steps button[aria-current="step"] .done{color:var(--on-accent)}
+.navrow{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.navrow button{font:inherit;font-size:13.5px;font-weight:600;padding:8px 14px;border-radius:9px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.navrow button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.navrow button:disabled{opacity:.45;cursor:default}
+.saved{font-weight:600;color:var(--ok)}
+.go{display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:12px;border:2px solid var(--accent);background:var(--surface)}
+.go .row{display:flex;gap:8px;flex-wrap:wrap}
+.go button{font:inherit;font-size:14px;font-weight:600;padding:8px 14px;border-radius:9px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.go button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+footer{padding-top:18px;font-size:12.5px;color:var(--faint)}
+/* ---- mock screens: always light, like the program ---- */
+.m{--mA:#4F46E5;--mAs:#EEEDFD;--mLbl:uppercase;--mLs:.8px;--mFs:12px;color-scheme:light;background:#F4F4F6;color:#1B1B23;border:1px solid #D2D2DA;border-radius:12px;overflow:hidden;font-size:var(--mFs);line-height:1.4;font-family:var(--sans)}
+.m .cap{font-size:10.5px;font-weight:700;color:#6B6B78;padding:6px 10px;background:#ECECEF;border-bottom:1px solid #E4E4EA}
+.m .body{padding:10px;display:flex;flex-direction:column;gap:8px}
+.m .card{background:#fff;border:1px solid #E4E4EA;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.m .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.m .lbl{font-size:9.5px;font-weight:600;letter-spacing:var(--mLs);text-transform:var(--mLbl);color:#9B9BA6}
+.m .btn{font-weight:600;font-size:11px;padding:5px 10px;border-radius:6px;background:var(--mA);color:#fff;border:1px solid var(--mA)}
+.m .gh{font-weight:600;font-size:11px;padding:4px 9px;border-radius:6px;background:#fff;color:#1B1B23;border:1px solid #D2D2DA;display:inline-flex;gap:5px;align-items:center}
+.m .inp{border:1px solid #D2D2DA;border-radius:6px;padding:5px 8px;background:#fff;color:#6B6B78;font-size:11px;min-width:110px}
+/* the computer's own drop-down (before) */
+.m .nsel{font-size:10.5px;padding:1px 18px 1px 7px;border-radius:5px;border:1px solid #B9B9C2;background:linear-gradient(#fff,#ECECEF);box-shadow:0 1px 1px rgba(0,0,0,.08);position:relative;color:#1B1B23;line-height:1.5}
+.m .nsel::after{content:"⌃⌄";position:absolute;right:4px;top:-1px;font-size:7px;line-height:.9;writing-mode:vertical-lr;color:#444}
+/* the program's own drop-down (after) */
+.m .psel{font-size:11px;padding:5px 26px 5px 8px;border-radius:6px;border:1px solid #D2D2DA;background:#fff;position:relative;color:#1B1B23;min-width:96px}
+.m .psel::after{content:"";position:absolute;right:9px;top:50%;width:6px;height:6px;border-right:1.6px solid #6B6B78;border-bottom:1.6px solid #6B6B78;transform:translateY(-70%) rotate(45deg)}
+.m .plist{position:absolute;left:0;top:calc(100% + 4px);background:#fff;border:1px solid #D2D2DA;border-radius:8px;box-shadow:0 10px 26px -10px rgba(20,20,35,.3);padding:4px;display:flex;flex-direction:column;min-width:140px;z-index:2}
+.m .plist span{padding:4px 8px;border-radius:5px} .m .plist span.on{background:var(--mAs);color:var(--mA);font-weight:600}
+.m .shell{display:grid;grid-template-columns:var(--sw,150px) 1fr;min-height:200px;transition:grid-template-columns .25s}
+.m .side{background:#F0F0F3;border-right:1px solid #E4E4EA;padding:8px 6px;display:flex;flex-direction:column;gap:2px;overflow:hidden;position:relative}
+.m .side .it{display:flex;gap:8px;align-items:center;padding:5px 7px;border-radius:6px;color:#6B6B78;white-space:nowrap;font-size:11.5px}
+.m .side .it svg{flex:none}
+.m .side .it.on{background:var(--mAs);color:var(--mA);font-weight:600}
+.m .side .grp{padding:7px 7px 2px}
+.m .grip{position:absolute;right:-3px;top:0;bottom:0;width:6px;cursor:col-resize}
+.m .grip::after{content:"";position:absolute;left:2px;top:40%;height:28px;width:2px;border-radius:2px;background:var(--mA)}
+.m .main{padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.m .tbl{display:grid;font-size:11px;background:#fff;border:1px solid #E4E4EA;border-radius:8px;overflow:hidden}
+.m .tbl > span{padding:5px 7px;border-bottom:1px solid #F0F0F3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m .tbl > span.h{font-weight:600;color:#6B6B78;background:#FAFAFB;font-size:10px}
+.m .tag{font-size:9.5px;font-weight:700;border-radius:4px;padding:1px 5px;white-space:nowrap}
+.m .t-ok{background:#E7F5EE;color:#14663f} .m .t-w{background:#F8EFDF;color:#8a5208} .m .t-r{background:#FAEAEA;color:#B23434} .m .t-g{background:#EDEDF1;color:#6B6B78} .m .t-a{background:var(--mA);color:#fff}
+.m .hl{outline:2px dashed #D14343;outline-offset:2px;border-radius:6px}
+.m .hlg{outline:2px solid #1E9E62;outline-offset:2px;border-radius:6px}
+.m .back{display:inline-flex;gap:5px;align-items:center;font-weight:600;font-size:11px;padding:4px 9px;border-radius:6px;border:1px solid #D2D2DA;background:#fff;align-self:flex-start}
+.m .crumb{font-size:10px;color:#9B9BA6}
+.m h4{margin:0;font-size:14px}
+.m .ic{display:grid;grid-template-columns:1fr 26px 26px;gap:4px 8px;align-items:center;font-size:11.5px}
+.m .ic .bad{color:#D14343}
+.m .mono{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;background:#FAFAFB;border:1px solid #E4E4EA;border-radius:4px;padding:0 4px}
+.m .arrow{color:#9B9BA6}
+.trail{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px}
+.trail b{background:#fff;border:1px solid #D2D2DA;border-radius:6px;padding:3px 8px;font-weight:600}
+.trail i{font-style:normal;color:#9B9BA6}
+.swatches{display:flex;gap:8px}
+.swatches span{width:22px;height:22px;border-radius:6px;display:inline-block}
+.pickfrom{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:13px}
+.pickfrom button{font:inherit;font-size:12.5px;padding:5px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.pickfrom button[aria-pressed="true"]{border:2px solid var(--accent);padding:4px 9px;font-weight:600}
+</style>
+<div class="wrap">
+<header>
+  <div class="eyebrow">REACH Medical Suite · your requests of 28 Nov after release 1 · Workflow B, shown before building</div>
+  <h1>Your eight requests: seven questions here, one plan page</h1>
+  <p class="muted">You asked for: a real gear icon (A1), a sidebar you can resize and fold away (A2), a designer's clean-up of the whole look (A3), Back buttons (A4), the Item list (A5), Head Doctor on the profile (A6), the real stock list on this Mac for testing (A7), and a privacy and legal plan (A8, on its own page). Each question below shows the real screen. Click an answer: the screen changes. The green <b>Proposed</b> mark is my recommendation. Nothing is built until you say GO at the bottom.</p>
+</header>
+<div class="steps" id="steps" role="tablist" aria-label="Questions"></div>
+<div id="part"></div>
+<div class="go" id="go"></div>
+<footer>REACH Medical Suite · Workflow B · requests A1–A7 (B70–B76 in BUGS.md) · source <code>docs/requests/a1-a8-questions.html</code> · answers saved for Claude in collection “requests”. All names and items in the pictures are invented examples.</footer>
+</div>
+<script>
+(function(){
+"use strict";
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+// ---- icons: June set (before) and the proposed set (Lucide, ISC licence) ----
+const OLD = {
+  home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
+  box:'<path d="M21 8V21H3V8"/><rect x="1" y="3" width="22" height="5" rx="1"/><path d="M10 12h4"/>',
+  filter:'<path d="M3 6h18M6 12h12M9 18h6"/>',
+  file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/>',
+  count:'<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/>',
+  clock:'<path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/>',
+  pill:'<rect x="2" y="8" width="20" height="8" rx="4"/><path d="M12 8v8"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  roster:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M7 14h3v3H7z"/>',
+  settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+};
+const NEW = {
+  home:'<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  overview:'<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
+  bag:'<path d="M12 11v4"/><path d="M14 13h-4"/><path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><path d="M18 6v14"/><path d="M6 6v14"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+  list:'<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>',
+  count:'<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
+  takes:'<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
+  pill:'<path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/>',
+  history:'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
+  users:OLD.users,
+  roster:'<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/>',
+  folder:'<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M12 10v6M9 13h6"/>',
+  settings:'<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  fold:'<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="m16 15-3-3 3-3"/>',
+  back:'<path d="M19 12H5M12 19l-7-7 7-7"/>',
+};
+const svg = (p, w=15) => `<svg viewBox="0 0 24 24" width="${w}" height="${w}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+// menu: label, June icon, proposed icon
+const MENU = [["Home","home","home"],["Overview","box","overview"],["Store and bags","filter","bag"],["Item list","file","list"],["Count a bag","count","count"],["Stock takes","clock","takes"],["Controlled drugs","pill","pill"],["Activity","clock","history"],["Staff and training","users","users"],["Roster","roster","roster"],["Patient Archive","file","folder"],["Settings","settings","settings"]];
+const ACCENTS = { A:["#0E7490","#E3F2F5","Teal"], B:["#3B5A78","#E6ECF2","Slate blue"], C:["#4F46E5","#EEEDFD","Indigo (today)"] };
+// the mocks follow your answers to the look questions, so every later picture shows the look you picked
+function look(){
+  const dir = answers.look || "A";
+  const acc = dir === "A" ? (ACCENTS[answers.accent] || ACCENTS.A) : ACCENTS.C;
+  const fresh = dir !== "C";
+  const icons = (answers.icons || "A") === "A" && dir !== "C";
+  return { acc, fresh, icons, style:`--mA:${acc[0]};--mAs:${acc[1]};${dir==="A"?"--mLbl:none;--mLs:0;--mFs:12.5px;":""}` };
+}
+const sel = (txt, open) => { const L = look(); return L.fresh ? `<span class="psel" style="position:relative">${esc(txt)}${open?`<span class="plist"><span class="on">${esc(txt)}</span><span>Store</span><span>Bag 1 (example)</span><span>Bag 2 (example)</span></span>`:""}</span>` : `<span class="nsel">${esc(txt)}</span>`; };
+const navIcon = (r) => look().icons ? NEW[r[2]] : OLD[r[1]];
+
+const PARTS = {
+  // ---------------- A7 ----------------
+  mustfix:{ req:"A7", title:"A7 · Real stock list: what to do with the 77 rows that must be fixed",
+    about:"You want the real stock list in the program on this Mac, to test with. The program checks the medics' two Excel files first. 378 rows in the Store file and 527 in the bags file; 24 and 53 rows have a problem the check won't guess at, so today nothing loads.",
+    why:"Release-1 rule (B6, F13.6): nothing loads while a row must be fixed, so a wrong guess never becomes wrong stock. Most of the 77 are harmless to read (“2 pkt” is 2), a few are real puzzles (two expiry dates in one cell: which amount belongs to which?). A wrong reading of an expiry date is the risky kind.",
+    changes:"A: almost everything loads, every guess is marked “to check” and listed. B: the 77 rows are missing from the trial. C: nothing loads until the medics fix the files.",
+    opts:{
+      A:{ l:"Read what is safe, mark the rest “to check”", d:"For the trial on this Mac only. Every row loads; each guess is shown on the line and in one list.", prop:true,
+        pro:["You test with the whole list today","Nothing is guessed silently: every changed cell is named"], con:["You (or a medic) go through about 77 marked lines"],
+        lines:["Counts written with a unit (“2 pkt”, “3 pairs”: 54 cells) → the number; “1 +2 +3 = 6” → 6. “Full” (7) → the required amount; “Half” and “&” (2) → not loaded, listed.","Two expiry dates in one cell → loads with the earlier date (the safer one), marked “two lots: split”.","Year 1899, 1900 or 1905, or text that isn't a date → no expiry, marked.","A lot number that is a date → used as the expiry when the expiry is empty, marked.","The same item twice (same lot and expiry) → added together, marked.","The real loading rule for the nurses' program (nothing loads while a row must be fixed) stays as it is."]},
+      B:{ l:"Leave those rows out", d:"Load the clean rows only; the 77 are listed, not loaded.",
+        pro:["No guessing at all"], con:["77 lines missing: bags look emptier than they are","Bag readiness is wrong in the trial"],
+        lines:["About 300 Store rows and 470 bag rows load.","The missing rows are in a list to copy for the medics."]},
+      C:{ l:"Wait for the medics", d:"Send them the problem list; load once both files pass.",
+        pro:["The files become the truth again"], con:["No real-data test until they find time"],
+        lines:["Nothing loads now.","The problem list goes to the medics (Settings › Backup and import › Check a stock list › Copy)."]}},
+    mock(o){
+      const rows=[["Gauze swabs (example)","Count","2 pkt","2","t-w","read as 2"],["Saline 500 ml (example)","Expiry","03/27 & 08/27","2027-03-27","t-w","two lots: split"],["Crepe bandage (example)","Expiry","01/01/1900","none","t-w","no expiry"],["Splint set (example)","Count","Full","4 (required)","t-w","read as required"],["Glucose gel (example)","Count","Half","—","t-r","not loaded"]];
+      const show = o==="A" ? rows : rows.map(r=>[r[0],r[1],r[2],"—",o==="B"?"t-r":"t-g",o==="B"?"left out":"waits for the medics"]);
+      return `<div class="m" style="${look().style}"><div class="cap">Settings › Backup and import · loading the bags file (invented examples)</div><div class="body">
+        <div class="trail"><b>Excel cell</b><i>→</i><b>what the program loads</b><i>→</i><b>mark on the line</b></div>
+        <div class="tbl" style="grid-template-columns:1.6fr .7fr 1fr 1fr 1.1fr"><span class="h">Item</span><span class="h">Cell</span><span class="h">Written</span><span class="h">Loads as</span><span class="h">Mark</span>
+        ${show.map(r=>`<span>${esc(r[0])}</span><span>${esc(r[1])}</span><span><span class="mono">${esc(r[2])}</span></span><span>${esc(r[3])}</span><span><span class="tag ${r[4]}">${esc(r[5])}</span></span>`).join("")}</div>
+        <div class="card"><b>${o==="A"?"Loaded: about 900 of 905 rows. 77 rows marked “to check” (list ready to copy).":o==="B"?"Loaded: 828 of 905 rows. 77 left out (list ready to copy).":"Nothing loaded. 77 rows must be fixed in the Excel files first."}</b></div></div></div>`; }},
+  trial:{ req:"A7", title:"A7 · Where the real stock lives on this Mac",
+    about:"The program you run today holds the DEMO people and stock. Real stock has to go somewhere on this Mac, and it must never reach GitHub (hard rule: the repository is public).",
+    why:"If real stock mixes with DEMO stock you can't tell which is which, and the program tests (which start from DEMO data) could read it. The program's data folder is already outside the repository; the question is whether the trial gets its own.",
+    changes:"A: two separate copies, the trial clearly marked. B: one copy, DEMO stock replaced by the real list.",
+    opts:{
+      A:{ l:"A separate trial copy", d:"Its own data folder in your Mac's Library (outside GitHub), started with its own command or Dock icon, a red stripe “REAL DATA · trial on this Mac”.", prop:true,
+        pro:["DEMO copy and tests untouched","Throw the trial away by deleting one folder"], con:["Two icons to keep apart"],
+        lines:["Folder: ~/Library/Application Support/REACH Medical Suite – real trial (never in the repository; a test checks it).","First start: you set yourself up as Management (the normal first-start screen); no DEMO people.","Suggested controlled drugs wait for a Head Doctor, as built. To try that part you add a test doctor in the trial yourself.","The real files are read straight from iCloud; nothing is copied into the project folder."]},
+      B:{ l:"Into the normal copy", d:"The real list replaces the DEMO stock; DEMO people stay.",
+        pro:["One program"], con:["DEMO people next to real stock","Your demos and screenshots then show real stock"],
+        lines:["Backup first, then load.","Going back to DEMO means restoring that backup."]}},
+    mock(o){
+      return `<div class="m" style="${look().style}"><div class="cap">This Mac</div><div class="body">
+        <div class="row">${o==="A"?`<div class="card" style="flex:1"><b>REACH Medical Suite</b><span class="tag t-g" style="align-self:flex-start">DEMO DATA</span><span style="color:#6B6B78">Dr Ben Sample, Gauze (example)…</span></div><div class="card hlg" style="flex:1;border-top:4px solid #D14343"><b>REACH Medical Suite – real trial</b><span class="tag t-r" style="align-self:flex-start">REAL DATA · trial on this Mac</span><span style="color:#6B6B78">the medics' real list, you as Management</span></div>`
+          :`<div class="card hl" style="flex:1"><b>REACH Medical Suite</b><span class="tag t-g" style="align-self:flex-start">DEMO people</span><span class="tag t-r" style="align-self:flex-start">REAL stock</span><span style="color:#6B6B78">Dr Ben Sample (invented) next to the real list</span></div>`}</div>
+        <div class="row" style="font-size:11px;color:#6B6B78"><span class="tag t-ok">GitHub</span> never receives either data folder (they live in the Mac's Library, not the project).</div></div></div>`; }},
+  // ---------------- A3 ----------------
+  look:{ req:"A3", title:"A3 · The look: what a designer would change",
+    about:"I reviewed every screen as a senior designer would. Biggest finding: the drop-downs are the computer's own plain ones (28 of them): smaller, greyer and a different shape than the boxes next to them. Second: the colour (a stock indigo), the font and the tiny CAPITAL labels are the most common template look of 2024–2026: that's the “AI-made” feeling.",
+    why:"Danny, 26 Nov (EDP F53): medical apps keep their own colours; something common pulls the REACH family together later. So the choice now is how far to go before F53. Going too far now could mean redoing it when F53 is decided; too little leaves the clunky look.",
+    changes:"A: own calm medical look now (colour, drop-downs, labels, spacing), written as a small set of named colours F53 can adopt. B: keep the colours, fix only the parts. C: wait for F53.",
+    opts:{
+      A:{ l:"Own calm medical look, now", d:"Layout and screens stay. New: one medical colour, the program's own drop-downs, plain-case labels, slightly larger text, quieter tags, distinct icons.", prop:true,
+        pro:["Fixes everything you named","Kept in one file of named colours, so F53 can line it up later"], con:["Every screen's picture changes once (screens, not how they work)"],
+        lines:["Drop-downs: same height and shape as text boxes, one arrow; the open list in the program's look; typing a letter still jumps.","Labels like INVENTORY become Inventory; body text 13.5 → 14 px.","Colour: question 4. Statuses keep green / amber / red.","Removed: the coloured bar beside the menu entry, letter-spaced tags, the indigo glow on focus.","Recorded in DECISIONS.md and docs/reach-notes.md for EDP F53."]},
+      B:{ l:"Same colours, fix the parts", d:"Keep indigo and the font; new drop-downs, labels and spacing.",
+        pro:["Smaller change"], con:["Keeps the template colour you felt was AI-made"],
+        lines:["Drop-downs and labels as in A.","Colour stays indigo; question 4 is skipped."]},
+      C:{ l:"Wait for F53", d:"Change nothing in the look until EDP F53.",
+        pro:["Decided once for all apps"], con:["F53 is parked; the clunky drop-downs stay for months"],
+        lines:["Only the gear icon (A1) is fixed now.","Questions 4 and 5 are skipped."]}},
+    mock(o){
+      const before = `<div class="m"><div class="cap">Store and bags · today</div><div class="body"><div class="lbl">Filters</div><div class="row"><span class="inp">Search items…</span><span class="nsel">All places</span><span class="nsel">All categories</span><span class="nsel">Any stock level</span></div>
+        <div class="row"><span class="btn">Add item</span><span class="gh">Export CSV</span><span class="tag t-g" style="letter-spacing:.4px">LATER</span></div></div></div>`;
+      const after = `<div class="m" style="${look().style}"><div class="cap">Store and bags · ${o==="C"?"unchanged (waits for F53)":"after"}</div><div class="body"><div class="lbl">Filters</div><div class="row">${o==="C"?`<span class="inp">Search items…</span><span class="nsel">All places</span><span class="nsel">All categories</span><span class="nsel">Any stock level</span>`:`<span class="inp" style="padding:5px 8px">Search items…</span>${sel("All places", true)}${sel("All categories")}${sel("Any stock level")}`}</div>
+        <div class="row" style="margin-top:${o==="C"?0:62}px"><span class="btn">Add item</span><span class="gh">Export CSV</span><span class="tag t-g" ${o==="C"?'style="letter-spacing:.4px"':""}>${o==="C"?"LATER":"Later"}</span></div></div></div>`;
+      return `${before}<div style="height:8px"></div>${after}`; }},
+  accent:{ req:"A3", title:"A3 · The medical colour",
+    about:"Only if the look changes now (question 3 = A). One colour carries the selected menu entry, the main buttons and links. Statuses keep their own green (ready), amber (low) and red (out, expired).",
+    why:"The colour must stay clearly apart from the green “ready” and red “out”, readable for small text (contrast checked for each below), and different from the aviation apps, as you asked on 26 Nov. It's the colour F53 would remember as “medical”.",
+    changes:"A: teal (medical, calm, clear of the status green). B: slate blue (very quiet, nearly grey). C: keep today's indigo.",
+    skip(){ return (answers.look||"A") !== "A" ? "Skipped: you chose to keep today's colours (question 3)." : ""; },
+    opts:{
+      A:{ l:"Teal", d:"#0E7490. White text on it: contrast 5.4 : 1 (passes for small text).", prop:true, pro:["Reads as medical","Clear of the green “ready” and the red"], con:["Close to cyan on cheap screens"], lines:["Selected menu entry, main buttons, links and focus rings in teal."]},
+      B:{ l:"Slate blue", d:"#3B5A78. Contrast 7.2 : 1.", pro:["Very calm, very readable"], con:["Can look dull; less “medical”"], lines:["Selected menu entry, main buttons, links and focus rings in slate blue."]},
+      C:{ l:"Indigo (today)", d:"#4F46E5. Contrast 6.3 : 1.", pro:["No colour change"], con:["The template colour"], lines:["Colour stays; drop-downs and labels still change."]}},
+    mock(o){ const a = ACCENTS[o]; const st = `--mA:${a[0]};--mAs:${a[1]};--mLbl:none;--mLs:0;--mFs:12.5px`;
+      return `<div class="m" style="${st}"><div class="cap">Overview · ${esc(a[2])}</div><div class="shell" style="--sw:150px"><div class="side">${MENU.slice(0,5).map((r,i)=>`<div class="it ${i===1?"on":""}">${svg(NEW[r[2]],14)}${esc(r[0])}</div>`).join("")}</div>
+        <div class="main"><div class="row"><span class="btn">Count a bag</span><span class="gh">Export</span>${sel("All places")}</div>
+        <div class="row"><span class="tag t-ok">Ready</span><span class="tag t-w">Low</span><span class="tag t-r">Out</span><span style="color:var(--mA);font-weight:600">Open Store and bags →</span></div>
+        <div class="swatches">${Object.values(ACCENTS).map(x=>`<span title="${esc(x[2])}" style="background:${x[0]};${x[0]===a[0]?"outline:2px solid #1B1B23;outline-offset:2px":""}"></span>`).join("")}<span style="background:#1E9E62" title="ready"></span><span style="background:#C77A12" title="low"></span><span style="background:#D14343" title="out"></span></div></div></div></div>`; }},
+  // ---------------- A1 ----------------
+  icons:{ req:"A1", title:"A1 · Icons: a real gear, and one clear icon per menu entry",
+    about:"Settings is drawn as a circle with eight rays: a sun. Checking every icon found three more: Activity and Stock takes share the same clock; Item list and Patient Archive share the same page; Store and bags has three lines (a “filter” sign).",
+    why:"In a menu you find things by shape before you read. Two entries with the same icon, or a sun for Settings, make people click the wrong one.",
+    changes:"A: a tested open icon set (Lucide; free, licence kept in the program), one icon per entry. B: keep the June icons, swap only the sun for a gear and fix the two pairs.",
+    skip(){ return (answers.look||"A") === "C" ? "Partly skipped: with question 3 = C only the gear is changed now (answer B is used)." : ""; },
+    opts:{
+      A:{ l:"New matching set, one per entry", d:"All icons from one family (same line width and corners), copied into the program: no download at run time.", prop:true,
+        pro:["Consistent shapes","Gear, bag, clipboard, pill all read at a glance"], con:["Every icon changes once"],
+        lines:["Red outlines: the six menu entries with a problem (the sun, two clock twins, two page twins, the filter sign). Green: what replaces them.","Lucide's licence (ISC, free) goes into the program's licence list (A8 page).","The program's own mark (the plus) stays until REACH has a logo."]},
+      B:{ l:"Keep the June icons, fix the four", d:"Gear for Settings; Stock takes, Patient Archive and Store and bags get new ones.",
+        pro:["Smallest change"], con:["Mixed families: new and old icons look slightly different"],
+        lines:["Only four icons change."]}},
+    mock(o){
+      const bad = new Set(["Store and bags","Item list","Stock takes","Activity","Patient Archive","Settings"]);
+      const fix = { "Settings":"settings","Stock takes":"takes","Patient Archive":"folder","Store and bags":"bag" };
+      return `<div class="m" style="${look().style}"><div class="cap">The menu: June icons → ${o==="A"?"the new set":"four fixed"}</div><div class="body"><div class="ic"><span class="lbl">Entry</span><span class="lbl">Now</span><span class="lbl">After</span>
+        ${MENU.map(r=>{ const after = o==="A" ? NEW[r[2]] : (fix[r[0]] ? NEW[fix[r[0]]] : OLD[r[1]]); const changed = o==="A" ? r[1]!==r[2] || bad.has(r[0]) : !!fix[r[0]];
+          return `<span>${esc(r[0])}</span><span class="${bad.has(r[0])?"bad hl":""}" style="display:grid;place-items:center">${svg(OLD[r[1]],17)}</span><span class="${changed?"hlg":""}" style="display:grid;place-items:center;color:var(--mA)">${svg(after,17)}</span>`; }).join("")}</div></div></div>`; }},
+  // ---------------- A2 ----------------
+  sidebar:{ req:"A2", title:"A2 · The sidebar: resize it and fold it away",
+    about:"The menu on the left has a fixed width. You want to drag it wider or narrower, and fold it away for more room (for example a long stock table).",
+    why:"Long item names get cut off in a narrow menu; a wide menu steals room from tables. Folding it completely means you lose the overview of where you are.",
+    changes:"A: drag the edge, and fold to a slim strip of icons (names show when you point at one). B: fold away completely, a button brings it back. C: fold only, no dragging.",
+    opts:{
+      A:{ l:"Drag the edge + fold to an icon strip", d:"Drag between 180 and 320 px; the fold button (or ⌘\\ on Mac, Ctrl+\\ on Windows) makes it a 56 px strip of icons. Remembered on this computer.", prop:true,
+        pro:["Always one click from any screen","You still see where you are (the highlighted icon)"], con:["Icons must be clear (A1 does that)"],
+        lines:["Double-click the edge: back to the normal width.","On a narrow window it stays the slide-in menu, as today.","Remembered per computer, not per person."]},
+      B:{ l:"Drag the edge + fold away completely", d:"Folded, only a small menu button stays at the top left.",
+        pro:["Most room for tables"], con:["Two clicks to switch screens","You don't see where you are"], lines:["Folded: a ☰ button opens it as a slide-in."]},
+      C:{ l:"Fold only", d:"No dragging; fold to the icon strip.",
+        pro:["Simplest"], con:["Long names stay cut off"], lines:["Two widths only: normal and the strip."]}},
+    mock(o){
+      const [w, folded] = o==="B" ? ["0px", true] : o==="C" ? ["44px", true] : ["44px", true];
+      const L = look();
+      const side = (width, strip) => `<div class="shell" style="--sw:${width}"><div class="side">${strip===null?"":MENU.slice(0,8).map((r,i)=>`<div class="it ${i===2?"on":""}" title="${esc(r[0])}">${svg(navIcon(r),14)}${strip?"":esc(r[0])}</div>`).join("")}${strip===false&&o!=="C"?'<span class="grip" title="drag"></span>':""}</div>
+        <div class="main">${strip===null?`<span class="gh" style="align-self:flex-start">☰ Menu</span>`:""}<div class="row"><b>Store and bags</b><span class="gh" style="margin-left:auto">${svg(NEW.fold,13)}${strip||strip===null?"Unfold":"Fold"}</span></div>
+        <div class="tbl" style="grid-template-columns:2fr .6fr .8fr"><span class="h">Item</span><span class="h">On hand</span><span class="h">Expiry</span><span>Gauze swabs 10×10 cm (example)</span><span>40</span><span>2027-03</span><span>Saline 500 ml (example)</span><span>12</span><span>2026-12</span></div></div></div>`;
+      return `<div class="m" style="${L.style}"><div class="cap">Open (drag the ${o==="C"?"— no handle":"teal handle"})</div>${side(o==="C"?"150px":"190px", false)}</div><div style="height:8px"></div>
+        <div class="m" style="${L.style}"><div class="cap">Folded</div>${side(w, o==="B"?null:true)}</div>`; }},
+  // ---------------- A4 ----------------
+  back:{ req:"A4", title:"A4 · Back: where does it take you?",
+    about:"Some screens you open from inside another: an item from the Overview, a person from the search, a stock take from its list, a screen from a Home card. Today only three have a Back button, and the item page always says “Back to Store and bags”, even when you came from the Overview or the search.",
+    why:"A Back that goes somewhere else than where you came from loses your place (your filters, your scroll). That's the broken part today. The menu always stays as the way to jump anywhere.",
+    changes:"A: Back returns to exactly where you came from, says its name, keeps your filters. B: Back always goes to the parent list (today's way, added everywhere).",
+    opts:{
+      A:{ l:"Back to where you came from", d:"Shown on every screen you reached from inside another (not when you used the menu). Its label names the screen: “Back to Overview”. Also ⌘[ (Mac) or Alt+← (Windows).", prop:true,
+        pro:["Never lands you somewhere unexpected","Filters and the scroll position kept"], con:["The label changes with the path"],
+        lines:["Covers: item page, staff profile, stock take, Home cards and alerts, Overview cards, search results, the new Item list.","Several steps: Back walks them in reverse; the menu starts a new path.","Unsaved counts still ask first (B16 rule)."]},
+      B:{ l:"Always to the parent list", d:"Item page → Store and bags; profile → All staff; a Home card's screen → Home.",
+        pro:["Always the same"], con:["From the Overview you land in Store and bags with no filter"], lines:["Fixed labels as today, added where missing."]}},
+    from:"overview",
+    mock(o){
+      const FROM = { overview:["Overview","Overview card “Low stock”"], search:["Search","search result “gauze”"], items:["Item list","Item list row"], home:["Home","Home card “Inventory”"] };
+      const f = PARTS.back.from, label = o==="A" ? `Back to ${FROM[f][0]}` : (f==="home" ? "Back to Home" : "Back to Store and bags");
+      const right = o==="A" || f==="home";
+      return `<div class="pickfrom" style="margin-bottom:8px">You came from: ${Object.entries(FROM).map(([k,v])=>`<button type="button" data-from="${k}" aria-pressed="${k===f}">${esc(v[1])}</button>`).join("")}</div>
+        <div class="m" style="${look().style}"><div class="cap">The path</div><div class="body"><div class="trail"><b>${esc(FROM[f][0])}</b><i>→ click</i><b>${f==="home"?"Overview":"Gauze swabs (example)"}</b><i>→ Back →</i><b style="${right?"border-color:#1E9E62":"border-color:#D14343"}">${esc(right?FROM[f][0]:"Store and bags")}</b></div></div></div>
+        <div style="height:8px"></div><div class="m" style="${look().style}"><div class="cap">${f==="home"?"Overview":"Item page"}</div><div class="body"><span class="crumb">Inventory</span><span class="back ${right?"hlg":"hl"}">${svg(NEW.back,12)}${esc(label)}</span><h4>${f==="home"?"Overview":"Gauze swabs 10×10 cm (example)"}</h4>
+        <span style="color:#6B6B78">${right?"You land where you were, with your filters.":"You land in the full list; the Overview filter is gone."}</span></div></div>`; }},
+  // ---------------- A6 ----------------
+  head:{ req:"A6", title:"A6 · Head Doctor on the person's profile",
+    about:"Today you see who is Head Doctor only in Settings › People and access and on the Controlled drugs screen. On the person's own profile (Staff and training) it doesn't show.",
+    why:"Nurses look up a person on Staff and training, not in Settings. Knowing who the Head Doctor is matters when a drug has to become controlled (only the Head Doctor ticks it) and when nobody is Head Doctor (nobody can).",
+    changes:"A: a Head Doctor mark on the profile and in the staff list. B: on the profile only.",
+    opts:{
+      A:{ l:"Profile and staff list", d:"A “Head Doctor” mark beside the name in both places; the profile also says who named them and when.", prop:true,
+        pro:["Found from the list without opening anyone"], con:["One more mark in the list"],
+        lines:["Profile: “Head Doctor · named by Cara Demo, 28 Nov 2026”.","Staff list: the mark next to the name.","Read-only there; Management still changes it in Settings › People and access.","Nobody named: the profile of a doctor shows nothing; Management keeps the red note on Home."]},
+      B:{ l:"Profile only", d:"The mark and the line on the profile.", pro:["Quieter list"], con:["You have to open people to find the Head Doctor"], lines:["Staff list unchanged."]}},
+    mock(o){
+      const L = look();
+      return `<div class="m" style="${L.style}"><div class="cap">Staff and training</div><div class="body">
+        <div class="tbl" style="grid-template-columns:1.6fr 1fr 1fr"><span class="h">Name</span><span class="h">Job</span><span class="h">Office</span>
+        <span>Anna Example</span><span>Nurse</span><span>Medics</span><span class="${o==="A"?"hlg":""}">Dr Ben Sample ${o==="A"?'<span class="tag t-a">Head Doctor</span>':""}</span><span>Doctor</span><span>Medics</span><span>Cara Demo</span><span>Manager</span><span>Management</span></div>
+        <div class="card"><span class="back">${svg(NEW.back,12)}Back to Staff and training</span><div class="row hlg" style="padding:4px"><h4>Dr Ben Sample</h4><span class="tag t-a">Head Doctor</span></div>
+        <span style="color:#6B6B78">Doctor · Medics · medical code DEMO-MD-0001</span><span style="font-size:11px">Head Doctor · named by Cara Demo, 28 Nov 2026</span></div></div></div>`; }},
+  // ---------------- A5 ----------------
+  items:{ req:"A5", title:"A5 · The Item list: what it is",
+    about:"“Store and bags” shows stock lines: one row per item per place per lot (Gauze in the Store, Gauze in Bag 1…). The “Item list” menu entry is still empty. It never got a line in the Master Checklist, so the audit missed it: my gap.",
+    why:"Without one row per item you can't answer “how much gauze do we have in total, and where?” or keep the item names tidy (duplicates, wrong units). It is also the catalogue EDP will use for “used on a case” (same item numbers).",
+    changes:"A: one row per item with totals, opening the item page. B: names only, a tidy catalogue. C: drop the entry; Store and bags is enough.",
+    opts:{
+      A:{ l:"One row per item, with totals", d:"Item number, name, category, unit, controlled mark, total on hand everywhere, in how many places, the next expiry, and Ready / Low / Out over all places. Search and a category filter. A row opens the item page (Back returns here).", prop:true,
+        pro:["Answers “how much in total”","One place to spot duplicates and wrong units"], con:["A second list next to Store and bags"],
+        lines:["“Add item” lives here (Work level and up), and still on Store and bags.","Archived items only with “Show archived”.","Export CSV like Store and bags.","Gets its own Master Checklist block (F22) so the audit can't miss it again."]},
+      B:{ l:"Names only (catalogue)", d:"Number, name, category, unit, controlled mark. No amounts.",
+        pro:["Simple, for tidying the names"], con:["“How much in total” still needs adding up"], lines:["Same search, filter and Add item; no amounts."]},
+      C:{ l:"Drop it from the menu", d:"Store and bags already lists everything.",
+        pro:["One list fewer"], con:["No totals, no catalogue view for EDP"], lines:["The menu entry and the Overview's “Item types” card go to Store and bags."]}},
+    mock(o){
+      const L = look();
+      if (o==="C") return `<div class="m" style="${L.style}"><div class="cap">Menu</div><div class="body">${MENU.slice(1,6).filter(r=>r[0]!=="Item list").map(r=>`<div class="row">${svg(navIcon(r),14)}${esc(r[0])}</div>`).join("")}<span class="tag t-g" style="align-self:flex-start">Item list removed</span></div></div>`;
+      const rows=[["IT-1001","Gauze swabs 10×10 cm","Dressings","pack","",64,3,"2027-03","t-ok","Ready"],["IT-1002","Saline 500 ml","Fluids","bag","",9,4,"2026-12","t-w","Low"],["IT-1003","Morphine 10 mg/ml","Analgesia","ampoule","CD",6,2,"2027-01","t-ok","Ready"],["IT-1004","Glucose gel","Medication","tube","",0,0,"—","t-r","Out"]];
+      return `<div class="m" style="${L.style}"><div class="cap">Item list (invented examples)</div><div class="body"><div class="row"><span class="inp">Search items…</span>${sel("All categories")}<span class="btn" style="margin-left:auto">Add item</span></div>
+        <div class="tbl" style="grid-template-columns:${o==="A"?".7fr 2fr 1fr .7fr .6fr .6fr .8fr .7fr":".7fr 2.2fr 1.1fr .8fr"}"><span class="h">No.</span><span class="h">Item</span><span class="h">Category</span><span class="h">Unit</span>${o==="A"?'<span class="h">Total</span><span class="h">Places</span><span class="h">Next expiry</span><span class="h">Status</span>':""}
+        ${rows.map(r=>`<span>${r[0]}</span><span>${esc(r[1])} ${r[4]?'<span class="tag t-r">CD</span>':""}</span><span>${r[2]}</span><span>${r[3]}</span>${o==="A"?`<span>${r[5]}</span><span>${r[6]}</span><span>${r[7]}</span><span><span class="tag ${r[8]}">${r[9]}</span></span>`:""}`).join("")}</div>
+        <span style="color:#6B6B78;font-size:11px">Click a row → the item page, with “Back to Item list”.</span></div></div>`; }},
+};
+const KEYS = Object.keys(PARTS);
+let part = KEYS[0], answers = {}, notes = {}, go = null, savedAt = null, db = null, pending = 0;
+const prop = k => Object.keys(PARTS[k].opts).find(x=>PARTS[k].opts[x].prop);
+function render(){
+  const P = PARTS[part];
+  const pick = answers[part], shown = pick && P.opts[pick] ? pick : prop(part);
+  const skip = P.skip ? P.skip() : "";
+  document.getElementById("steps").innerHTML = KEYS.map((k,i)=>`<button type="button" role="tab" data-part="${k}" ${k===part?'aria-current="step"':""}>${i+1} · ${esc(PARTS[k].req)}${answers[k]?'<span class="done">✓</span>':""}</button>`).join("");
+  document.getElementById("part").innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <h2>${KEYS.indexOf(part)+1}. ${esc(P.title)}</h2>
+      ${skip?`<div class="note" style="border-color:var(--warn)"><b>${esc(skip)}</b><span>You can still answer it, in case you change question 3.</span></div>`:""}
+      <div class="why">
+        <div class="box"><span class="k">What it's about</span><p>${esc(P.about)}</p></div>
+        <div class="box risk"><span class="k">Why it matters</span><p>${esc(P.why)}</p></div>
+        <div class="box"><span class="k">What each answer changes</span><p>${esc(P.changes)}</p></div>
+      </div>
+      <div class="qgrid">
+        <div>${P.mock(shown)}</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="opts">${Object.entries(P.opts).map(([k,o])=>`<button type="button" class="opt" data-o="${k}" aria-pressed="${pick===k}"><span class="l">${k} · ${esc(o.l)}${o.prop?' <span class="prop">Proposed</span>':""}</span><span class="d">${esc(o.d)}</span><span class="cons">${o.pro.map(p=>`<span>${esc(p)}</span>`).join("")}${o.con.map(p=>`<span class="minus">${esc(p)}</span>`).join("")}</span></button>`).join("")}</div>
+          <div class="ans"><div class="row"><b>Your answer:</b> <span>${pick ? (pick==="unsure"?"Not sure":pick+" · "+esc(P.opts[pick].l)) : "not picked yet (the picture shows the proposed one)"}</span></div>
+            <div class="row"><button type="button" id="unsure" aria-pressed="${pick==="unsure"}">Not sure</button></div>
+            <textarea id="note" placeholder="Anything to add? (optional)"></textarea><span class="state" id="st"></span></div>
+          <div class="note"><span><b>${esc(shown)}</b> means:</span>${P.opts[shown].lines.map(l=>`<span>· ${esc(l)}</span>`).join("")}</div>
+        </div>
+      </div>
+      <div class="navrow"><button type="button" id="prev" ${part===KEYS[0]?"disabled":""}>← Previous question</button><button type="button" id="next" class="primary" ${part===KEYS[KEYS.length-1]?"disabled":""}>Next question →</button></div>
+    </div>`;
+  const n = KEYS.filter(k=>answers[k]).length;
+  document.getElementById("go").innerHTML = `<b>When you're done: GO for building?</b><span class="muted" style="font-size:13.5px">${n} of ${KEYS.length} answered. Unanswered questions are built as proposed. Build order: icons → look and drop-downs → sidebar → Back → Head Doctor mark → Item list → real-data trial. The A8 legal plan is a separate page.</span>
+    <div class="row"><button type="button" data-go="yes" aria-pressed="${go==="yes"}">GO: build it</button><button type="button" data-go="wait" aria-pressed="${go==="wait"}">Not yet: I have changes</button></div>`;
+  document.getElementById("note").value = notes[part] ?? "";
+  status();
+  document.querySelectorAll("[data-part]").forEach(b=>b.onclick=()=>{ part=b.dataset.part; render(); });
+  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{ answers[part]=b.dataset.o; render(); save(); });
+  document.querySelectorAll("[data-from]").forEach(b=>b.onclick=()=>{ PARTS.back.from=b.dataset.from; render(); });
+  document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{ go=b.dataset.go; render(); save(); });
+  document.getElementById("unsure").onclick=()=>{ answers[part]="unsure"; render(); save(); };
+  let t; document.getElementById("note").oninput=e=>{ notes[part]=e.target.value; clearTimeout(t); t=setTimeout(save,800); };
+  document.getElementById("prev").onclick=()=>{ part=KEYS[Math.max(0,KEYS.indexOf(part)-1)]; render(); window.scrollTo({top:0}); };
+  document.getElementById("next").onclick=()=>{ part=KEYS[Math.min(KEYS.length-1,KEYS.indexOf(part)+1)]; render(); window.scrollTo({top:0}); };
+}
+function status(msg){
+  const st = document.getElementById("st"); if (!st) return;
+  if (msg) { st.textContent = msg; return; }
+  const n = KEYS.filter(k=>answers[k]).length;
+  st.innerHTML = !db ? "Can't be saved in this view. Open the page from its link, or type your answers in chat."
+    : pending ? "Saving…" : savedAt ? `<span class="saved">✓ Saved for Claude</span> · ${n} of ${KEYS.length} answered · ${new Date(savedAt).toLocaleTimeString()}` : "Not answered yet.";
+}
+// B28: every save sends all answers; a copy coming back from the server never overwrites a newer click.
+async function save(){
+  if (!db) { status(); return; }
+  const clean = {}; KEYS.forEach(k=>{ if (answers[k]) clean[k]=answers[k]; });
+  const rec = {q:"requests", answers:clean, notes:{...notes}, go:go||"", at:new Date().toISOString()};
+  pending++; status();
+  try { await db.collection("requests").doc("requests").set(rec); savedAt = rec.at; }
+  catch(e){ pending--; status("Not saved ("+(e&&e.code||"error")+"). Type your answers in chat instead."); return; }
+  pending--; status();
+}
+render();
+(async function(){
+  try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : null); }catch(e){ db=null; }
+  status();
+  if (!db) return;
+  db.collection("requests").onSnapshot(s=>{ (s.docs||[]).forEach(d=>{ const r=typeof d.data==="function"?d.data():d.data;
+    if (!r || r.q!=="requests" || pending) return;
+    if (savedAt && r.at && r.at < savedAt) return;
+    answers = {...(r.answers||{}), ...answers}; notes = {...(r.notes||{}), ...notes}; go = go || r.go || null; savedAt = r.at; render(); }); }, ()=>{});
+})();
+})();
+</script>

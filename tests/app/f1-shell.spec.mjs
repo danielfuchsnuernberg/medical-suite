@@ -30,13 +30,13 @@ test("F1.1 menu as in the June app, Home cards, Settings at the bottom", async (
   await expect(page).toHaveTitle("REACH Medical Suite");
   const groups = await page.locator(".side .navlabel").allTextContents();
   expect(groups).toEqual(["Inventory", "Team", "Later"]);
-  const items = (await page.locator(".side .nav button").allTextContents()).map(t => t.replace(/LATER$/, "").trim());
+  const items = (await page.locator(".side .nav button[data-view]").allTextContents()).map(t => t.replace(/Later$/, "").trim());
   expect(items).toEqual(["Home", "Overview", "Store and bags", "Item list", "Count a bag", "Stock takes", "Controlled drugs", "Activity",
     "Staff and training", "Roster", "Patient Archive", "Settings"]);
-  await expect(page.locator(".side .bottom button")).toHaveText("Settings");
+  await expect(page.locator(".side .bottom button[data-view]")).toHaveText("Settings");
   expect(await page.locator(".home-grid .appcard").count()).toBe(6);
   // every menu entry opens: Home, or a screen that says which feature brings it
-  for (const id of ["items", "roster"]) {                               // staff: built in F14
+  for (const id of ["roster"]) {                                        // staff: built in F14; items: built (B74)
     await page.click(`.side [data-view="${id}"]`);
     await expect(page.locator(`.side [data-view="${id}"]`)).toHaveAttribute("aria-current", "page");
     await expect(page.getByTestId("placeholder")).toContainText(/Comes (with F\d+|later)/);

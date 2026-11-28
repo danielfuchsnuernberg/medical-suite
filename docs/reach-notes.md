@@ -58,3 +58,11 @@ What this app built or decided that touches the REACH ecosystem: the shared Peop
 - **What is never in a backup or sent anywhere:** password and PIN check values, "stay signed in". They belong to one computer until one REACH account exists (SD1).
 - **Never deleted** (R4, Q38), extended in this app: stock takes and the controlled-drug register (lines and doctors' decisions). They can't even be changed afterwards.
 - **Backups until the server exists (SD2):** one a day on each computer, the last 30 kept. The server's nightly backups wait for SD2.
+
+## The medical look (B72, 28 Nov 2026) — for EDP F53, the common REACH look
+Danny chose (Q35 = A, Q36 = A) to give the Medical Suite its own calm medical look now, before F53. Kept in one file (`apps/desktop/src/styles/tokens.css`), so F53 can line the names up:
+- Accent **teal #0E7490** (hover #155E75, soft #E3F2F5, border #A9D6DF); white text on it 5.4 : 1. Statuses unchanged: green #1E9E62, amber #C77A12, red #D14343.
+- Labels in plain case (no capitals, no letter-spacing); body 14 px; headings 19 / 15 px.
+- Icons: Lucide (ISC), one per menu entry.
+- Drop-downs shaped like text boxes, with the program's own open list.
+Danny on 26 Nov (EDP PLAN): medical apps keep their own colours; something common pulls the family together. Teal is meant to be the “medical” colour F53 keeps.

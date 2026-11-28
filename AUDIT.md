@@ -59,3 +59,13 @@
 - Followed `HANDOVER.md` › How to run it / How to test it, word for word: `npm install` (cache in a scratch folder) → Electron missing, so the documented `node node_modules/electron/install.js` → present.
 - `npx vitest run`: **181 of 181** pass. `npm run test:app`: **104 passed, 1 skipped** (the installed-app test skips itself when no installer was built: as designed).
 - Result: ✅ the files alone are enough to install, run and test the program.
+
+## 2026-11-28 — Requests A1–A6 (Workflow B step 9)
+
+**Checked:** `git status` against the planned files in BUGS.md (B70–B75).
+- Code changed: App.jsx, main.jsx, Icon.jsx, Sidebar.jsx, SelectPopup.jsx (new), ItemList.jsx (new), ItemPage.jsx (back label), Overview.jsx (Item types → Item list), Staff.jsx (Head Doctor mark, back label), StockList.jsx (AddItem exported, nothing else), tokens.css, app.css; core: menu.ts, itemList.ts (new), index.ts. All planned.
+- Tests changed or added: requests.spec.mjs (new), itemList.test.ts (new), f1-shell, f14-staff, f15-training, stage8 (wording of the new behaviour only).
+- Not planned but expected: 6 screenshots in docs/stage6 and docs/stage7 are written by the existing program tests; they now show the new look (DEMO data only).
+- Docs: BUGS, CHANGELOG, CHECKLIST, DECISIONS, PLAN, HANDOVER, docs/reach-notes.md, docs/requests/ (three question and plan pages).
+- **Result:** 188 of 188 unit tests, 113 of 113 program tests. 10 of 10 fixes, undone one at a time, made their test fail. Program looked at in five screenshots (Home, Settings with an open drop-down, Item list, an item with its Back, Staff with the menu folded).
+- Real data: the new pages and files were checked against the 781 real item names from the two spreadsheets: only generic words matched (“fluids”, “splint”, “trauma kit”, already in the DEMO data); nothing real added.

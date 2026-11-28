@@ -31,8 +31,8 @@ test("B68 every Overview card opens a list; below zero lists only the lines belo
   await launch("Anna Example");
   await page.evaluate(async () => { const t = window.__mdTest; await t.door.apply({ recordType: "line", recordId: "demo-s1", op: "delta", data: { field: "qty", by: -20 }, by: "demo-p4" }); });
   await page.click('.side [data-view="overview"]');
-  await page.locator('[data-ov="types"]').click();
-  await expect(page.locator('.side [data-view="where"]')).toHaveAttribute("aria-current", "page");
+  await page.locator('[data-ov="types"]').click();                    // B74: Item types opens the Item list
+  await expect(page.locator('.side [data-view="items"]')).toHaveAttribute("aria-current", "page");
   await page.click('.side [data-view="overview"]');
   await page.locator('[data-ov="units"]').click();
   await expect(page.locator('.side [data-view="where"]')).toHaveAttribute("aria-current", "page");

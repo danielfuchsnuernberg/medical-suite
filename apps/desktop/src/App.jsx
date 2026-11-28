@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { findEntry, MENU, can, needsMedicalCode, programName } from "@md/core";
 import Sidebar from "./components/Sidebar.jsx";
 import SearchBox from "./components/SearchBox.jsx";
@@ -16,6 +16,7 @@ import ItemPage from "./screens/ItemPage.jsx";
 import Count from "./screens/Count.jsx";
 import StockTakes from "./screens/StockTakes.jsx";
 import Staff from "./screens/Staff.jsx";
+import ItemList from "./screens/ItemList.jsx";
 import { installSaveGuard } from "./state/saveGuard.js";
 import { setAppName } from "./state/appName.js";
 import Register from "./screens/Register.jsx";
@@ -60,6 +61,23 @@ export default function App() {
   // whoever signs in next never sees, or saves, someone else's typed counts
   useEffect(() => { setCount({ locationId: null, q: "", drafts: {} }); setCountResult(null); setLeaving(null); }, [auth.id]);
   const [drawer, setDrawer] = useState(false);
+  // B71 (A2, Q38 = A): the menu's width and fold, remembered on this computer (not per person)
+  const [side, setSide] = useState(() => { try { const v = JSON.parse(localStorage.getItem("md.sidebar") || "{}"); return { w: Math.min(320, Math.max(180, Number(v.w) || 220)), folded: v.folded === true }; } catch { return { w: 220, folded: false }; } });
+  useEffect(() => { try { localStorage.setItem("md.sidebar", JSON.stringify(side)); } catch { /* not remembered: still works */ } }, [side]);
+  const [resizing, setResizing] = useState(false);
+  const grip = (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault(); setResizing(true);
+    const moveTo = (x) => setSide(s => ({ ...s, w: Math.round(Math.min(320, Math.max(180, x))) }));
+    const mv = (ev) => moveTo(ev.clientX);
+    const up = () => { setResizing(false); window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); };
+    window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
+  };
+  const toggleFold = useCallback(() => setSide(s => ({ ...s, folded: !s.folded })), []);
+  // B73 (A4, Q39 = A): where you came from, step by step. A menu click starts afresh; Back walks it in reverse.
+  const [trail, setTrail] = useState([]);
+  const contentRef = useRef(null);
+  const scrollTo = useRef(null);
   const [toasts, setToasts] = useState([]);
   const [offlineClosed, setOfflineClosed] = useState(false);
   const toast = useCallback((text, kind) => setToasts(t => [...t, { id: Math.random().toString(36).slice(2), text, kind }]), []);
@@ -73,15 +91,35 @@ export default function App() {
     return () => window.removeEventListener("beforeunload", ask);
   }, [typedCounts]);
   const [nav, setNav] = useState(0);              // every menu click starts the screen afresh (e.g. Stock takes goes back to the list)
-  const goNow = (id, f = null) => { setNav(n => n + 1); setView(id); setPersonId(null); setFilter(f); setDrawer(false); if (id !== "count") setCountResult(null); };
+  const apply = (t) => { setNav(n => n + 1); setView(t.view); setPersonId(t.personId ?? null); setFilter(t.filter ?? null); if (t.itemId !== undefined) setItemId(t.itemId); setDrawer(false); if (t.view !== "count") setCountResult(null); scrollTo.current = t.scroll ?? 0; };
+  const here = () => ({ view, filter, itemId, personId, scroll: contentRef.current ? contentRef.current.scrollTop : 0 });
+  // push: opened from inside a screen (Back comes back here); otherwise the menu: a new path
+  const goNow = (id, f = null, push = true, extra = {}) => { setTrail(t => push ? [...t, here()] : []); apply({ view: id, filter: f, personId: null, ...extra }); };
+  const backNow = () => {
+    const prev = trail[trail.length - 1];
+    if (!prev) { if (view === "item") apply({ view: "where", filter }); else if (personId) setPersonId(null); return; }
+    setTrail(trail.slice(0, -1)); apply(prev);
+  };
   // F10.2: leaving with unsaved counts asks Save / Throw away / Keep counting
-  const go = (id, f = null) => { if (view === "count" && id !== "count" && typedCounts) { setDrawer(false); setLeaving({ id, f }); return; } goNow(id, f); };
+  const guard = (t) => { if (view === "count" && t.id !== "count" && typedCounts) { setDrawer(false); setLeaving(t); return true; } return false; };
+  const go = (id, f = null, push = true) => { if (!guard({ id, f, push })) goNow(id, f, push); };
+  const menu = (id) => go(id, null, false);
+  const back = () => { if (!guard({ id: "back", back: true })) backNow(); };
+  const openItem = (id) => { if (!guard({ id: "item", f: filter, push: true, extra: { itemId: id } })) goNow("item", filter, true, { itemId: id }); };
+  const openPerson = (id) => { if (id) goNow("staff", null, true, { personId: id }); else back(); };
+  const backRef = useRef(back); backRef.current = back;
+  useEffect(() => { if (scrollTo.current != null && contentRef.current) { const y = scrollTo.current; scrollTo.current = null; requestAnimationFrame(() => { if (contentRef.current) contentRef.current.scrollTop = y; }); } });
 
   useEffect(() => {
-    const onKey = (e) => { if (e.key === "Escape") setDrawer(false); };
+    const onKey = (e) => {
+      if (e.key === "Escape") setDrawer(false);
+      const mac = navigator.platform.startsWith("Mac");
+      if ((mac ? e.metaKey : e.ctrlKey) && e.key === "\\") { e.preventDefault(); toggleFold(); }                    // B71: fold the menu
+      if ((mac && e.metaKey && e.key === "[") || (!mac && e.altKey && e.key === "ArrowLeft")) { e.preventDefault(); backRef.current(); }   // B73: Back
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [toggleFold]);
 
   // Every screen saves through here: the store door, and a red message if this computer couldn't save (F3.6).
   const save = useCallback(async (p) => {
@@ -143,9 +181,9 @@ export default function App() {
   const demo = door.records("person").some(p => p.demo === true) || door.records("item").some(i => i.demo === true);
   // Signing out takes effect at once; forgetting "stay signed in" is saved after.
   // Typed counts belong to the person who typed them: signing out asks first (like leaving) and always clears them.
-  const signOutNow = () => { setCount({ locationId: null, q: "", drafts: {} }); setCountResult(null); setAuth({ id: null, mustChange: false, ready: true }); setView("home"); accounts.stay(null).catch(e => toast(String(e.message || e), "danger")); };
+  const signOutNow = () => { setCount({ locationId: null, q: "", drafts: {} }); setCountResult(null); setAuth({ id: null, mustChange: false, ready: true }); setView("home"); setTrail([]); accounts.stay(null).catch(e => toast(String(e.message || e), "danger")); };
   const signOut = () => { if (typedCounts) { setLeaving({ id: "signout" }); return; } signOutNow(); };
-  const after = (t) => { if (t.id === "signout") signOutNow(); else goNow(t.id, t.f); };
+  const after = (t) => { if (t.id === "signout") signOutNow(); else if (t.back) backNow(); else goNow(t.id, t.f, t.push !== false, t.extra); };
   if (accounts.needsSetUp()) return <SetUp accounts={accounts} baseName={settings.baseName} demo={demo} onDone={(id) => setAuth({ id, mustChange: false, ready: true })} />;
   if (me && me.state === "Active" && auth.mustChange) return <ChooseOwn accounts={accounts} person={me} proof={auth.proof} demo={demo} onDone={() => setAuth(a => ({ ...a, mustChange: false, proof: "" }))} onCancel={signOut} />;
   if (signedIn && needsMedicalCode(me)) return <MedicalCode accounts={accounts} person={me} demo={demo} onDone={() => {}} onCancel={signOut} />;
@@ -166,14 +204,22 @@ export default function App() {
   const lockout = lockEv ? String(door.get("person", String(lockEv.personId))?.name ?? "someone") : null;
   const entry = findEntry(view);
   const title = view === "home" ? "Home" : view === "item" ? String(door.get("item", itemId)?.name ?? "Item") : entry ? entry.label : "";
+  const nameOf = (t) => t.view === "home" ? "Home" : t.view === "item" ? String(door.get("item", t.itemId)?.name ?? "the item")
+    : t.view === "staff" && t.personId ? String(door.get("person", t.personId)?.name ?? "Staff and training") : findEntry(t.view)?.label ?? "the last screen";
+  const prev = trail[trail.length - 1];
+  const backLabel = prev ? `Back to ${nameOf(prev)}` : view === "item" ? "Back to Store and bags" : "Back to Staff and training";
+  // the item page and a profile draw their own Back; every other screen opened from another gets it here
+  const ownBack = view === "item" || (view === "staff" && personId);
   const openResult = (kind, hit) => {
-    if (kind === "person") { go("staff"); setPersonId(hit?.id ?? null); return; }
+    if (kind === "person") { if (!guard({ id: "staff", push: true, extra: { personId: hit?.id ?? null } })) goNow("staff", null, true, { personId: hit?.id ?? null }); return; }
     const l = hit ? door.get("line", hit.id) : null;   // B67: a stock result opens its item page
-    go("where"); if (l) { setItemId(String(l.itemId)); setView("item"); }
+    if (l) openItem(String(l.itemId)); else go("where");
   };
   return (
-    <div className={`shell${drawer ? " drawer" : ""}`}>
-      <Sidebar view={view === "item" ? "where" : view} badges={{ cd: cdBadge }} go={go} baseName={settings.baseName} />
+    <div className={`shell${drawer ? " drawer" : ""}${side.folded ? " folded" : ""}${resizing ? " resizing" : ""}`} style={{ "--side-w": `${side.folded ? 56 : side.w}px` }}>
+      <Sidebar view={view === "item" ? (trail.find(t => t.view === "items") ? "items" : "where") : view} badges={{ cd: cdBadge }} go={menu} baseName={settings.baseName} folded={side.folded} onFold={toggleFold} />
+      {side.folded ? null : <div className={`sidegrip${resizing ? " dragging" : ""}`} role="separator" aria-orientation="vertical" aria-label="Menu width: drag, or double-click for the normal width" aria-valuemin={180} aria-valuemax={320} aria-valuenow={side.w} data-testid="sidegrip"
+        onPointerDown={grip} onDoubleClick={() => setSide(s => ({ ...s, w: 220 }))} />}
       {drawer ? <button type="button" className="scrim" aria-label="Close the menu" onClick={() => setDrawer(false)} /> : null}
       <div className="main">
         <header className="topbar">
@@ -183,15 +229,17 @@ export default function App() {
           <div className="tb-right"><span className="who" data-testid="who">{String(me.name)} · {String(me.level)}</span><button type="button" className="btn small" onClick={signOut}>Sign out</button><SyncLight status={status} waiting={door.waiting()} describe={describe} timeZone={settings.timeZone} /></div>
         </header>
         <Banners status={status} flags={door.flags()} nameOf={nameOfLine} timeZone={settings.timeZone} offlineClosed={offlineClosed} onCloseOffline={() => setOfflineClosed(true)} />
-        <main className="content" id="content">
+        <main className="content" id="content" ref={contentRef}>
+          {prev && !ownBack ? <div className="backbar"><button type="button" className="btn small backlink" data-testid="back" onClick={back}><Icon name="back" width={14} stroke={2} />{backLabel}</button></div> : null}
           {view === "home" ? <Home go={go} today={today} baseName={settings.baseName} emergencies={emergencies.length} noHead={noHead} lockout={lockout} below={data.inv.lines.filter(l => Number(l.qty) < 0).length} />
-            : view === "overview" ? <Overview inv={data.inv} today={today} dateStyle={settings.dateStyle} open={(f) => go("where", f)} openItem={(id) => { setItemId(id); setView("item"); }} />
-            : view === "where" ? <StockList inv={data.inv} today={today} dateStyle={settings.dateStyle} filter={filter} setFilter={setFilter} openItem={(id) => { setItemId(id); setView("item"); }} me={me} store={inventory} toast={toast} openRegister={() => go("cd")} />
-            : view === "item" ? <ItemPage itemId={itemId} me={me} door={door} inv={data.inv} store={inventory} tick={tick} today={today} timeZone={settings.timeZone} dateStyle={settings.dateStyle} back={() => setView("where")} toast={toast} openRegister={() => go("cd")} register={register} />
+            : view === "overview" ? <Overview inv={data.inv} today={today} dateStyle={settings.dateStyle} open={(f) => go("where", f)} openItem={openItem} openItems={() => go("items")} />
+            : view === "where" ? <StockList inv={data.inv} today={today} dateStyle={settings.dateStyle} filter={filter} setFilter={setFilter} openItem={openItem} me={me} store={inventory} toast={toast} openRegister={() => go("cd")} />
+            : view === "item" ? <ItemPage itemId={itemId} me={me} door={door} inv={data.inv} store={inventory} tick={tick} today={today} timeZone={settings.timeZone} dateStyle={settings.dateStyle} back={back} backLabel={backLabel} toast={toast} openRegister={() => go("cd")} register={register} />
+            : view === "items" ? <ItemList inv={data.inv} door={door} me={me} today={today} dateStyle={settings.dateStyle} openItem={openItem} store={inventory} toast={toast} tick={tick} filter={filter} setFilter={setFilter} />
             : view === "count" ? <Count inv={data.inv} me={me} state={count} setState={(f) => { setCount(f); setCountResult(null); }} save={saveCounts} result={countResult} />
             : view === "takes" ? <StockTakes key={nav} door={door} me={me} store={inventory} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} toast={toast} typedCounts={typedCounts} />
             : view === "cd" ? <Register door={door} me={me} reg={register} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} toast={toast} />
-            : view === "staff" ? <Staff door={door} me={me} accounts={accounts} training={training} tick={tick} toast={toast} timeZone={settings.timeZone} dateStyle={settings.dateStyle} openId={personId} setOpenId={setPersonId} />
+            : view === "staff" ? <Staff door={door} me={me} accounts={accounts} training={training} register={register} tick={tick} toast={toast} timeZone={settings.timeZone} dateStyle={settings.dateStyle} openId={personId} setOpenId={openPerson} backLabel={backLabel} />
             : view === "log" ? <Activity door={door} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} />
             : view === "settings" ? <Settings me={me} accounts={accounts} store={settingsStore} door={door} tick={tick} toast={toast} backups={backups} register={register} inventory={inventory} />
             : <Placeholder view={view} />}

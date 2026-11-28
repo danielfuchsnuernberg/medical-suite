@@ -17,14 +17,14 @@ const STOCK_WORDS = {
   ok: (store) => ["b-success", store ? "In stock" : "At or above required"],
 };
 
-export default function ItemPage({ itemId, me, door, inv, store, tick, today, timeZone, dateStyle, back, toast, openRegister, register }) {
+export default function ItemPage({ itemId, me, door, inv, store, tick, today, timeZone, dateStyle, back, backLabel = "Back to Store and bags", toast, openRegister, register }) {
   const item = door.get("item", itemId);
   const [dlg, setDlg] = useState(null);          // { kind: "move" | "edit" | "add" | "delete", lineId?, type? }
   const [why, setWhy] = useState("");
   const work = can(me.level, "changeStock");
   const all = useMemo(() => door.log(), [door, tick]);
   const w = useMemo(() => words(door, all), [door, all]);
-  if (!item) return <div className="placeholder" data-testid="item-page"><h2>This item isn't there any more.</h2><button type="button" className="btn" onClick={back}>Back to Store and bags</button></div>;
+  if (!item) return <div className="placeholder" data-testid="item-page"><h2>This item isn't there any more.</h2><button type="button" className="btn" onClick={back}>{backLabel}</button></div>;
 
   const place = (id) => door.get("location", id);
   const placeName = (id) => String(place(id)?.name ?? "?");
@@ -49,7 +49,7 @@ export default function ItemPage({ itemId, me, door, inv, store, tick, today, ti
 
   return (
     <div className="itempage" data-testid="item-page" data-item={itemId}>
-      <button type="button" className="btn small backlink" onClick={back}><Icon name="back" width={14} stroke={2} />Back to Store and bags</button>
+      <button type="button" className="btn small backlink" onClick={back}><Icon name="back" width={14} stroke={2} />{backLabel}</button>
       <div className="prof-head">
         <span className="appcard-ic"><Icon name="box" /></span>
         <div className="prof-main">

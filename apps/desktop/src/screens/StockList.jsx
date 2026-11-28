@@ -137,7 +137,7 @@ export default function StockList({ inv, today, dateStyle, filter, setFilter, op
 }
 
 // F8.4: a new item with its first place. A duplicate name is refused (in the store, any capitals, archived items too).
-function AddItem({ inv, at, close, go }) {
+export function AddItem({ inv, at, close, go }) {
   const [v, setV] = useState({ name: "", categoryId: "", unit: "", locationId: at || inv.locations[0]?.id || "", qty: "0" });
   const [why, setWhy] = useState("");
   const set = (k) => (e) => setV(x => ({ ...x, [k]: e.target.value }));

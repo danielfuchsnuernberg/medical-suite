@@ -1,0 +1,197 @@
+<title>Privacy and Legal Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* A8 (B77): a structured plan of privacy and legal duties for REACH Medical Suite. Not legal advice. Review answers save to db collection "a8". */
+:root{--bg:#F4F4F6;--surface:#FFFFFF;--surface-2:#FAFAFB;--border:#E4E4EA;--border-strong:#D2D2DA;--text:#1B1B23;--muted:#6B6B78;--faint:#9B9BA6;--accent:#0E7490;--accent-soft:#E3F2F5;--on-accent:#fff;--ok:#1E9E62;--ok-soft:#E7F5EE;--warn:#C77A12;--warn-soft:#F8EFDF;--bad:#D14343;--bad-soft:#FAEAEA;--law:#7C3AED;--law-soft:#F1EBFD;--lead:#B45309;--lead-soft:#FBF0E1;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121218;--surface:#1B1B23;--surface-2:#20202A;--border:#2C2C38;--border-strong:#3A3A48;--text:#ECECF2;--muted:#A3A3B2;--faint:#76768A;--accent:#4FB3C8;--accent-soft:#143038;--on-accent:#121218;--ok:#4CC48A;--ok-soft:#173326;--warn:#E0A247;--warn-soft:#352812;--bad:#EE7474;--bad-soft:#3A1C1C;--law:#B79BF5;--law-soft:#2A2140;--lead:#E5A55A;--lead-soft:#33260F;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121218;--surface:#1B1B23;--surface-2:#20202A;--border:#2C2C38;--border-strong:#3A3A48;--text:#ECECF2;--muted:#A3A3B2;--faint:#76768A;--accent:#4FB3C8;--accent-soft:#143038;--on-accent:#121218;--ok:#4CC48A;--ok-soft:#173326;--warn:#E0A247;--warn-soft:#352812;--bad:#EE7474;--bad-soft:#3A1C1C;--law:#B79BF5;--law-soft:#2A2140;--lead:#E5A55A;--lead-soft:#33260F;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;margin:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:64px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0} h1{font-size:27px;letter-spacing:-.4px} h2{font-size:19px} h3{font-size:15px}
+p{margin:0;max-width:74ch}
+a{color:var(--accent)}
+.muted{color:var(--muted)}
+header{padding-top:32px;display:flex;flex-direction:column;gap:10px}
+.eyebrow{font-size:12px;font-weight:600;color:var(--accent)}
+.warnbox{border:1px solid var(--warn);background:var(--warn-soft);border-radius:12px;padding:12px 14px;font-size:14px}
+.legend{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;align-items:center}
+.who{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.w-law{background:var(--law-soft);color:var(--law)} .w-lead{background:var(--lead-soft);color:var(--lead)} .w-app{background:var(--ok-soft);color:var(--ok)} .w-danny{background:var(--accent-soft);color:var(--accent)} .w-done{background:var(--surface-2);color:var(--muted);border:1px solid var(--border)}
+/* data map */
+.map{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:820px){.map{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.map{grid-template-columns:1fr}}
+.d{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:13px;border-top:4px solid var(--border-strong)}
+.d h3{font-size:14px}
+.d.low{border-top-color:var(--ok)} .d.mid{border-top-color:var(--warn)} .d.high{border-top-color:var(--bad)} .d.later{border-top-color:var(--bad);border-style:dashed}
+.d .lvl{font-size:11.5px;font-weight:700}
+.d.low .lvl{color:var(--ok)} .d.mid .lvl{color:var(--warn)} .d.high .lvl,.d.later .lvl{color:var(--bad)}
+.d ul{margin:0;padding-left:16px;color:var(--muted)}
+/* sections */
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.sec .top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.items{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.it{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:9px 12px;border-bottom:1px solid var(--border);font-size:14px;align-items:start}
+.it:last-child{border-bottom:0}
+.it small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.tbc{font-size:11px;font-weight:700;color:var(--warn);margin-left:6px;white-space:nowrap}
+.review{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;padding-top:4px;border-top:1px dashed var(--border-strong)}
+.review button{font:inherit;font-size:12.5px;padding:5px 11px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.review button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.review input{flex:1;min-width:180px;font:inherit;font-size:13px;padding:6px 9px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text)}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:820px){.cols{grid-template-columns:1fr}}
+.col{border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.col ol{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.col.law{background:var(--law-soft)} .col.lead{background:var(--lead-soft)} .col.app{background:var(--ok-soft)}
+.state{font-size:12.5px;color:var(--faint)} .saved{color:var(--ok);font-weight:600}
+footer{font-size:12.5px;color:var(--faint);display:flex;flex-direction:column;gap:4px}
+</style>
+<div class="wrap">
+<header>
+  <div class="eyebrow">REACH Medical Suite · A8 · privacy and legal plan · 28 Nov 2026</div>
+  <h1>What REACH has to get right before real people use the program</h1>
+  <p class="muted">You asked for a plan of the privacy and legal duties: staff data, the controlled-drug register, patient files later, Papua New Guinea and Peru, Europe and the United States (added 28 Nov: the strictest laws, as the yardstick), how the program is handed out, and the free software inside it. This page sorts each duty by <b>who has to decide it</b>. I checked public sources on 28 Nov 2026; anything marked <span class="tbc">to confirm</span> I could not settle from them.</p>
+  <div class="warnbox"><b>This is not legal advice.</b> It is a checklist to take to a lawyer and to REACH leadership. Laws in both countries are changing (PNG has a data protection bill in consultation in 2026). A lawyer in each country has to confirm the purple items before release 1 goes to the nurses.</div>
+  <div class="legend">Who decides: <span class="who w-law">Lawyer</span><span class="who w-lead">REACH leadership</span><span class="who w-danny">You</span><span class="who w-app">Built into the program (after your GO)</span><span class="who w-done">Already built</span></div>
+</header>
+
+<section style="display:flex;flex-direction:column;gap:10px">
+  <h2>1. What the program holds, and how sensitive it is</h2>
+  <div class="map">
+    <div class="d low"><span class="lvl">Low</span><h3>Stock</h3><ul><li>items, amounts, lots, expiry</li><li>places (Store, bags)</li></ul><span>Not personal. Business data of REACH.</span></div>
+    <div class="d mid"><span class="lvl">Personal</span><h3>Staff</h3><ul><li>names, email, job, office</li><li>training, certificates, dates</li><li>medical code (doctors)</li><li>password and PIN (stored scrambled)</li></ul><span>Personal data of real staff.</span></div>
+    <div class="d high"><span class="lvl">Regulated</span><h3>Controlled-drug register</h3><ul><li>who took what, when, why</li><li>witness, approving doctor</li><li>never deleted (by design)</li></ul><span>A legal record in its own right, and personal data of staff.</span></div>
+    <div class="d later"><span class="lvl">Most sensitive · later</span><h3>Patient Archive (MD2)</h3><ul><li>patient names, conditions, treatment</li><li>drugs given on a case (EDP F79)</li></ul><span>Health data: the strictest rules in both countries. Not in release 1.</span></div>
+  </div>
+  <p class="muted" style="font-size:13.5px">Also personal: the <b>Activity log</b> (who changed what, kept for good) and <b>backups</b> (a full copy of everything above). Each computer today keeps its own copy, unencrypted on its disk; the shared server (REACH SD2) is not decided yet.</p>
+</section>
+
+<div id="secs" style="display:flex;flex-direction:column;gap:14px"></div>
+
+<section style="display:flex;flex-direction:column;gap:10px">
+  <h2>Summary: three lists to hand over</h2>
+  <div class="cols">
+    <div class="col law"><span class="who w-law" style="align-self:flex-start">Lawyer, PNG and Peru</span><ol id="list-law"></ol></div>
+    <div class="col lead"><span class="who w-lead" style="align-self:flex-start">REACH leadership</span><ol id="list-lead"></ol></div>
+    <div class="col app"><span class="who w-app" style="align-self:flex-start">Build into the program</span><ol id="list-app"></ol></div>
+  </div>
+  <p class="muted" style="font-size:13.5px">The program items are proposals: each goes through Workflow B (shown, your GO, built, tested) like any change. None is started.</p>
+</section>
+<div class="sec"><b>Your review</b><span class="muted" style="font-size:13.5px">Mark each section above Right or Change (with a note). Saved for Claude.</span><span class="state" id="st"></span></div>
+<footer>
+  <span>Sources checked 28 Nov 2026: <a href="https://www.ict.gov.pg/draft-bills-2026/" target="_blank" rel="noopener">PNG DICT, draft bills 2026 (Data Governance and Data Protection Bill)</a> · <a href="https://www.dataguidance.com/jurisdiction/papua-new-guinea" target="_blank" rel="noopener">DataGuidance: Papua New Guinea</a> · <a href="https://www.gob.pe/institucion/anpd/normas-legales/6554453-16-2024-jus" target="_blank" rel="noopener">Peru ANPD: Decreto Supremo 016-2024-JUS</a> · <a href="https://www.dlapiperdataprotection.com/?c=PE&amp;t=law" target="_blank" rel="noopener">DLA Piper: data protection in Peru</a> · <a href="https://www.wipo.int/wipolex/en/text/198948" target="_blank" rel="noopener">PNG Medicines and Cosmetics Act 1999 (WIPO Lex)</a> · <a href="https://pacliirms.austlii.edu.au/pg/legis/PG-consol_act_1986/dda180.pdf" target="_blank" rel="noopener">PNG Dangerous Drugs Act, Ch. 228 (PacLII)</a> · <a href="https://edpb.europa.eu/sites/edpb/files/files/file1/edpb_guidelines_3_2018_territorial_scope_en.pdf" target="_blank" rel="noopener">EDPB: GDPR territorial scope</a> · <a href="https://www.edpb.europa.eu/system/files/2022-10/edpb_guidelines_202209_personal_data_breach_notification_targetedupdate_en.pdf" target="_blank" rel="noopener">EDPB: breach notification</a> · <a href="https://www.hhs.gov/hipaa/for-professionals/special-topics/hipaa-ftc-act/index.html" target="_blank" rel="noopener">HHS: HIPAA and the FTC Act</a> · <a href="https://www.federalregister.gov/documents/2024/05/30/2024-10855/health-breach-notification-rule" target="_blank" rel="noopener">FTC Health Breach Notification Rule (2024)</a> · <a href="https://www.law.cornell.edu/cfr/text/21/1304.04" target="_blank" rel="noopener">21 CFR 1304.04 (DEA records)</a></span>
+  <span>REACH Medical Suite · A8 (B77 in BUGS.md) · source <code>docs/requests/a8-legal-plan.html</code> · review saved in collection “a8”.</span>
+</footer>
+</div>
+<script>
+(function(){
+"use strict";
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const W = { law:["w-law","Lawyer"], lead:["w-lead","REACH leadership"], danny:["w-danny","You"], app:["w-app","Build"], done:["w-done","Already built"] };
+// [text, detail, who, toConfirm, listText]
+const SECS = [
+ { id:"png", title:"2. Papua New Guinea", lead:"Where release 1 goes first.", items:[
+   ["No general data protection law in force yet","PNG's Data Governance and Data Protection Bill 2026 was out for public consultation (to about August 2026); I found no sign it has passed. The Constitution's right to privacy (s. 49) and the Cybercrime Code Act 2016 apply now. Build as if the bill were law: it is coming, and the program is cheaper to shape now.","law",true,"PNG: status of the Data Governance and Data Protection Bill 2026 and what it will require of a health charity"],
+   ["Controlled drugs: which law, which register","The Dangerous Drugs Act (Ch. 228) requires a book of quantities received and to whom they went, and returns to the authorities; the Poisons and Dangerous Substances Act 1952 keeps a poisons register; the Medicines and Cosmetics Act 1999 licenses pharmacies. Which of these covers a MedEvac operator carrying drugs on aircraft, and whether an electronic register is accepted instead of a paper book, I could not confirm.","law",true,"PNG: is an electronic controlled-drug register legally accepted, which Act applies to drugs carried on MedEvac aircraft, how long records must be kept, which returns go to whom"],
+   ["Who at REACH holds the drug licence","The program's Head Doctor is a role inside the program. The law will name a licensed person (a doctor or pharmacist) responsible for the drugs. The two should be the same person, or the program should show the licence holder.","lead",false,"Name the licensed person responsible for controlled drugs in PNG, and confirm they are the program's Head Doctor"],
+   ["Keep the register printable","Inspectors may ask for the register on paper. Today it can be seen on screen and exported only in a backup.","app",false,"Print or PDF export of the controlled-drug register per drug and per period, signed-off by the Head Doctor"],
+ ]},
+ { id:"peru", title:"3. Peru (if the program goes there)", lead:"Peru has a full data protection law; it applies as soon as Peruvian staff or patients are in the program.", items:[
+   ["Ley 29733 and its new regulation (DS 016-2024-JUS)","In force since about 30–31 March 2025. Health data is sensitive data: it needs written consent (signed by hand or electronically). Staff data needs a stated purpose and security measures.","law",true,"Peru: does REACH (as employer) need staff consent for training records, or is the employment contract enough; what consent form patients sign"],
+   ["Register the database with the authority (ANPD)","Peru requires personal databases to be registered with the national registry. Whether one registration covers staff and later patients, and who files it, is for the lawyer.","law",true,"Peru: register REACH's databases with the ANPD; whether a data protection officer must be named"],
+   ["Data stored outside Peru","If the shared server sits in another country (SD2 is undecided), that is a cross-border transfer with its own conditions.","law",true,"Peru: conditions for keeping Peruvian staff and patient data on a server outside Peru"],
+   ["Breach notice","The new regulation adds duties to report security incidents to the authority within a short deadline.","law",true,"Peru: the exact deadline and form for reporting a data breach"],
+   ["Controlled drugs in Peru","Controlled medicines are supervised by DIGEMID under their own decrees; record and prescription rules differ from PNG.","law",true,"Peru: DIGEMID rules for an air-ambulance operator holding controlled medicines, and whether an electronic register is accepted"],
+   ["Country rules stay settings","Already a project rule: anything country-specific is a setting (base country, lists). New country rules (consent wording, retention) go into Settings, never into the code.","done",false,""],
+ ]},
+ { id:"staff", title:"4. Staff personal data (both countries)", lead:"What any good data protection law expects, whatever the country.", items:[
+   ["Tell staff what is kept and why","A short privacy notice: what the program keeps about them, who sees it, how long, whom to ask. Shown once at first sign-in and in Settings.","app",false,"A privacy notice screen at first sign-in and in Settings (text from REACH leadership)"],
+   ["Who may see what","Levels View / Work / Manage already limit changes; training records and medical codes are visible to all signed-in staff. Decide whether that is wanted.","lead",false,"Decide who may see staff training records and doctors' medical codes"],
+   ["How long to keep things","Archived staff stay for good today; the Activity log and the register are never deleted (by design). A law will want a reason and a period for each.","lead",false,"Set retention periods: archived staff, training records, Activity log, register (the register's period comes from the drug law)"],
+   ["A person's own data, on request","Staff can ask what is held about them. Today that needs a full backup.","app",false,"Export one person's data (profile, training, their log entries) as a file"],
+   ["Lock the data on the computer","Each computer keeps an unencrypted copy; anyone who can open the user account can read it. Turn on FileVault (Mac) and BitLocker (Windows) on every REACH computer; later, the program can encrypt its own data.","lead",false,"Require disk encryption (FileVault / BitLocker) and a screen lock on every computer running the program"],
+   ["Passwords, PINs, levels, log","Scrambled passwords and PINs, PIN pause after 5 tries, every change logged with who and when, no real data in Git.","done",false,""],
+ ]},
+ { id:"patients", title:"5. Patient data (Patient Archive, later)", lead:"Not in release 1. Decided before MD2 starts, because it changes the design.", items:[
+   ["Health data needs the strictest handling","Consent or another legal basis, access only for those treating the patient, encryption, an access log of who looked at which file (not only who changed it).","law",true,"Both countries: legal basis for keeping MedEvac patient records, required retention period for medical records, patients' rights to see them"],
+   ["Where patient files live","Only on the shared server, encrypted, with backups in a known country. Not on every nurse's laptop.","lead",false,"Decide that patient data lives only on the server (SD2), and in which country"],
+   ["Shared with EDP","EDP case data and patient files must follow the same rules (EDP F66 is the shared patient-data rule).","lead",false,"Agree the patient-data rule once for all REACH apps (EDP F66, REACH chat)"],
+ ]},
+ { id:"dist", title:"6. Handing out the program", lead:"Today: unsigned installers for Mac and Windows, built on this Mac.", items:[
+   ["Who is the publisher","Signing certificates name a person or an organisation. In your own name, Mac and Windows show you as the publisher; for REACH's name, REACH enrols as an organisation (Apple asks for a D-U-N-S number) and owns the certificates.","lead",false,"Decide whether the program is published under REACH's name (organisation developer account, D-U-N-S number) or yours"],
+   ["Mac: Developer ID and notarisation","Outside the App Store, Apple's Developer Program terms allow handing out the app signed with a Developer ID and notarised by Apple. Without it, Macs warn or block.","danny",false,"Make the Developer ID Application certificate (already on your list)"],
+   ["Windows: code signing","Unsigned installers show “unknown publisher”. A code signing certificate (paid, yearly) removes the warning over time.","lead",false,"Buy a Windows code signing certificate (or accept the warning for an internal tool)"],
+   ["iPhone, iPad, Android later","App Store and Google Play ask for a privacy policy, App Privacy / Data safety answers, and review. Internal apps can use Apple Business Manager custom apps instead of the public store.","lead",false,"Before phone apps: a public privacy policy page for REACH apps"],
+   ["The public GitHub repository","The code is public, and its old history still holds the June app with real staff names and the real stock list (your Q1: leave it). For staff privacy that is the most direct risk on this page.","lead",false,"Decide: make the repository private, or rewrite its history to remove the June app (Q1 again, now with the privacy angle)"],
+ ]},
+ { id:"oss", title:"7. Free software inside the program", lead:"Measured in the project on 28 Nov: what ships inside the installed program.", items:[
+   ["Electron 45.5 (MIT) with Chromium","Its licence and Chromium's list of licences are already inside the installed app (LICENSE.electron.txt, LICENSES.chromium.html: checked in the Mac and Windows builds).","done",false,""],
+   ["React 18.3 (MIT), idb 8.0 (ISC), scheduler and two helpers (MIT)","MIT and ISC allow free use, also inside a closed program, if the licence notice travels with it. The bundling may strip those notices.","app",false,"An About › Licences screen listing every part shipped with its licence text"],
+   ["Lucide icons (ISC), if A1 = A","Same kind of licence; its notice goes on the same screen.","app",false,""],
+   ["Your own code has no licence file","A public repository without a licence means nobody else may reuse it: fine for REACH. If REACH wants it open source, pick a licence on purpose.","lead",false,"Decide whether REACH's own code stays “all rights reserved” or gets an open-source licence"],
+   ["Building tools","Vite, electron-builder, TypeScript, Vitest, Playwright are only used to build and test: they don't ship, no notice needed.","done",false,""],
+ ]},
+ { id:"eu", title:"8. Europe (GDPR): the strictest privacy law, used as the yardstick", lead:"Added 28 Nov at your request: Europe and the U.S. have the strictest rules, so meeting them covers most other countries' basics.", items:[
+   ["When the GDPR applies to REACH at all","It applies to an organisation established in the EU, or one outside the EU that offers services to people in the EU or monitors them there (Art. 3). It follows where the person is, not their passport: a German nurse working in PNG is not, by that alone, covered. If REACH has an EU office, an EU fundraising arm that also handles staff data, or EU-based volunteers in the program, it may apply, with an EU representative.","law",true,"EU: does the GDPR apply to REACH (any EU office, EU-based volunteers or donors in the same systems)? If so, who is REACH's EU representative?"],
+   ["Health data is “special category” (Art. 9)","Allowed only on specific grounds, e.g. for medical care by professionals under secrecy, or explicit consent. The future Patient Archive falls here; staff fitness or vaccination records would too.","law",true,"EU: legal ground for patient records and any staff health records"],
+   ["Impact assessment before patient data (Art. 35)","Large-scale health data needs a written Data Protection Impact Assessment before it starts. Good practice everywhere, so do it for MD2 anyway.","app",false,"A written impact assessment (DPIA) before the Patient Archive is built: what is kept, risks, safeguards"],
+   ["A record of what is processed (Art. 30)","A list: which data, why, who sees it, how long, where stored. The data map at the top of this page is its start.","lead",false,"Keep a record of processing (start from section 1 of this page) and review it yearly"],
+   ["Breach: tell the authority within 72 hours (Art. 33)","And the people affected when the risk is high. Peru has a similar duty. Needs a plan before it happens: who decides, who writes, who is told.","lead",false,"Write a one-page breach plan: who to call, what to check, who reports (72 hours is the strictest deadline)"],
+   ["People's rights","See, correct, export and (where no other law keeps it) delete their data. The register and the Activity log are kept by law and by design: that is an allowed reason to refuse deletion.","app",false,""],
+   ["Controlled drugs in Europe","Each country has its own narcotics register law (in Germany: the narcotics book, kept 3 years). Only relevant if REACH ever runs a base in Europe.","law",true,""],
+ ]},
+ { id:"us", title:"9. United States: strict rules for health data and controlled drugs", lead:"Mostly a benchmark: U.S. laws apply to U.S. healthcare and U.S. users, but their technical rules are a good standard to build to.", items:[
+   ["HIPAA probably does not apply","HIPAA covers U.S. health plans, most U.S. healthcare providers and clearinghouses, and their business associates. A PNG or Peru air-medical charity is very likely outside it unless it bills U.S. insurers or works for a U.S. covered entity.","law",true,"U.S.: confirm HIPAA does not apply (no U.S. billing, no U.S. covered-entity partners)"],
+   ["Use HIPAA's Security Rule as the technical yardstick","Its safeguards are a clear checklist: unique sign-in per person, automatic sign-out, audit log of who saw and changed records, encryption, backups, a tested restore. Release 1 already has most of the first four for stock and staff.","app",false,"Automatic sign-out after a set idle time; an access log of who opened which record (for patient files)"],
+   ["Health apps outside HIPAA: the FTC breach rule","Since 2024 the FTC's Health Breach Notification Rule covers most health apps that hold personal health records outside HIPAA, if they serve U.S. users. Only matters if REACH apps ever serve people in the U.S.","law",true,""],
+   ["U.S. controlled-drug records (DEA)","Records kept at least 2 years, readily retrievable, electronic records allowed under conditions. The program's register already never deletes or changes a line (corrections are new lines), which matches this style.","done",false,""],
+   ["State privacy laws","Several U.S. states (e.g. California, Washington's health-data law) have their own rules for health data of their residents. Not relevant unless REACH serves people there.","law",true,""],
+ ]},
+ { id:"base", title:"10. The baseline: build to the strictest, everywhere", lead:"What “cover all bases” means for the program: one standard for every country, so a new country only adds paperwork, not rebuilding.", items:[
+   ["Keep the controlled-drug register for the longest period any country asks","Today: never deleted. Keep it that way; the retention period is a setting per country when the lawyers answer.","done",false,""],
+   ["Encrypt everything at rest and in transit","Disk encryption on every computer now (section 4); the server (SD2) must encrypt its data and every connection.","lead",false,"Make encryption at rest and in transit a condition for choosing the server (SD2)"],
+   ["Least access, logged","Each person sees what their job needs; reading patient files is logged, not only changes.","app",false,""],
+   ["Privacy by design for the Patient Archive","DPIA first (section 8), patient data only on the server, minimal fields, consent wording per country as a setting.","app",false,""],
+   ["Being strictest is not automatically compliant","Some rules differ, not just in strength: data must stay in a country, a form must be filed, a register must be on paper. The lawyer list catches those.","law",false,""],
+ ]},
+];
+let review = {}, notes = {}, savedAt = null, db = null, pending = 0;
+function render(){
+  document.getElementById("secs").innerHTML = SECS.map(s=>`<section class="sec" data-sec="${s.id}"><div class="top"><div><h2>${esc(s.title)}</h2><p class="muted" style="font-size:13.5px">${esc(s.lead)}</p></div></div>
+    <div class="items">${s.items.map(i=>`<div class="it"><div><b>${esc(i[0])}</b>${i[3]?'<span class="tbc">to confirm</span>':""}<small>${esc(i[1])}</small></div><span class="who ${W[i[2]][0]}">${W[i[2]][1]}</span></div>`).join("")}</div>
+    <div class="review">This section: <button type="button" data-r="${s.id}" data-v="right" aria-pressed="${review[s.id]==="right"}">Right</button><button type="button" data-r="${s.id}" data-v="change" aria-pressed="${review[s.id]==="change"}">Change</button><input data-n="${s.id}" placeholder="What to change? (optional)" aria-label="Note on ${esc(s.title)}"></div></section>`).join("");
+  for (const [w, el] of [["law","list-law"],["lead","list-lead"],["app","list-app"]]) {
+    document.getElementById(el).innerHTML = SECS.flatMap(s=>s.items.filter(i=>i[2]===w && i[4]).map(i=>`<li>${esc(i[4])}</li>`)).join("");
+  }
+  document.querySelectorAll("[data-n]").forEach(inp=>{ inp.value = notes[inp.dataset.n] ?? ""; let t; inp.oninput=()=>{ notes[inp.dataset.n]=inp.value; clearTimeout(t); t=setTimeout(save,800); }; });
+  document.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{ review[b.dataset.r]=b.dataset.v; render(); save(); });
+  status();
+}
+function status(msg){
+  const st=document.getElementById("st"); if (msg) { st.textContent=msg; return; }
+  const n = Object.keys(review).length;
+  st.innerHTML = !db ? "Can't be saved in this view. Open the page from its link, or answer in chat." : pending ? "Saving…" : savedAt ? `<span class="saved">✓ Saved for Claude</span> · ${n} of ${SECS.length} sections reviewed · ${new Date(savedAt).toLocaleTimeString()}` : `0 of ${SECS.length} sections reviewed.`;
+}
+async function save(){
+  if (!db) { status(); return; }
+  const rec = {q:"a8", review:{...review}, notes:{...notes}, at:new Date().toISOString()};
+  pending++; status();
+  try { await db.collection("a8").doc("a8").set(rec); savedAt = rec.at; }
+  catch(e){ pending--; status("Not saved ("+(e&&e.code||"error")+"). Answer in chat instead."); return; }
+  pending--; status();
+}
+render();
+(async function(){
+  try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : null); }catch(e){ db=null; }
+  status(); if (!db) return;
+  db.collection("a8").onSnapshot(s=>{ (s.docs||[]).forEach(d=>{ const r=typeof d.data==="function"?d.data():d.data;
+    if (!r || r.q!=="a8" || pending) return; if (savedAt && r.at && r.at < savedAt) return;
+    review = {...(r.review||{}), ...review}; notes = {...(r.notes||{}), ...notes}; savedAt = r.at; render(); }); }, ()=>{});
+})();
+})();
+</script>

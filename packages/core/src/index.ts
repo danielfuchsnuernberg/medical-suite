@@ -11,6 +11,7 @@ export * from "./settings/lists";
 export * from "./inventory/readiness";
 export * from "./inventory/lines";
 export * from "./inventory/stockTake";
+export * from "./inventory/itemList";
 export * from "./inventory/register";
 export * from "./importExport/xlsx";
 export * from "./importExport/stockList";

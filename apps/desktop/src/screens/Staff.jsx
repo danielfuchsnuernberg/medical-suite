@@ -13,7 +13,22 @@ import Dialog from "../components/Dialog.jsx";
 const SUM_BADGE = { expired: "b-danger", due: "b-warning", ok: "b-success", none: "b-muted" };
 const KIND_BADGE = { required: "b-warning", inprogress: "b-accent", done: "b-success", valid: "b-success", soon: "b-warning", expired: "b-danger" };
 
-export default function Staff({ door, me, accounts, training, tick, toast, timeZone, dateStyle, openId, setOpenId }) {
+// B75 (A6, Q40 = A): who is Head Doctor shows on the profile and in the list (read-only; Management changes it in Settings).
+// The tag follows the register's rule: the doctor Management named, or the only doctor (F12.13).
+function headInfo(door, register, timeZone, dateStyle) {
+  const heads = register ? register.heads() : [];
+  const id = heads[0]?.id ?? null;
+  if (!id) return { id: null, line: "" };
+  const p = door.get("person", id);
+  if (p?.headDoctor !== true) return { id, line: "Head Doctor · the only doctor on the doctors' list" };
+  const named = door.log().filter(e => e.recordType === "person" && e.recordId === id && e.data && e.data.headDoctor === true).sort((a, b) => b.at - a.at)[0];
+  if (!named) return { id, line: "Head Doctor" };
+  const by = String(door.get("person", named.by)?.name ?? "Management");
+  return { id, line: `Head Doctor · named by ${by}, ${formatCalendarDate(todayIn(timeZone, named.at), dateStyle === "short" ? "short" : "long")}` };
+}
+const HeadTag = () => <span className="badge b-head nodot" data-testid="head-tag">Head Doctor</span>;
+
+export default function Staff({ door, me, accounts, training, register, tick, toast, timeZone, dateStyle, openId, setOpenId, backLabel = "Back to Staff and training" }) {
   const [showArchived, setShowArchived] = useState(false);
   const [adding, setAdding] = useState(false);
   void tick;
@@ -24,7 +39,8 @@ export default function Staff({ door, me, accounts, training, tick, toast, timeZ
   const person = openId ? accounts.person(openId) : null;
 
   const today = training.today();
-  if (person) return <Profile p={person} me={me} accounts={accounts} training={training} today={today} manage={manage} departments={departments} deptName={deptName} back={() => setOpenId(null)} toast={toast} door={door} timeZone={timeZone} dateStyle={dateStyle} />;
+  const head = headInfo(door, register, timeZone, dateStyle);
+  if (person) return <Profile p={person} me={me} accounts={accounts} training={training} today={today} manage={manage} departments={departments} deptName={deptName} back={() => setOpenId(null)} backLabel={backLabel} head={head.id === person.id ? head.line : ""} toast={toast} door={door} timeZone={timeZone} dateStyle={dateStyle} />;
 
   const c = staffCounts(all, door.records("department"));
   const tc = trainingCounts(all, training.records(), today);
@@ -52,7 +68,7 @@ export default function Staff({ door, me, accounts, training, tick, toast, timeZ
                 <tr key={p.id} data-person={p.id} className={`click${archived ? " archived" : ""}`} onClick={() => setOpenId(p.id)}>
                   <td><button type="button" className="linkish who-cell" onClick={(e) => { e.stopPropagation(); setOpenId(p.id); }}>
                     <span className="avatar">{initials(p.name)}</span>
-                    <span><b>{String(p.name)}</b>{p.id === me.id ? <span className="you">you</span> : null}<br /><span className="muted">{String(p.job ?? "")}</span></span></button></td>
+                    <span><b>{String(p.name)}</b>{p.id === me.id ? <span className="you">you</span> : null}{head.id === p.id ? <HeadTag /> : null}<br /><span className="muted">{String(p.job ?? "")}</span></span></button></td>
                   <td>{p.departmentId ? deptName(p.departmentId) : <span className="muted">—</span>}</td>
                   <td>{p.office ? String(p.office) : <span className="muted">not set</span>}</td>
                   <td>{archived ? <span className="badge b-danger nodot">Archived</span> : <span className="badge b-accent nodot">{String(p.level)}</span>}</td>
@@ -104,7 +120,7 @@ function AddPerson({ accounts, me, departments, onDone, onClose }) {
   );
 }
 
-function Profile({ p, me, accounts, training, today, manage, departments, deptName, back, toast, door, timeZone, dateStyle }) {
+function Profile({ p, me, accounts, training, today, manage, departments, deptName, back, backLabel, head, toast, door, timeZone, dateStyle }) {
   const archived = p.state !== "Active";
   const [editing, setEditing] = useState(false);
   const [confirm, setConfirm] = useState(null);    // "archive" | "delete"
@@ -114,15 +130,16 @@ function Profile({ p, me, accounts, training, today, manage, departments, deptNa
   const addedBy = p.createdBy === "demo" ? "DEMO data" : String(door.get("person", p.createdBy)?.name ?? "");
   return (
     <div className="profile" data-testid="profile" data-person={p.id}>
-      <button type="button" className="btn small backlink" onClick={back}><Icon name="back" width={14} stroke={2} />All staff</button>
+      <button type="button" className="btn small backlink" onClick={back}><Icon name="back" width={14} stroke={2} />{backLabel}</button>
       <section className="panel prof-head">
         <span className="avatar big">{initials(p.name)}</span>
         <div className="grow">
-          <h2 data-testid="prof-name">{String(p.name)}{p.id === me.id ? <span className="you">you</span> : null}</h2>
+          <h2 data-testid="prof-name">{String(p.name)}{p.id === me.id ? <span className="you">you</span> : null}{head ? <HeadTag /> : null}</h2>
           <div className="muted">{String(p.job || "No job set")} · {p.departmentId ? deptName(p.departmentId) : "no department"}</div>
           <div className="badges"><span className="badge b-accent nodot">{String(p.level)}</span>
             {archived ? <span className="badge b-danger nodot" data-testid="prof-archived">Archived</span> : <span className="badge b-success nodot">Active</span>}
             {p.profession ? <span className="badge b-muted nodot">{String(p.profession)}</span> : null}</div>
+          {head ? <div className="muted small" data-testid="head-line">{head}</div> : null}
         </div>
         {manage ? <div className="actions">
           {archived ? <button type="button" className="btn" onClick={() => run(() => accounts.restore(me, p.id))}>Restore</button> : <>
