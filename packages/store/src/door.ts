@@ -144,6 +144,22 @@ export class Door {
     return cs;
   }
 
+  /**
+   * F13.4/F13.5: replaces everything on this computer with these messages (a restore), all or nothing, and every screen
+   * shows it at once (B2). Messages from an older version are carried forward first (B3).
+   */
+  async restore(changes: Change[], fromVersion: number): Promise<void> {
+    let cs = changes;
+    for (let v = fromVersion; v < SCHEMA_VERSION; v++) cs = MIGRATIONS[v](cs);
+    try { await this.o.backend.replace(cs); }
+    catch { this.st.error = "Not restored. This computer couldn't store the backup, so nothing was changed."; this.emit(); throw new DoorError(this.st.error); }
+    this.st.error = null;
+    this.changes = new Map(cs.map(c => [c.messageId, frozen(c)]));
+    this.outbox.clear(); this.st.waiting = 0;
+    this.refold();
+    this.emit();
+  }
+
   /** Sends what's waiting and fetches what other computers sent. Safe to call any time; does nothing without a server. */
   async sync(): Promise<void> {
     const t = this.o.transport;

@@ -17,7 +17,7 @@ const STOCK_WORDS = {
   ok: (store) => ["b-success", store ? "In stock" : "At or above required"],
 };
 
-export default function ItemPage({ itemId, me, door, inv, store, tick, today, timeZone, dateStyle, back, toast, openRegister }) {
+export default function ItemPage({ itemId, me, door, inv, store, tick, today, timeZone, dateStyle, back, toast, openRegister, register }) {
   const item = door.get("item", itemId);
   const [dlg, setDlg] = useState(null);          // { kind: "move" | "edit" | "add" | "delete", lineId?, type? }
   const [why, setWhy] = useState("");
@@ -58,6 +58,7 @@ export default function ItemPage({ itemId, me, door, inv, store, tick, today, ti
           <div className="badges">
             <span className="badge b-accent nodot" data-testid="total">{total} on hand · {active.length} {active.length === 1 ? "line" : "lines"}</span>
             {item.controlled ? <span className="badge b-warning nodot">Controlled drug</span> : null}
+            {item.controlled !== true && item.controlledNote ? <span className="badge b-muted nodot">no longer controlled: {String(item.controlledNote)}</span> : null}
             {item.state !== "Active" ? <span className="badge b-muted nodot">Archived</span> : null}
           </div>
         </div>
@@ -71,6 +72,7 @@ export default function ItemPage({ itemId, me, door, inv, store, tick, today, ti
           </div>
         ) : null}
       </div>
+      {register && item.state === "Active" ? <ControlledBox item={item} me={me} register={register} onClick={() => open({ kind: "cd" })} /> : null}
       {why && !dlg ? <div className="form-err" role="alert" data-testid="refusal">{why}</div> : null}
 
       <div className="prof-grid">
@@ -130,6 +132,8 @@ export default function ItemPage({ itemId, me, door, inv, store, tick, today, ti
         go={(v) => run(() => store.editLine(me, dlg.lineId, v), (changed) => changed ? "Saved." : "Nothing changed.")} /> : null}
       {dlg?.kind === "add" ? <LineDialog dateStyle={dateStyle} title="Add a place" free={places.filter(p => !active.some(l => l.locationId === p.id))} placeName={placeName} why={why} close={() => { setDlg(null); setWhy(""); }}
         go={(v) => run(() => store.addLine(me, itemId, v.locationId, v), "Place added.")} /> : null}
+      {dlg?.kind === "cd" ? <ControlledConfirm door={door} me={me} item={item} register={register} close={() => { setDlg(null); setWhy(""); }}
+        done={(t) => { setDlg(null); toast(t, "success"); }} /> : null}
       {dlg?.kind === "delete" ? (
         <Dialog title="Delete for good?" onClose={() => { setDlg(null); setWhy(""); }} testid="confirm" footer={<>
           <button type="button" className="btn" onClick={() => { setDlg(null); setWhy(""); }}>Cancel</button>
@@ -140,6 +144,47 @@ export default function ItemPage({ itemId, me, door, inv, store, tick, today, ti
         </Dialog>
       ) : null}
     </div>
+  );
+}
+
+// F12.15: only a Head Doctor ticks or unticks "Controlled drug", after a confirm box. Everyone else sees it greyed.
+function ControlledBox({ item, me, register, onClick }) {
+  const head = register.isHead(me.id);
+  const on = item.controlled === true;
+  return (
+    <div className={`cdtick${head ? " head" : ""}`} data-testid="cd-box">
+      <label className="check inline"><input type="checkbox" aria-label="Controlled drug" checked={on} disabled={!head} onChange={(e) => { e.preventDefault(); onClick(); }} /><span>Controlled drug</span></label>
+      {head ? <span className="muted small">You're a Head Doctor: a confirm box asks first.</span>
+        : <span className="badge b-muted nodot">only a Head Doctor changes this{register.heads().length ? "" : " (there is none: Management names one)"}</span>}
+    </div>
+  );
+}
+
+function ControlledConfirm({ door, me, item, register, close, done }) {
+  const on = item.controlled !== true;          // what the tick will do
+  const [witness, setWitness] = useState("");
+  const [reason, setReason] = useState("");
+  const [why, setWhy] = useState("");
+  const shelves = register.onShelves(item.id);
+  const people = door.records("person").filter(p => p.state === "Active" && p.id !== me.id).sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  const go = async () => {
+    setWhy("");
+    try { await register.setControlled(me, item.id, on, { witness, reason }); done(on ? `${String(item.name)} is now a controlled drug. Its register opened at ${shelves}.` : `${String(item.name)} is no longer a controlled drug. Its register history stays.`); }
+    catch (e) { setWhy(String(e.message || e)); }
+  };
+  return (
+    <Dialog title={on ? `Make ${String(item.name)} a controlled drug?` : `${String(item.name)}: no longer a controlled drug?`} onClose={close} testid="cd-confirm" footer={<>
+      <button type="button" className="btn" onClick={close}>Cancel</button>
+      <button type="button" className="btn primary" onClick={go}>{on ? "Yes, make it controlled" : "Yes, no longer controlled"}</button></>}>
+      {on ? <>
+        <p>From now on its stock changes only through the controlled-drug register, with a witness. The register opens at what the Store and bags hold now: <b data-testid="cd-shelves">{shelves}</b>{item.unit ? ` ${String(item.unit)}` : ""}.</p>
+        <label className="field"><span>Witness (was there)</span><select aria-label="Witness" value={witness} onChange={e => setWitness(e.target.value)}><option value="">Pick who saw it…</option>{people.map(p => <option key={p.id} value={p.id}>{String(p.name)}</option>)}</select></label>
+      </> : <>
+        <p>Its stock moves like any item again. The register history stays, read-only, under Controlled drugs.</p>
+        <label className="field"><span>Why</span><input aria-label="Why" placeholder="e.g. ticked by mistake" value={reason} onChange={e => setReason(e.target.value)} /></label>
+      </>}
+      {why ? <div className="form-err" role="alert" data-testid="refusal">{why} Nothing was changed.</div> : null}
+    </Dialog>
   );
 }
 

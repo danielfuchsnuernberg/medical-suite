@@ -1,0 +1,28 @@
+# Notes for the REACH chat (from REACH Medical Suite)
+
+What this app built or decided that touches the REACH ecosystem: the shared People list, offices and levels, the Core rules (`../reach/CORE-DATA.md`) and the other apps (EDP, Ops Management). This app never edits the REACH folder (R13); the REACH chat reads this file and decides. Newest first. Each note says what changed here, why it matters for REACH, and what REACH may want to decide.
+
+---
+
+## 28 Nov 2026 — Doctors, medical codes and Head Doctors (Danny with the medical staff)
+
+**What changed in this app** (built and tested, not committed yet at the time of writing; checklist F12.12–F12.15):
+- Every person has a **profession**: Doctor, Nurse or Other. Management (Manage level) sets it.
+- Someone entered as a Doctor types their own **medical code** (their registration number) when they sign in. It must be unique; it is logged. The program can't check it with the Medical Board: "there has to be a level of trust" (Danny).
+- Only a doctor with a medical code can be on this app's **doctors' list** (may approve controlled drugs, F12) or be a **Head Doctor**.
+- **Head Doctor**: Management names exactly one (Danny: “we just stick to one head doctor”); naming another takes it from the first. With only one doctor, that doctor is Head Doctor automatically. Only the Head Doctor marks an item as a **controlled drug**, after a confirm box.
+- Management gets exactly one right around controlled drugs: naming the Head Doctor. It still can't approve, take out, tick drugs, or change the doctors' list.
+
+**Why it matters for REACH:**
+1. **People Core shape (R2, Q37).** Each app keeps its own people list "in the Core shape, same fields", so the lists can be merged by Ops Management later. This app now stores two new fields on a person: `profession` (Doctor / Nurse / Other) and `medicalCode` (free text, unique). EDP has medics and crew too; a roster (MD3) and training (F15) will use the profession. **For REACH to decide:** are `profession` and `medicalCode` Core People fields (same name and values in every app), or this app's own? Proposed by this app: Core fields, because "who is a doctor" is a fact about the person, not about one app.
+2. **App rights stay in the app.** `cdRight` (on the doctors' list) and `headDoctor` are this app's own rights, stored on the person record today. When Ops Management becomes the People keeper, these should stay with the Medical Suite (like each app's View/Work/Manage level), not move into the shared person. **For REACH to note** in the merge plan.
+3. **Offices and levels (ACCESS.md, R3).** In the Medical Suite, controlled-drug rights don't follow levels or offices: they come from the doctors' list. Management (office) at Manage level names the Head Doctor and nothing more. **For REACH to note** in ACCESS.md for MD1.
+4. **Medical item catalogue (R2: keeper Medical Suite).** Items carry a `controlled` flag, set only by a Head Doctor. EDP F79 ("medication used on a case", not built) will need to read it, because a controlled drug taken out for a case must go through this app's register (witness, doctor's approval, running balance). Recorded in this app's PLAN › "EDP link — what it would need".
+
+## 28 Nov 2026 — Shapes this app follows (for the record)
+
+- **R9 change log:** every change is one message (who, record, op, data, when, app code MD, device); the activity log is worked out from the messages. Matches R9.
+- **R10 backup file:** `{ app: "MD", kind: "backup", dataVersion, exportedAt, exportedBy, data: { messages } }`. Beyond R10 it adds `kind` and `exportedBy`. **For REACH to decide** whether those two belong in the R10 shape for every app.
+- **What is never in a backup or sent anywhere:** password and PIN check values, "stay signed in". They belong to one computer until one REACH account exists (SD1).
+- **Never deleted** (R4, Q38), extended in this app: stock takes and the controlled-drug register (lines and doctors' decisions). They can't even be changed afterwards.
+- **Backups until the server exists (SD2):** one a day on each computer, the last 30 kept. The server's nightly backups wait for SD2.

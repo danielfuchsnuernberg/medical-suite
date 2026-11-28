@@ -1,6 +1,7 @@
 // The program window (Electron). The screens run with no access to the computer (sandbox, no Node),
 // and the window never navigates away from the program's own files.
-const { app, BrowserWindow, shell, dialog } = require("electron");
+const { app, BrowserWindow, shell, dialog, ipcMain } = require("electron");
+const fs = require("fs");
 const path = require("path");
 
 // Test mode (program tests only): MD_TEST=1 gives the screens a stand-in server and test controls.
@@ -46,6 +47,24 @@ function createWindow() {
   win.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   return win;
 }
+
+// F13.1: backups on this computer (until the server keeps them): the program's backups folder, the last 30 nightly ones kept.
+// Only names the program makes are accepted, so nothing outside the folder can be read or written.
+const BACKUP_NAME = /^medical-suite-backup-\d{4}-\d{2}-\d{2}(-before-restore-\d{6})?\.json$/;
+const NIGHTLY = /^medical-suite-backup-\d{4}-\d{2}-\d{2}\.json$/;
+const backupDir = () => { const d = path.join(app.getPath("userData"), "backups"); fs.mkdirSync(d, { recursive: true }); return d; };
+ipcMain.handle("backups:list", () => fs.readdirSync(backupDir()).filter(n => BACKUP_NAME.test(n)).sort().reverse().map(name => ({ name, size: fs.statSync(path.join(backupDir(), name)).size })));
+ipcMain.handle("backups:save", (_e, name, text) => {
+  if (!BACKUP_NAME.test(String(name)) || typeof text !== "string") throw new Error("Not a backup name.");
+  const tmp = path.join(backupDir(), name + ".part");
+  fs.writeFileSync(tmp, text); fs.renameSync(tmp, path.join(backupDir(), name));          // never a half-written backup
+  const nightly = fs.readdirSync(backupDir()).filter(n => NIGHTLY.test(n)).sort().reverse();
+  for (const n of nightly.slice(30)) fs.unlinkSync(path.join(backupDir(), n));
+});
+ipcMain.handle("backups:read", (_e, name) => {
+  if (!BACKUP_NAME.test(String(name))) throw new Error("Not a backup name.");
+  return fs.readFileSync(path.join(backupDir(), name), "utf8");
+});
 
 app.on("second-instance", () => {
   const [w] = BrowserWindow.getAllWindows();

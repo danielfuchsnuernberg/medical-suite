@@ -10,6 +10,8 @@ export interface Backend {
   setMeta(entries: Record<string, unknown>): Promise<void>;
   /** Replaces messages (used by version migrations only). */
   rewrite(changes: Change[]): Promise<void>;
+  /** Replaces everything with these messages, nothing waiting to send (F13.4 restore): all or nothing. */
+  replace(changes: Change[]): Promise<void>;
 }
 
 export class MemoryBackend implements Backend {
@@ -25,4 +27,8 @@ export class MemoryBackend implements Backend {
   async ackOutbox(ids: string[]) { for (const id of ids) this.outbox.delete(id); }
   async setMeta(e: Record<string, unknown>) { Object.assign(this.meta, e); }
   async rewrite(changes: Change[]) { for (const c of changes) this.changes.set(c.messageId, structuredClone(c)); }
+  async replace(changes: Change[]) {
+    if (this.failNext > 0) { this.failNext--; throw new Error("Storage failed (test)"); }
+    this.changes = new Map(changes.map(c => [c.messageId, structuredClone(c)])); this.outbox = new Set();
+  }
 }

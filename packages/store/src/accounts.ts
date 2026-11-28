@@ -5,7 +5,7 @@
 // - DEMO people (R11) sign in with "demo" until someone gives them a password on this computer.
 // Every rule is checked here, not only in the screens.
 import { can, checkLevelChange, checkArchivePerson, checkDelete, makeCredential, verifyPassword, passwordProblem,
-  oneTimePassword, normaliseOneTime, isLevel, type Credential, type Level, type StoredRecord } from "@md/core";
+  oneTimePassword, normaliseOneTime, isLevel, type Credential, type Level, type StoredRecord, PROFESSIONS, medicalCodeProblem } from "@md/core";
 import { Door, DoorError } from "./door";
 
 export const DEMO_PASSWORD = "demo";
@@ -148,6 +148,28 @@ export class Accounts {
     if (!p || p.state !== "Active") throw new Refused("You are no longer an active person here. Sign out and ask Management.");
     return p;
   }
+  // ---- Profession and medical code (Danny with the medical staff, 28 Nov; F12.12) ----
+  /** Management sets each person's profession: Doctor, Nurse or Other. */
+  private async _setProfession(actor: StoredRecord, targetId: string, to: string): Promise<void> {
+    actor = this.current(actor);
+    if (!can(actor.level, "managePeople")) throw new Refused("Only Manage level sets a profession.");
+    if (!(PROFESSIONS as readonly string[]).includes(to)) throw new Refused("Pick Doctor, Nurse or Other.");
+    const t = this.person(targetId); if (!t || t.state !== "Active") throw new Refused("Not found.");
+    if (t.profession === to) return;
+    await this.door.apply({ recordType: "person", recordId: targetId, op: "set", data: { profession: to }, by: actor.id });
+  }
+  /** A doctor types their own medical code (never someone else's). There has to be a level of trust: it is checked to be there and unique. */
+  private async _setMedicalCode(actor: StoredRecord, code: string): Promise<void> {
+    actor = this.current(actor);
+    if (actor.profession !== "Doctor") throw new Refused("Only someone entered as a doctor types a medical code.");
+    const why = medicalCodeProblem(code, this.door.records("person"), actor.id); if (why) throw new Refused(why);
+    const c = String(code).trim().replace(/\s+/g, " ");
+    if (actor.medicalCode === c) return;
+    await this.door.apply({ recordType: "person", recordId: actor.id, op: "set", data: { medicalCode: c }, by: actor.id });
+  }
+  setProfession(actor: StoredRecord, targetId: string, to: string) { return this.one(() => this._setProfession(actor, targetId, to)); }
+  setMedicalCode(actor: StoredRecord, code: string) { return this.one(() => this._setMedicalCode(actor, code)); }
+
   setOwnPassword(personId: string, password: string, repeat?: string) { return this.one(() => this._setOwnPassword(personId, password, repeat)); }
   giveOneTime(actor: StoredRecord, targetId: string) { return this.one(() => this._giveOneTime(actor, targetId)); }
   setUp(o: { personId?: string; name?: string; job?: string }, password: string, repeat?: string) { return this.one(() => this._setUp(o, password, repeat)); }

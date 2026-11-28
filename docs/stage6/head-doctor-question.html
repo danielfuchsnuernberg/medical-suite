@@ -1,0 +1,314 @@
+<title>Head Doctor</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Danny: Head Doctor, only the Head Doctor marks a controlled drug (Workflow B). Stage 4 colours, dark mode; mock screens in the June look (light). Answer saves to db collection "headdoc". */
+:root{--bg:#F4F4F6;--surface:#FFFFFF;--surface-2:#FAFAFB;--border:#E4E4EA;--border-strong:#D2D2DA;--text:#1B1B23;--muted:#6B6B78;--faint:#9B9BA6;--accent:#4F46E5;--accent-soft:#EEEDFD;--accent-border:#C9C6F7;--on-accent:#FFFFFF;--ok:#1E9E62;--ok-soft:#E7F5EE;--warn:#C77A12;--warn-soft:#F8EFDF;--bad:#D14343;--bad-soft:#FAEAEA;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121218;--surface:#1B1B23;--surface-2:#20202A;--border:#2C2C38;--border-strong:#3A3A48;--text:#ECECF2;--muted:#A3A3B2;--faint:#76768A;--accent:#8B85F5;--accent-soft:#25234A;--accent-border:#3F3B7A;--on-accent:#121218;--ok:#4CC48A;--ok-soft:#173326;--warn:#E0A247;--warn-soft:#352812;--bad:#EE7474;--bad-soft:#3A1C1C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121218;--surface:#1B1B23;--surface-2:#20202A;--border:#2C2C38;--border-strong:#3A3A48;--text:#ECECF2;--muted:#A3A3B2;--faint:#76768A;--accent:#8B85F5;--accent-soft:#25234A;--accent-border:#3F3B7A;--on-accent:#121218;--ok:#4CC48A;--ok-soft:#173326;--warn:#E0A247;--warn-soft:#352812;--bad:#EE7474;--bad-soft:#3A1C1C;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;margin:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:64px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0} h1{font-size:27px;font-weight:700;letter-spacing:-.4px} h2{font-size:19px;font-weight:700}
+p{margin:0;max-width:72ch}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:13px}
+header{padding-top:32px;display:flex;flex-direction:column;gap:10px}
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:780px){.why{grid-template-columns:1fr}}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:5px;font-size:14px;min-width:0}
+.k{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.risk{border-color:var(--bad);background:var(--bad-soft)} .risk .k{color:var(--bad)}
+.flow{display:flex;gap:0;align-items:stretch;overflow-x:auto;padding-bottom:4px}
+.fs{flex:1 0 170px;min-width:170px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:3px}
+.fs .w{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent)}
+.fs.bad{border-color:var(--bad)} .fs.bad .w{color:var(--bad)} .fs.good{border-color:var(--ok)} .fs.good .w{color:var(--ok)}
+.to{flex:none;display:flex;align-items:center;padding:0 6px;color:var(--faint)}
+.qgrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.qgrid{grid-template-columns:1fr}}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:12px;border:1px solid var(--border-strong);background:var(--surface)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt[aria-pressed="true"]{border:2px solid var(--accent);background:var(--accent-soft);padding:11px 13px}
+.opt .l{font-weight:600;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.opt .d{font-size:13px;color:var(--muted)}
+.opt .cons{font-size:12.5px;display:flex;flex-direction:column;gap:2px;margin-top:3px}
+.opt .cons span::before{content:"+ ";color:var(--ok);font-weight:700} .opt .cons span.minus::before{content:"− ";color:var(--bad)}
+.prop{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--ok);color:#fff}
+.ans{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--border-strong)}
+.ans .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13.5px}
+.ans button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.ans button[aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:#fff}
+.ans textarea{min-height:54px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);resize:vertical}
+.ans .state{font-size:12px;color:var(--faint)}
+.note{font-size:13px;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--border)}
+/* mock screens (June look) */
+.mocks{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.mocks{grid-template-columns:1fr}}
+.m{color-scheme:light;background:#F4F4F6;color:#1B1B23;border:1px solid #D2D2DA;border-radius:12px;overflow:hidden;font-size:12px;line-height:1.4}
+.m .cap{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#9B9BA6;padding:6px 10px;background:#F0F0F3;border-bottom:1px solid #E4E4EA}
+.m .body{padding:10px;display:flex;flex-direction:column;gap:7px}
+.m .card{background:#fff;border:1px solid #E4E4EA;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.m .t{font-weight:700;font-size:13px}
+.m .f{display:flex;flex-direction:column;gap:2px} .m .f span{font-size:10.5px;font-weight:600;color:#6B6B78} .m .f i{font-style:normal;border:1px solid #D2D2DA;border-radius:6px;padding:4px 7px;background:#fff;color:#6B6B78}
+.m .btn{align-self:flex-start;font-weight:600;font-size:11.5px;padding:5px 10px;border-radius:6px;background:#4F46E5;color:#fff}
+.m .ghost{background:#fff;color:#1B1B23;border:1px solid #E4E4EA}
+.m .warn{background:#FAEAEA;color:#D14343;border-radius:7px;padding:6px 8px;font-size:11px}
+.m .okm{background:#E7F5EE;color:#14663f;border-radius:7px;padding:6px 8px;font-size:11px}
+.m .pick{display:flex;flex-direction:column;gap:4px}
+.m .pick b{font-weight:600;border:1px solid #E4E4EA;border-radius:7px;padding:5px 8px;background:#FAFAFB}
+footer{padding-top:18px;font-size:12.5px;color:var(--faint)}
+</style>
+<style>
+.story{display:flex;gap:0;align-items:stretch;overflow-x:auto;padding-bottom:4px}
+.story .fs{flex:1 0 190px}
+.steps{display:flex;gap:6px;flex-wrap:wrap}
+.steps button{font:inherit;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.steps button[aria-current="step"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.steps button .done{color:var(--ok);margin-left:4px}
+.steps button[aria-current="step"] .done{color:var(--on-accent)}
+.who{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:13px}
+.who button{font:inherit;font-size:12.5px;padding:5px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.who button[aria-pressed="true"]{border:2px solid var(--accent);padding:4px 9px;font-weight:600}
+.m .head{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid #E4E4EA;border-radius:10px;padding:10px}
+.m .ic{width:34px;height:34px;border-radius:8px;background:#EEEDFD;flex:none}
+.m .nm{font-weight:700;font-size:13.5px}
+.m .sub{font-size:11px;color:#6B6B78}
+.m .cdbox{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:7px;font-size:12px;padding:6px 8px;border-radius:7px;border:1px solid #E4E4EA;background:#FAFAFB}
+.m .cdbox.hi{outline:2px solid #4F46E5;outline-offset:1px;background:#fff}
+.m .cb{width:15px;height:15px;border-radius:3px;border:1.5px solid #9B9BA6;display:inline-grid;place-items:center;flex:none}
+.m .cb.locked{background:#EDEDF1;border-color:#D2D2DA}
+.m .pl{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:11.5px;background:#fff;border:1px solid #E4E4EA;border-radius:7px;padding:6px 8px}
+.m .pl.hi{outline:2px solid #4F46E5;outline-offset:1px}
+.m .pl.wait{border-color:#C77A12;background:#F8EFDF}
+.m .pl.off{color:#9B9BA6}
+.m .tag2{font-size:9.5px;font-weight:700;border-radius:4px;padding:1px 5px;white-space:nowrap}
+.m .tg-new{background:#EEEDFD;color:#4F46E5} .m .tg-skip{background:#EDEDF1;color:#6B6B78} .m .tg-ok{background:#E7F5EE;color:#14663f} .m .tg-wait{background:#F8EFDF;color:#8a5208} .m .tg-red{background:#FAEAEA;color:#D14343} .m .tg-head{background:#4F46E5;color:#fff}
+.m .hole{background:#FAEAEA;color:#D14343;border-radius:7px;padding:6px 8px;font-size:11px}
+.m .okm{background:#E7F5EE;color:#14663f;border-radius:7px;padding:6px 8px;font-size:11px}
+.m .stack{display:flex;flex-direction:column;gap:6px}
+.m .dlg{background:#fff;border:1px solid #D2D2DA;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;box-shadow:0 6px 18px rgba(0,0,0,.12)}
+.m .dlg .t{font-weight:700;font-size:12.5px}
+.m .fld{font-size:10.5px;color:#6B6B78} .m .fld i{font-style:normal;display:block;border:1px solid #D2D2DA;border-radius:6px;padding:3px 6px;color:#1B1B23;background:#fff;margin-top:2px}
+.m .bts{display:flex;justify-content:flex-end;gap:5px}
+.m .bt{font-size:10.5px;font-weight:600;padding:4px 9px;border-radius:6px;border:1px solid #D2D2DA;background:#fff}
+.m .bt.p{background:#4F46E5;border-color:#4F46E5;color:#fff}
+.m .sel{font-size:10.5px;border:1px solid #D2D2DA;border-radius:5px;padding:1px 6px;background:#fff}
+.navrow{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.navrow button{font:inherit;font-size:13.5px;font-weight:600;padding:8px 14px;border-radius:9px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.navrow button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.navrow button:disabled{opacity:.45;cursor:default}
+.saved{font-weight:600;color:var(--ok)}
+</style>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Stage 6 · your ideas of 28 Nov, redrawn with the Head Doctor · Workflow B, shown before building</div>
+  <h1>The Head Doctor decides which drugs are controlled</h1>
+  <p class="muted">From you and the medical staff: one Head Doctor is in charge of the other doctors. Only the Head Doctor ticks or unticks “Controlled drug”, after a confirm box. Management makes a doctor Head Doctor; a nurse can't be one. Below: how it looks for each person, then six things to decide, one at a time, each with a proposed answer. Nothing is built until you say GO. (This replaces the page drawn for “any doctor”.)</p>
+</header>
+<div class="story">
+  <div class="fs"><span class="w">Today</span><span>Whether an item is a controlled drug sits in the data only: no box on screen, and nothing stops it being set by anyone.</span></div>
+  <span class="to">→</span>
+  <div class="fs good"><span class="w">After</span><span>A <b>Head Doctor</b>, named by Management. Only the Head Doctor ticks <b>“Controlled drug”</b> on an item, and confirms it in a box. Everyone else sees it greyed.</span></div>
+  <span class="to">→</span>
+  <div class="fs bad"><span class="w">New for Management</span><span>Until now Manage level had <b>no</b> right around controlled drugs (your Q16). Now it gets one: choosing which doctor is Head Doctor. Nothing else changes for Manage.</span></div>
+</div>
+<section style="display:flex;flex-direction:column;gap:10px">
+  <h2>How it looks for each person</h2>
+  <div class="who" role="group" aria-label="Who is looking">Who is looking: <span id="who"></span></div>
+  <div class="qgrid"><div class="mocks" style="grid-template-columns:1fr" id="boxmock"></div>
+    <div class="note" id="boxnote"></div></div>
+</section>
+<div class="steps" id="steps" role="tablist" aria-label="Parts"></div>
+<div id="part"></div>
+<footer>REACH Medical Suite · Stage 6 · Danny's ideas of 28 Nov (Head Doctor; only the Head Doctor marks a controlled drug) · source <code>docs/stage6/head-doctor-question.html</code></footer>
+</div>
+<script>
+(function(){
+"use strict";
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const PEOPLE = { anna:["Anna","nurse"], cara:["Cara","Management"], ben:["Dr Ben","doctor"], eva:["Dr Eva","Head Doctor"] };
+let who = "eva";
+function boxMock(){
+  if (who === "cara") return `<div class="m"><div class="cap">Settings › People and access · signed in as Cara (Management)</div><div class="body stack">
+      <div class="pl"><span><b>Dr Eva (example)</b> · Doctor</span><span><span class="tag2 tg-head">Head Doctor</span></span></div>
+      <div class="pl hi"><span><b>Dr Ben (example)</b> · Doctor</span><span class="sel">☐ Make Head Doctor</span></div>
+      <div class="pl off"><span><b>Anna (example)</b> · Nurse</span><span class="tag2 tg-skip">a nurse can't be Head Doctor</span></div>
+      <div class="cdbox"><span class="cb locked"></span><span>On an item page Cara sees “Controlled drug” greyed: only the Head Doctor changes it</span></div></div></div>`;
+  const head = who === "eva";
+  return `<div class="m"><div class="cap">Item page: Ketamine 200 mg (example) · signed in as ${esc(PEOPLE[who][0])}</div><div class="body stack">
+    <div class="head"><span class="ic"></span><div><div class="nm">Ketamine 200 mg (example)</div><div class="sub">Medication · counted in vial · 3 on hand</div>
+      <div class="cdbox ${head?"hi":""}"><span class="cb ${head?"":"locked"}"></span><span>Controlled drug</span>${head?"":'<span class="tag2 tg-skip">only the Head Doctor changes this</span>'}</div></div></div>
+    ${head?`<div class="dlg"><span class="t">Make Ketamine 200 mg a controlled drug?</span><span class="fld">From now on its stock changes only through the controlled-drug register, with a witness.</span><div class="bts"><span class="bt">Cancel</span><span class="bt p">Yes, make it controlled</span></div></div>`:""}</div></div>`;
+}
+function boxNote(){
+  return { anna:"Anna (nurse) sees the box greyed: “only the Head Doctor changes this”. Not even from behind the screen.",
+    cara:"Cara (Management) ticks which doctor is Head Doctor in Settings › People and access. A nurse is shown, but can't be picked. On item pages Cara sees the box greyed like everyone else.",
+    ben:"Dr Ben is a doctor, but not the Head Doctor: he sees the box greyed. He still approves take-outs as before (F12).",
+    eva:"Dr Eva is the Head Doctor: she ticks the box, and a confirm box asks first (your request). What happens with stock already on the shelf is part 4." }[who];
+}
+const PARTS = {
+  a:{ title:"1 · How the program knows who is a nurse",
+    about:"“A nurse can't become Head Doctor.” Today the program knows two things about a person: whether they're on the doctors' list (may approve take-outs) and a job, typed as free text.",
+    why:"A nurse can be on the doctors' list: a doctor may give that right to anyone (Q16). And free text can say “Doctor”, “Dr”, “MO” or be misspelt. Neither tells the program reliably who is a doctor.",
+    changes:"Pick one: the picture shows who Management can make Head Doctor.",
+    opts:{
+      A:{l:"A “Profession” on each person: Doctor, Nurse or Other", d:"Management sets it in People and access (with the job and level). Only someone whose profession is Doctor and who is on the doctors' list can be Head Doctor.", prop:true,
+        pro:["Clear and checkable","Also useful later for the roster and training (F14–F16)"], con:["Management sets it once for everyone"],
+        lines:["New: each person has a profession (Doctor, Nurse, Other). The Head Doctor must be a Doctor on the doctors' list."]},
+      B:{l:"Anyone on the doctors' list can be Head Doctor", d:"No new field. Whoever may approve can be made Head Doctor.",
+        pro:["Nothing new to fill in"], con:["A nurse on the doctors' list could become Head Doctor, which you don't want"],
+        lines:["The Head Doctor is anyone on the doctors' list."]},
+      C:{l:"The typed job must say “Doctor”", d:"The program reads the job text.", pro:["No new field"], con:["“Dr”, “MO”, a typo: the program guesses, and gets it wrong"],
+        lines:["The Head Doctor's job text must contain “Doctor”."]}
+    },
+    mock(o){
+      const ppl=[["Dr Eva (example)","Doctor","on the list"],["Sr Mary (example)","Nurse","on the list"],["Anna (example)","Nurse",""]];
+      return `<div class="m"><div class="cap">Who Management can make Head Doctor</div><div class="body stack">${ppl.map(([n,p,l])=>{
+        const ok = o==="A" ? (p==="Doctor"&&l) : o==="B" ? !!l : p==="Doctor";
+        return `<div class="pl ${ok?"":"off"}"><span><b>${esc(n)}</b> · ${o==="C"?"job: ":""}${esc(p)}${l?" · may approve":""}</span><span class="tag2 ${ok?"tg-ok":"tg-skip"}">${ok?"can be Head Doctor":"can't"}</span></div>`;}).join("")}
+        ${o==="B"?`<div class="hole">Sr Mary, a nurse on the doctors' list, could be made Head Doctor.</div>`:o==="C"?`<div class="hole">Works here, but a job typed “Dr” or “Medical Officer” wouldn't count.</div>`:`<div class="okm">Only Dr Eva: a Doctor by profession and on the doctors' list.</div>`}</div></div>`; }},
+  b:{ title:"2 · One Head Doctor, and the single-doctor base",
+    about:"You said: if there are several doctors, there is a Head Doctor. A small base may have only one doctor.",
+    why:"With one doctor and no Head Doctor named, nobody could mark a controlled drug. With several Head Doctors, “who is in charge” is unclear again.",
+    changes:"Pick one: the picture shows a base with one doctor.",
+    opts:{
+      A:{l:"Exactly one Head Doctor; a lone doctor is it automatically", d:"There's never more than one. When only one doctor is on the doctors' list, that doctor is Head Doctor without anyone ticking it. With two or more, Management picks one.", prop:true,
+        pro:["Always clear who is in charge","A small base just works"], con:["When a second doctor joins, the first stays Head Doctor until Management changes it"],
+        lines:["One Head Doctor at most; a single doctor on the list is Head Doctor automatically."]},
+      B:{l:"Exactly one, always named by Management", d:"Even a lone doctor has to be made Head Doctor by Management.", pro:["Always a deliberate choice"], con:["A new base can't mark controlled drugs until Management does it"],
+        lines:["One Head Doctor at most, always named by Management."]},
+      C:{l:"Several Head Doctors allowed", d:"Management can tick more than one.", pro:["Cover for each other"], con:["Back to “who is in charge?”"],
+        lines:["Management can name several Head Doctors."]}
+    },
+    mock(o){ return `<div class="m"><div class="cap">A base with one doctor (example)</div><div class="body stack">
+      <div class="pl"><span><b>Dr Eva (example)</b> · Doctor · may approve</span>${o==="A"?'<span class="tag2 tg-head">Head Doctor (only doctor)</span>':o==="B"?'<span class="tag2 tg-red">not named yet</span>':'<span class="sel">☐ Head Doctor</span>'}</div>
+      ${o==="A"?'<div class="okm">Dr Eva can mark controlled drugs straight away.</div>':o==="B"?'<div class="hole">Nobody can mark a controlled drug until Management names her.</div>':'<div class="hole">With a second doctor, both could be Head Doctor.</div>'}</div></div>`; }},
+  c:{ title:"3 · When there is no Head Doctor",
+    about:"The Head Doctor is archived, loses the right to approve, or is away for weeks.",
+    why:"Only the Head Doctor ticks the box. Without one, a drug that must become controlled stays ordinary, so anyone can move or dispense it without the register.",
+    changes:"Pick one: the picture shows what Management sees.",
+    opts:{
+      A:{l:"Nobody can tick until Management names a new one; Management is told", d:"A red note on Home and in Settings for Management: “No Head Doctor: name one.” Management can also switch the Head Doctor while one is away.", prop:true,
+        pro:["One person in charge, always","Nobody is left guessing"], con:["Until Management acts, no drug can be ticked or unticked"],
+        lines:["Without a Head Doctor, nobody ticks Controlled drug; Management sees a red note until it names one."]},
+      B:{l:"Any doctor may tick while there's no Head Doctor", d:"The right falls back to all doctors until a Head Doctor is named again.", pro:["Never blocked"], con:["Several people decide again, which the staff wanted to avoid"],
+        lines:["Without a Head Doctor, every doctor may tick Controlled drug."]}
+    },
+    mock(o){ return o==="A" ? `<div class="m"><div class="cap">Home, signed in as Cara (Management)</div><div class="body stack"><div class="hole">No Head Doctor: Dr Eva was archived. Name a Head Doctor in Settings › People and access.</div><div class="pl off"><span>☐ Controlled drug (on every item)</span><span class="tag2 tg-skip">waits for a Head Doctor</span></div></div></div>`
+      : `<div class="m"><div class="cap">Item page, signed in as Dr Ben</div><div class="body stack"><div class="pl hi"><span>☐ Controlled drug</span><span class="tag2 tg-wait">any doctor, while there's no Head Doctor</span></div></div></div>`; }},
+  d:{ title:"4 · Ticking a drug that already has stock",
+    about:"Dr Eva ticks “Controlled drug” on Ketamine. The Store already holds 3 vials; its register has no lines.",
+    why:"From that moment the register is the only way its stock may change (Q8). If the 3 vials aren't in it, the register says 0 while 3 sit on the shelf.",
+    changes:"Pick one: the picture shows the confirm box.",
+    opts:{
+      A:{l:"The confirm box also opens the register, with a witness", d:"The confirm box asks for a witness and opens the register at what the shelves hold (3), in the same step. Without a witness nothing changes.", prop:true,
+        pro:["Never controlled but missing from the register","One box, one step"], con:["The Head Doctor needs a witness there"],
+        lines:["Ticking: a confirm box with a witness; the register opens at what the shelves hold, in the same step."]},
+      B:{l:"Tick now; open the register later", d:"Confirmed straight away. The drug shows red “register not opened” and is blocked until a doctor opens it with a witness.",
+        pro:["Quick"], con:["The drug can sit blocked for days"],
+        lines:["Ticking: a confirm box; the register is opened later; the drug is blocked until then."]}
+    },
+    mock(o){ return o==="A" ? `<div class="m"><div class="cap">Dr Eva ticks the box</div><div class="body stack"><div class="dlg"><span class="t">Make Ketamine 200 mg a controlled drug?</span><span class="fld">Its register opens at what the shelves hold: <b>3 vial</b><i>Witness: Dina (example)</i></span><div class="bts"><span class="bt">Cancel</span><span class="bt p">Yes, make it controlled</span></div></div><div class="okm">One step: ticked, and the register shows “Opening 3, witness Dina”.</div></div></div>`
+      : `<div class="m"><div class="cap">Dr Eva ticks the box</div><div class="body stack"><div class="dlg"><span class="t">Make Ketamine 200 mg a controlled drug?</span><div class="bts"><span class="bt">Cancel</span><span class="bt p">Yes</span></div></div><div class="pl wait"><span>Ketamine 200 mg (example)</span><span class="tag2 tg-red">register not opened</span></div></div></div>`; }},
+  e:{ title:"5 · Unticking",
+    about:"Paracetamol was ticked by mistake, or a drug stops being controlled.",
+    why:"Register lines may never disappear (F12.8), but the drug's stock must be changeable again without the register.",
+    changes:"Pick one: the picture shows the drug after unticking.",
+    opts:{
+      A:{l:"The Head Doctor unticks with a reason; the register history stays", d:"The confirm box asks for a reason; it's logged. The register lines stay, read-only, marked “no longer controlled since …”.", prop:true,
+        pro:["A mistake can be undone","Nothing in the register is lost"], con:["Unticking skips the register from then on (logged, with who and why)"],
+        lines:["The Head Doctor can untick with a reason in the confirm box; the register history stays read-only; logged."]},
+      B:{l:"Once it has register lines, it stays controlled", d:"Unticking only works before anything was booked; after that, archive the item and add a new one.",
+        pro:["No drug can ever leave the register's control"], con:["A wrong tick can't be undone without archiving"],
+        lines:["Unticking only while the register has no lines."]}
+    },
+    mock(o){ return o==="A" ? `<div class="m"><div class="cap">Paracetamol (example) after Dr Eva unticks it</div><div class="body stack"><div class="pl"><span>☐ Controlled drug</span><span class="tag2 tg-skip">unticked by Dr Eva · “ticked by mistake”</span></div><div class="pl off"><span>Register (2 lines)</span><span class="tag2 tg-skip">read-only, kept</span></div></div></div>`
+      : `<div class="m"><div class="cap">Paracetamol (example), 2 register lines</div><div class="body stack"><div class="pl"><span>☑ Controlled drug</span><span class="tag2 tg-red">can't be unticked</span></div><div class="hole">To undo: archive the item and add it again as a normal one.</div></div></div>`; }},
+  f:{ title:"6 · Controlled drugs in the Excel import",
+    about:"Your Q26 answer: controlled drugs in the lists are ticked in the import preview. The person importing is Management, not the Head Doctor.",
+    why:"If the importer's tick counted, it would be a back door around the Head Doctor. If nobody ticks, morphine comes in as an ordinary item.",
+    changes:"Pick one: the picture shows the preview and what happens next.",
+    opts:{
+      A:{l:"The importer suggests; those lines wait for the Head Doctor", d:"Cara marks the items she thinks are controlled. Their stock waits, red, until the Head Doctor confirms each one (part 4). Everything else loads at once.", prop:true,
+        pro:["Morphine is never ordinary stock, not even for a minute","Only the Head Doctor decides"], con:["Those lines wait until the Head Doctor is there"],
+        lines:["Q26 part 3 becomes: the importer marks suspected controlled drugs; they wait for the Head Doctor."]},
+      B:{l:"Load everything; the Head Doctor ticks afterwards", d:"All lines load as ordinary items; the Head Doctor ticks the controlled drugs later.",
+        pro:["The import never waits"], con:["Until then, morphine is ordinary stock that anyone can dispense or move"],
+        lines:["Q26 part 3 becomes: everything loads; the Head Doctor ticks controlled drugs afterwards."]}
+    },
+    mock(o){
+      const it=[["Gauze 10×10 cm (example)",false],["Morphine 10 mg/ml (example)",true],["Saline 500 ml (example)",false]];
+      return `<div class="m"><div class="cap">Import preview, Cara (Management) importing</div><div class="body stack">
+        ${it.map(([n,cd])=>`<div class="pl ${cd&&o==="A"?"wait":""}"><span>${cd&&o==="A"?"☑ ":"☐ "}${esc(n)}</span><span>${cd?(o==="A"?'<span class="tag2 tg-wait">waits for the Head Doctor</span>':'<span class="tag2 tg-ok">loads as ordinary</span>'):'<span class="tag2 tg-ok">loads</span>'}</span></div>`).join("")}
+        ${o==="A"?`<div class="okm">Gauze and Saline load now. Morphine waits until the Head Doctor confirms it.</div>`:`<div class="hole">Morphine loads as ordinary stock until the Head Doctor ticks it.</div>`}</div></div>`; }}
+};
+const KEYS = Object.keys(PARTS);
+let part = "a", answers = {}, notes = {}, savedAt = null, db = null, pending = 0;
+function render(){
+  document.getElementById("who").innerHTML = Object.entries(PEOPLE).map(([k,[n,d]])=>`<button type="button" data-who="${k}" aria-pressed="${k===who}">${esc(n)} <span class="muted">(${esc(d)})</span></button>`).join("");
+  document.getElementById("boxmock").innerHTML = boxMock();
+  document.getElementById("boxnote").textContent = boxNote();
+  const P = PARTS[part];
+  const pick = answers[part], shown = pick && P.opts[pick] ? pick : Object.keys(P.opts).find(k=>P.opts[k].prop);
+  document.getElementById("steps").innerHTML = KEYS.map(k=>`<button type="button" role="tab" data-part="${k}" ${k===part?'aria-current="step"':""}>${esc(PARTS[k].title.split(" · ")[0])}${answers[k]?'<span class="done">✓</span>':""}</button>`).join("");
+  document.getElementById("part").innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <h2>${esc(P.title)}</h2>
+      <div class="why">
+        <div class="box"><span class="k">What it's about</span><p>${esc(P.about)}</p></div>
+        <div class="box risk"><span class="k">Why it matters</span><p>${esc(P.why)}</p></div>
+        <div class="box"><span class="k">What each answer changes</span><p>${esc(P.changes)}</p></div>
+      </div>
+      <div class="qgrid">
+        <div class="mocks" style="grid-template-columns:1fr">${P.mock(shown)}</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="opts">${Object.entries(P.opts).map(([k,o])=>`<button type="button" class="opt" data-o="${k}" aria-pressed="${pick===k}"><span class="l">${k} · ${esc(o.l)}${o.prop?' <span class="prop">Proposed</span>':""}</span><span class="d">${esc(o.d)}</span><span class="cons">${o.pro.map(p=>`<span>${esc(p)}</span>`).join("")}${o.con.map(p=>`<span class="minus">${esc(p)}</span>`).join("")}</span></button>`).join("")}</div>
+          <div class="ans"><div class="row"><b>Your answer:</b> <span id="cur">${pick ? (pick==="unsure"?"Not sure":pick+" · "+esc(P.opts[pick].l)) : "not picked yet (showing the proposed one)"}</span></div>
+            <div class="row"><button type="button" id="unsure" aria-pressed="${pick==="unsure"}">Not sure</button></div>
+            <textarea id="note" placeholder="Anything to add? (optional)"></textarea><span class="state" id="st"></span></div>
+          <div class="note chg"><span><b>${esc(shown)}</b> means:</span>${P.opts[shown].lines.map(l=>`<span>· ${esc(l)}</span>`).join("")}</div>
+        </div>
+      </div>
+      <div class="navrow"><button type="button" id="prev" ${part===KEYS[0]?"disabled":""}>← Previous part</button><button type="button" id="next" class="primary" ${part===KEYS[KEYS.length-1]?"disabled":""}>Next part →</button></div>
+    </div>`;
+  document.getElementById("note").value = notes[part] ?? "";
+  status();
+  document.querySelectorAll("[data-who]").forEach(b=>b.onclick=()=>{ who=b.dataset.who; render(); });
+  document.querySelectorAll("[data-part]").forEach(b=>b.onclick=()=>{ part=b.dataset.part; render(); });
+  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{ answers[part]=b.dataset.o; render(); save(); });
+  document.getElementById("unsure").onclick=()=>{ answers[part]="unsure"; render(); save(); };
+  let t; document.getElementById("note").oninput=e=>{ notes[part]=e.target.value; clearTimeout(t); t=setTimeout(save,800); };
+  document.getElementById("prev").onclick=()=>{ part=KEYS[Math.max(0,KEYS.indexOf(part)-1)]; render(); };
+  document.getElementById("next").onclick=()=>{ part=KEYS[Math.min(KEYS.length-1,KEYS.indexOf(part)+1)]; render(); };
+}
+function status(msg){
+  const st = document.getElementById("st"); if (!st) return;
+  if (msg) { st.textContent = msg; return; }
+  const n = KEYS.filter(k=>answers[k]).length;
+  st.innerHTML = !db ? "Can't be saved in this view. Open the page from its link, or type your answers in chat."
+    : pending ? "Saving…" : savedAt ? `<span class="saved">✓ Saved for Claude</span> · ${n} of ${KEYS.length} answered · ${new Date(savedAt).toLocaleTimeString()}` : "Not answered yet.";
+}
+// B28: every save sends all answers; a copy coming back from the server never overwrites a newer click.
+async function save(){
+  if (!db) { status(); return; }
+  const rec = {q:"headdoc", answers:{...answers}, notes:{...notes}, at:new Date().toISOString()};
+  pending++; status();
+  try { await db.collection("headdoc").doc("headdoc").set(rec); savedAt = rec.at; }
+  catch(e){ pending--; status("Not saved ("+(e&&e.code||"error")+"). Type your answers in chat instead."); return; }
+  pending--; status();
+}
+render();
+(async function(){
+  try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : null); }catch(e){ db=null; }
+  status();
+  if (!db) return;
+  db.collection("headdoc").onSnapshot(s=>{ (s.docs||[]).forEach(d=>{ const r=typeof d.data==="function"?d.data():d.data;
+    if (!r || r.q!=="headdoc" || pending) return;
+    if (savedAt && r.at && r.at < savedAt) return;
+    answers = {...(r.answers||{}), ...answers}; notes = {...(r.notes||{}), ...notes}; savedAt = r.at; render(); }); }, ()=>{});
+})();
+})();
+</script>

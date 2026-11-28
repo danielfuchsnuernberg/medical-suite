@@ -1,0 +1,227 @@
+<title>Stock List Import</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Question Q26 (F13 reading the Excel stock lists). Stage 4 colours, dark mode; mock screens in the June look (light). Answer saves to db collection "q26". */
+:root{--bg:#F4F4F6;--surface:#FFFFFF;--surface-2:#FAFAFB;--border:#E4E4EA;--border-strong:#D2D2DA;--text:#1B1B23;--muted:#6B6B78;--faint:#9B9BA6;--accent:#4F46E5;--accent-soft:#EEEDFD;--accent-border:#C9C6F7;--on-accent:#FFFFFF;--ok:#1E9E62;--ok-soft:#E7F5EE;--warn:#C77A12;--warn-soft:#F8EFDF;--bad:#D14343;--bad-soft:#FAEAEA;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121218;--surface:#1B1B23;--surface-2:#20202A;--border:#2C2C38;--border-strong:#3A3A48;--text:#ECECF2;--muted:#A3A3B2;--faint:#76768A;--accent:#8B85F5;--accent-soft:#25234A;--accent-border:#3F3B7A;--on-accent:#121218;--ok:#4CC48A;--ok-soft:#173326;--warn:#E0A247;--warn-soft:#352812;--bad:#EE7474;--bad-soft:#3A1C1C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121218;--surface:#1B1B23;--surface-2:#20202A;--border:#2C2C38;--border-strong:#3A3A48;--text:#ECECF2;--muted:#A3A3B2;--faint:#76768A;--accent:#8B85F5;--accent-soft:#25234A;--accent-border:#3F3B7A;--on-accent:#121218;--ok:#4CC48A;--ok-soft:#173326;--warn:#E0A247;--warn-soft:#352812;--bad:#EE7474;--bad-soft:#3A1C1C;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;margin:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:64px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0} h1{font-size:27px;font-weight:700;letter-spacing:-.4px} h2{font-size:19px;font-weight:700}
+p{margin:0;max-width:72ch}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:13px}
+header{padding-top:32px;display:flex;flex-direction:column;gap:10px}
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:780px){.why{grid-template-columns:1fr}}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:5px;font-size:14px;min-width:0}
+.k{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.risk{border-color:var(--bad);background:var(--bad-soft)} .risk .k{color:var(--bad)}
+.flow{display:flex;gap:0;align-items:stretch;overflow-x:auto;padding-bottom:4px}
+.fs{flex:1 0 170px;min-width:170px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:3px}
+.fs .w{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent)}
+.fs.bad{border-color:var(--bad)} .fs.bad .w{color:var(--bad)} .fs.good{border-color:var(--ok)} .fs.good .w{color:var(--ok)}
+.to{flex:none;display:flex;align-items:center;padding:0 6px;color:var(--faint)}
+.qgrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.qgrid{grid-template-columns:1fr}}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:12px;border:1px solid var(--border-strong);background:var(--surface)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt[aria-pressed="true"]{border:2px solid var(--accent);background:var(--accent-soft);padding:11px 13px}
+.opt .l{font-weight:600;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.opt .d{font-size:13px;color:var(--muted)}
+.opt .cons{font-size:12.5px;display:flex;flex-direction:column;gap:2px;margin-top:3px}
+.opt .cons span::before{content:"+ ";color:var(--ok);font-weight:700} .opt .cons span.minus::before{content:"− ";color:var(--bad)}
+.prop{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--ok);color:#fff}
+.ans{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--border-strong)}
+.ans .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13.5px}
+.ans button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.ans button[aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:#fff}
+.ans textarea{min-height:54px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);resize:vertical}
+.ans .state{font-size:12px;color:var(--faint)}
+.note{font-size:13px;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--border)}
+/* mock screens (June look) */
+.mocks{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.mocks{grid-template-columns:1fr}}
+.m{color-scheme:light;background:#F4F4F6;color:#1B1B23;border:1px solid #D2D2DA;border-radius:12px;overflow:hidden;font-size:12px;line-height:1.4}
+.m .cap{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#9B9BA6;padding:6px 10px;background:#F0F0F3;border-bottom:1px solid #E4E4EA}
+.m .body{padding:10px;display:flex;flex-direction:column;gap:7px}
+.m .card{background:#fff;border:1px solid #E4E4EA;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.m .t{font-weight:700;font-size:13px}
+.m .f{display:flex;flex-direction:column;gap:2px} .m .f span{font-size:10.5px;font-weight:600;color:#6B6B78} .m .f i{font-style:normal;border:1px solid #D2D2DA;border-radius:6px;padding:4px 7px;background:#fff;color:#6B6B78}
+.m .btn{align-self:flex-start;font-weight:600;font-size:11.5px;padding:5px 10px;border-radius:6px;background:#4F46E5;color:#fff}
+.m .ghost{background:#fff;color:#1B1B23;border:1px solid #E4E4EA}
+.m .warn{background:#FAEAEA;color:#D14343;border-radius:7px;padding:6px 8px;font-size:11px}
+.m .okm{background:#E7F5EE;color:#14663f;border-radius:7px;padding:6px 8px;font-size:11px}
+.m .pick{display:flex;flex-direction:column;gap:4px}
+.m .pick b{font-weight:600;border:1px solid #E4E4EA;border-radius:7px;padding:5px 8px;background:#FAFAFB}
+footer{padding-top:18px;font-size:12.5px;color:var(--faint)}
+</style>
+<style>
+.story{display:flex;gap:0;align-items:stretch;overflow-x:auto;padding-bottom:4px}
+.story .fs{flex:1 0 190px}
+.chg b{font-family:var(--mono);font-weight:500;font-size:12px;color:var(--accent)}
+.steps{display:flex;gap:6px;flex-wrap:wrap}
+.steps button{font:inherit;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.steps button[aria-current="step"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.steps button .done{color:var(--ok);margin-left:4px}
+.steps button[aria-current="step"] .done{color:var(--on-accent)}
+.m table{width:100%;border-collapse:collapse;font-size:11px}
+.m th{font-size:9.5px;font-weight:700;letter-spacing:.3px;color:#6B6B78;text-align:left;padding:4px 5px;border-bottom:1px solid #E4E4EA;background:#FAFAFB}
+.m td{padding:5px;border-bottom:1px solid #EEEEF2}
+.m td.n,.m th.n{text-align:right;font-variant-numeric:tabular-nums}
+.m td.pick{background:#E7F5EE;color:#14663f;font-weight:700;outline:2px solid #1E9E62;outline-offset:-2px}
+.m td.skip{color:#C0C0C8}
+.m .tabs{display:flex;gap:3px;flex-wrap:wrap}
+.m .tab{font-size:10.5px;padding:3px 7px;border-radius:5px 5px 0 0;background:#E4E4EA;color:#6B6B78}
+.m .tab.on{background:#fff;color:#1B1B23;font-weight:700;border:1px solid #E4E4EA;border-bottom:0}
+.m .pl{display:flex;justify-content:space-between;gap:6px;font-size:11.5px;background:#fff;border:1px solid #E4E4EA;border-radius:7px;padding:6px 8px}
+.m .pl.new{border-color:#4F46E5;background:#EEEDFD}
+.m .pl.skip{color:#9B9BA6;text-decoration:line-through}
+.m .tag2{font-size:9.5px;font-weight:700;border-radius:4px;padding:1px 5px}
+.m .tg-new{background:#EEEDFD;color:#4F46E5} .m .tg-skip{background:#EDEDF1;color:#6B6B78} .m .tg-match{background:#E7F5EE;color:#14663f}
+.m .hole{background:#FAEAEA;color:#D14343;border-radius:7px;padding:6px 8px;font-size:11px}
+.m .okm{background:#E7F5EE;color:#14663f;border-radius:7px;padding:6px 8px;font-size:11px}
+.m .stack{display:flex;flex-direction:column;gap:6px}
+.navrow{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.navrow button{font:inherit;font-size:13.5px;font-weight:600;padding:8px 14px;border-radius:9px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.navrow button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.navrow button:disabled{opacity:.45;cursor:default}
+</style>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Stage 6 · F13 backup and import · question Q26 (three short parts)</div>
+  <h1>How should the program read the medics' Excel stock lists?</h1>
+  <p class="muted">F13 can now check the two spreadsheets (the Store's stock take and the MedEvac bag check list) and list their problems. Before it can load them, three things have to be decided: they're about how REACH keeps these sheets, so they're yours. The examples below use made-up items; the column names are the real ones from the sheets.</p>
+</header>
+<div class="story">
+  <div class="fs"><span class="w">What the sheets look like</span><span>One sheet per place: the Store, and one per bag (“Trauma Bag”, “Snake Bite Kit” …). Each counts stock in <b>month columns</b> (“SOH DEC”, “Jan”, “FEB” …).</span></div>
+  <span class="to">→</span>
+  <div class="fs"><span class="w">What the check found</span><span>The columns are named differently on every sheet, which the program handles. 21 rows in the Store sheet and 39 in the bag sheets must be fixed by the medics first.</span></div>
+  <span class="to">→</span>
+  <div class="fs bad"><span class="w">What's left to decide</span><span>Which month is “now”, what happens to each sheet, and how controlled drugs come in.</span></div>
+</div>
+<div class="steps" id="steps" role="tablist" aria-label="Parts of Q26"></div>
+<div id="part"></div>
+<footer>REACH Medical Suite · Stage 6 · question Q26 · 28 Nov 2026 · source <code>docs/stage6/import-question.html</code></footer>
+</div>
+<script>
+(function(){
+"use strict";
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const PARTS = {
+  a:{ title:"1 · Which count is “now”?",
+    about:"Every row has a count for each month: “SOH DEC”, “Jan”, “FEB”, “Mar” … The medics fill in a new column each month, but not always every row.",
+    why:"Loading the wrong column puts an old number into the program as today's stock. In the bag sheets, some rows have counts up to May and others stop in March.",
+    changes:"Pick one: the sheet on the left shows which cell becomes the amount on hand.",
+    opts:{
+      A:{l:"For each row, the last month that has a number", d:"Row by row, the right-most filled month is “now”. A row last counted in March loads March's number, and the preview says so.", prop:true,
+        pro:["Every row loads its newest count","Nothing is lost when a month was skipped for some rows"], con:["Rows can come from different months; the preview lists which month each one is from"],
+        lines:["F13.6: “For each row, the last month with a number is the amount on hand; the preview shows the month.”"]},
+      B:{l:"One month for the whole file, picked at import", d:"You pick e.g. “Mar”. Rows without a number in March are not loaded and are listed.",
+        pro:["The whole list is from one count"], con:["Rows counted later (Apr, May) load the older number","Rows not counted that month are left out"],
+        lines:["F13.6: “The person importing picks one month column; rows without a number in it are listed and not loaded.”"]},
+      C:{l:"Always the first count column", d:"Whatever the first “SOH …” column holds.", pro:["Simple"], con:["In these sheets that's December: months old"],
+        lines:["F13.6: “The first count column is loaded.”"]}
+    },
+    mock(o){
+      const rows=[["Gauze 10×10 cm (example)",12,10,11,9,null],["Saline 500 ml (example)",4,4,3,null,null],["Tourniquet (example)",2,2,2,2,2]];
+      const head=["SOH DEC","Jan","FEB","Mar","Apr"];
+      const pick=(r)=>{ if(o==="C") return 1; if(o==="B") return 4; let k=-1; r.forEach((v,i)=>{ if(i>0&&v!==null) k=i; }); return k; };
+      const body=rows.map(r=>{ const p=pick(r); return `<tr><td>${esc(r[0])}</td>${r.slice(1).map((v,i)=>`<td class="n ${i+1===p?"pick":""}">${v===null?"":v}</td>`).join("")}<td class="n"><b>${o==="B"&&r[p]===null?"—":r[p]}</b></td></tr>`; }).join("");
+      const foot = o==="A" ? `<div class="okm">Each row loads its newest count. The preview shows: Gauze from Mar, Saline from FEB, Tourniquet from Apr.</div>`
+        : o==="B" ? `<div class="hole">Picked “Mar”: Gauze loads 9, Saline (no March count) is left out, Tourniquet loads March even though April exists.</div>`
+        : `<div class="hole">Everything loads December's count.</div>`;
+      return `<div class="m"><div class="cap">A bag sheet (made-up rows); green = what is loaded</div><div class="body"><table><thead><tr><th>List Items</th>${head.map(h=>`<th class="n">${h}</th>`).join("")}<th class="n">Loaded</th></tr></thead><tbody>${body}</tbody></table>${foot}</div></div>`;
+    }},
+  b:{ title:"2 · What happens to each sheet?",
+    about:"Each sheet is one place. The Store sheet is the Store; each bag sheet is a bag: “Trauma Bag”, “Mass Casualty Bag”, “Snake Bite Kit” and so on.",
+    why:"The program only knows the bags set up in Settings. A sheet whose name matches no bag needs a decision, or its stock would land nowhere.",
+    changes:"Pick one: the list on the left shows where each sheet goes.",
+    opts:{
+      A:{l:"Match each sheet to a bag by name; a new name becomes a new bag", d:"Sheets that match an existing bag (any capitals, extra spaces ignored) go there. Others become new bags, named after the sheet. All of it is shown in the preview before anything loads.", prop:true,
+        pro:["Every sheet lands somewhere","You see and can stop it in the preview"], con:["A misspelt sheet name makes a second bag (it can be renamed or archived in Settings)"],
+        lines:["F13.6: “Each sheet is a place: matched to a bag by name, or a new bag named after the sheet; the preview shows which.”"]},
+      B:{l:"Only sheets that match an existing bag", d:"Sheets with no matching bag are skipped and listed. You set up the bag in Settings and import again.",
+        pro:["No bag is ever made by an import"], con:["The first import of a new base loads almost nothing until every bag is set up by hand"],
+        lines:["F13.6: “Only sheets matching a place in Settings are loaded; the others are listed.”"]}
+    },
+    mock(o){
+      const sh=[["Stock Take (Store)","Store (main)",true],["Trauma Bag","Trauma Bag",true],["Snake Bite Kit","",false],["Mass Casualty Bag","",false]];
+      return `<div class="m"><div class="cap">The sheets, and where they go (made-up bag list)</div><div class="body stack">
+        ${sh.map(([s,match,has])=> has ? `<div class="pl"><span>${esc(s)}</span><span><span class="tag2 tg-match">→ ${esc(match)}</span></span></div>`
+          : o==="A" ? `<div class="pl new"><span>${esc(s)}</span><span><span class="tag2 tg-new">new bag “${esc(s)}”</span></span></div>`
+          : `<div class="pl skip"><span>${esc(s)}</span><span><span class="tag2 tg-skip">skipped</span></span></div>`).join("")}
+        ${o==="A"?`<div class="okm">All four sheets load; two new bags appear in Settings › Bags.</div>`:`<div class="hole">Two sheets are skipped until their bags are set up by hand.</div>`}</div></div>`;
+    }},
+  c:{ title:"3 · Controlled drugs in the lists",
+    about:"The sheets don't say which items are controlled drugs. But the program only changes a controlled drug through its register, with a witness (Q8, F12).",
+    why:"If morphine came in as an ordinary item, it would skip the register entirely: no balance, no witness, no doctor.",
+    changes:"Pick one: the preview on the left changes with it.",
+    opts:{
+      A:{l:"Tick them in the preview; they come in through the register", d:"The preview lists every item. You tick the controlled drugs; they load with an opening register line that a doctor confirms with a witness (as for older data in F12).", prop:true,
+        pro:["Controlled drugs are in the register from the first day","A doctor and a witness confirm the opening numbers"], con:["Someone has to know which items to tick (once; the program remembers)"],
+        lines:["F13.6: “In the preview, controlled drugs are ticked; they load with an opening register line a doctor confirms with a witness.”"]},
+      B:{l:"Leave controlled drugs out of the import", d:"Ticked items are skipped. A doctor enters each controlled drug and its stock in the register by hand.",
+        pro:["The import never touches controlled drugs"], con:["More typing for the doctor","Until then, those items are missing from Store and bags"],
+        lines:["F13.6: “Controlled drugs are ticked in the preview and left out; a doctor enters them in the register.”"]}
+    },
+    mock(o){
+      const it=[["Gauze 10×10 cm (example)",false],["Morphine 10 mg/ml (example)",true],["Saline 500 ml (example)",false]];
+      return `<div class="m"><div class="cap">The import preview (made-up items)</div><div class="body stack">
+        ${it.map(([n,cd])=>`<div class="pl ${cd&&o==="B"?"skip":""}"><span>${cd?"☑":"☐"} ${esc(n)}</span><span>${cd?(o==="A"?'<span class="tag2 tg-new">register: opening line, doctor confirms</span>':'<span class="tag2 tg-skip">left out</span>'):'<span class="tag2 tg-match">loads</span>'}</span></div>`).join("")}
+        ${o==="A"?`<div class="okm">Morphine arrives in Store and bags and in the register, waiting for a doctor and a witness.</div>`:`<div class="hole">Morphine is not loaded; a doctor adds it in the register.</div>`}</div></div>`;
+    }}
+};
+const KEYS = Object.keys(PARTS);
+let part = "a", answers = {}, notes = {}, at = null, db = null;
+function render(){
+  const P = PARTS[part];
+  const pick = answers[part], shown = pick && P.opts[pick] ? pick : Object.keys(P.opts).find(k=>P.opts[k].prop);
+  document.getElementById("steps").innerHTML = KEYS.map(k=>`<button type="button" role="tab" data-part="${k}" ${k===part?'aria-current="step"':""}>${esc(PARTS[k].title.split(" · ")[0])}${answers[k]?'<span class="done">✓</span>':""}</button>`).join("");
+  document.getElementById("part").innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <h2>${esc(P.title)}</h2>
+      <div class="why">
+        <div class="box"><span class="k">What it's about</span><p>${esc(P.about)}</p></div>
+        <div class="box risk"><span class="k">Why it matters</span><p>${esc(P.why)}</p></div>
+        <div class="box"><span class="k">What each answer changes</span><p>${esc(P.changes)}</p></div>
+      </div>
+      <div class="qgrid">
+        <div class="mocks" style="grid-template-columns:1fr">${P.mock(shown)}</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="opts">${Object.entries(P.opts).map(([k,o])=>`<button type="button" class="opt" data-o="${k}" aria-pressed="${pick===k}"><span class="l">${k} · ${esc(o.l)}${o.prop?' <span class="prop">Proposed</span>':""}</span><span class="d">${esc(o.d)}</span><span class="cons">${o.pro.map(p=>`<span>${esc(p)}</span>`).join("")}${o.con.map(p=>`<span class="minus">${esc(p)}</span>`).join("")}</span></button>`).join("")}</div>
+          <div class="ans"><div class="row"><b>Your answer:</b> <span id="cur">${pick ? (pick==="unsure"?"Not sure":pick+" · "+esc(P.opts[pick].l)) : "not picked yet (showing the proposed one)"}</span></div>
+            <div class="row"><button type="button" id="unsure" aria-pressed="${pick==="unsure"}">Not sure</button></div>
+            <textarea id="note" placeholder="Anything to add? (optional)"></textarea><span class="state" id="st">${at ? "Saved for Claude · "+new Date(at).toLocaleString() : "Not answered yet."}</span></div>
+          <div class="note chg"><span><b>${esc(shown)}</b> changes the checklist like this:</span>${P.opts[shown].lines.map(l=>`<span>· ${esc(l)}</span>`).join("")}</div>
+        </div>
+      </div>
+      <div class="navrow"><button type="button" id="prev" ${part==="a"?"disabled":""}>← Previous part</button><button type="button" id="next" class="primary" ${part==="c"?"disabled":""}>Next part →</button></div>
+    </div>`;
+  document.getElementById("note").value = notes[part] ?? "";
+  document.querySelectorAll("[data-part]").forEach(b=>b.onclick=()=>{ part=b.dataset.part; render(); });
+  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{ answers[part]=b.dataset.o; render(); save(); });
+  document.getElementById("unsure").onclick=()=>{ answers[part]="unsure"; render(); save(); };
+  let t; document.getElementById("note").oninput=e=>{ notes[part]=e.target.value; clearTimeout(t); t=setTimeout(save,800); };
+  document.getElementById("prev").onclick=()=>{ part=KEYS[Math.max(0,KEYS.indexOf(part)-1)]; render(); };
+  document.getElementById("next").onclick=()=>{ part=KEYS[Math.min(KEYS.length-1,KEYS.indexOf(part)+1)]; render(); };
+}
+async function save(){
+  const rec = {q:"q26", answers, notes, at:new Date().toISOString()};
+  const st = () => document.getElementById("st");
+  if (!db){ st().textContent = "Shown here, but can't be saved in this view. Open the page from its link, or tell Claude in chat."; return; }
+  try{ await db.collection("q26").doc("q26").set(rec); at = rec.at; st().textContent = "Saved for Claude · "+new Date(at).toLocaleString(); }catch(e){ st().textContent = "Not saved ("+(e&&e.code||"error")+"). Tell Claude in chat instead."; }
+}
+render();
+(async function(){
+  try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : null); }catch(e){ db=null; }
+  if (!db) return;
+  db.collection("q26").onSnapshot(s=>{ (s.docs||[]).forEach(d=>{ const r=typeof d.data==="function"?d.data():d.data; if(r&&r.q==="q26"){ answers=r.answers||{}; notes=r.notes||{}; at=r.at; render(); } }); }, ()=>{});
+})();
+})();
+</script>

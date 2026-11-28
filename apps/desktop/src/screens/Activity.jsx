@@ -10,7 +10,8 @@ const KIND = { item: "item", line: "stock line", location: "place", person: "per
 const FIELD = { qty: "quantity", required: "required", expiry: "expiry", lot: "lot", name: "name", job: "job", level: "level", state: "state",
   itemId: "item", locationId: "place", category: "category", unit: "unit", kind: "kind", staffNo: "staff number", itemNo: "item number",
   controlled: "controlled drug", cdRight: "doctor's right", caseNo: "case number", baseName: "base name", country: "country", timeZone: "time zone",
-  dateStyle: "date style", dayShift: "day shift", nightShift: "night shift", departmentId: "department", categoryId: "category", validMonths: "valid for (months)" };
+  dateStyle: "date style", dayShift: "day shift", nightShift: "night shift", departmentId: "department", categoryId: "category", validMonths: "valid for (months)",
+  profession: "profession", medicalCode: "medical code", headDoctor: "Head Doctor", controlledNote: "reason" };
 const PAGE = 100;
 
 export default function Activity({ door, tick, timeZone, dateStyle }) {

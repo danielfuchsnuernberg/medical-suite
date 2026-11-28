@@ -1,5 +1,40 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — One Head Doctor
+- Danny: “No. We just stick to one head doctor.” Changed from several to exactly one: ticking Head Doctor for another doctor takes it from the first, in the same save. Should two computers name two while offline, the one named last counts. Tests changed to match; two rules broken on purpose (naming a second keeps the first; two named both count), each failed. 126 of 126 and 81 of 81 pass.
+
+## 2026-11-28 — Notes for the REACH chat
+- Danny: “make sure that the changes are being recorded for the REACH Ecosystem”. New file `docs/reach-notes.md`: what this app changed that touches REACH (profession and medical code on people, Head Doctor and doctors' list as this app's own rights, the controlled flag EDP will need, backup and log shapes), and what the REACH chat may want to decide. This app doesn't edit the REACH folder (R13). Row added to PLAN › Belongs elsewhere.
+
+## 2026-11-28 — Head Doctor built (F12.12–F12.15)
+- People and access: a Profession per person (Doctor, Nurse, Other), set by Management. Someone set to Doctor is asked for their own medical code when they sign in; it must be unique; it's logged and shown on the doctors' list. The program takes it on trust.
+- Only a doctor with a code can be on the doctors' list. Management ticks Head Doctor for doctors on the list (several allowed); with only one doctor, that doctor is Head Doctor automatically. Without a Head Doctor, Management sees a red note on Home.
+- Item page: a “Controlled drug” box. Only a Head Doctor can tick it; a confirm box asks first, needs a witness and opens the register at what the shelves hold. Unticking asks why; the register stays under Controlled drugs, read-only. Everyone else sees the box greyed.
+- B28 closed: all six answers on the Head Doctor page arrived.
+- Tests: 4 new unit tests, 4 new program tests; 5 older F12 tests now enter Dina as a doctor first. 13 rules broken on purpose; one survived at first (a weak check), the test was made stronger; now each fails when broken. 126 of 126 and 81 of 81 pass.
+- Found and fixed while building: the program checked the person being given the right before checking who was giving it; a nurse on the list was told to “type your medical code”.
+
+## 2026-11-28 — Head Doctor: Danny's answers
+- Management chooses Head Doctors, nothing more; a doctor is someone entered with a medical code (Danny's own answer); several Head Doctors allowed, a lone doctor is one automatically; without a Head Doctor nobody ticks until Management names one; import suggestions wait for a Head Doctor. Parts 4 and 5 and the medical-code details still to confirm. Nothing built.
+
+## 2026-11-28 — New idea from the medical staff: a Head Doctor
+- Danny, after talking to the medical staff: with several doctors there is one Head Doctor; only the Head Doctor ticks or unticks Controlled drug, after a confirm box; Management makes a doctor Head Doctor; a nurse can't be one. Written into PLAN › Additional thoughts. It changes the controlled-drug page (drawn for “any doctor”), which is updated before Danny answers it. Nothing built.
+- Redrawn on https://claude.ai/artifact/KHW4Hfihq7nSYKXzSF2HqG (replaces https://claude.ai/artifact/XD9tDFYMWBteb9EnNto29r): the four views and six choices, with the B28 fix. Checked: every person and option changes its picture, no sideways scroll at 375 px, no console errors.
+
+## 2026-11-28 — Q26 answered (A, A, A); new idea: only a doctor marks a controlled drug
+- Q26 = A, A, A, typed in chat (the page kept only part 1: bug B28, written down, not yet fixed). Per row the newest month is loaded; each sheet goes to the bag with its name or becomes a new bag, shown in the preview; controlled drugs come in through the register with a doctor and a witness.
+- Danny's new idea, written into PLAN › Additional thoughts: only a doctor can turn an item into a controlled drug, with a box. It goes through Workflow B and is shown before it is built; loading the Excel lists (F13.6) waits for it.
+- Shown on https://claude.ai/artifact/XD9tDFYMWBteb9EnNto29r: the box for each person, three choices with proposed answers. The page carries the B28 fix: a click can no longer be overwritten by an older saved copy, and it says when an answer is saved. Checked: every option changes its picture, no sideways scroll at 375 px, no console errors.
+
+## 2026-11-28 — F13 built (Excel loading waits for Q26): backup and import
+- F12 committed first (b90c3e7).
+- Settings › Backup and import (Manage level only): Export backup (the REACH shape: app code MD, data version, when exported, the data; no password or PIN check values); backups on this computer, one a day when the program opens, the last 30 kept (the server's nightly backups come with the server, REACH SD2); Restore from a file or from the list.
+- Restore: refused with the reason for a backup with no stock, with no people, from the June app, damaged or from a newer version (B15). Otherwise a table of now vs after, a tick to confirm, a copy of today saved first, then everything is replaced in one step and every screen shows it at once (B2). An older backup is carried forward to this version (B3). The backup's time is shown in base time.
+- Check a stock list (Excel): reads .xlsx files without any added library, finds the columns on every sheet whatever they are called, and lists the problems before anything is loaded (B6): impossible dates (1900, month 13), two dates in one cell, the same item twice in one place, lot numbers that look like dates, double spaces, missing units. “NA” counts as no expiry. Rows marked “must fix” are fixed in the medics' spreadsheet; the list can be copied for them. Run on the real files (counts only, nothing stored): Store 21 rows must be fixed, bags 39.
+- Loading the lists waits for Q26 on https://claude.ai/artifact/7kAfkVHZnQhMK6PKY28iie: which month is “now”, what happens to each sheet, how controlled drugs come in.
+- Tests: 12 new unit tests, 8 program tests; F5.3 now skips the hidden file pickers. 13 rules broken on purpose, each made its test fail. 122 of 122 and 77 of 77 pass.
+- Found and fixed while building: dates like 31/13/2027 were accepted; 193 “NA” cells were counted as bad dates; a restore box showed the time in UTC.
+
 ## 2026-11-28 — F12 built: controlled-drug register
 - Q25 committed first (c6cc96b).
 - Controlled drugs (menu): one card per drug with its balance and where it is; the register below with When, Line (Opening / In / Out / Moved / Correction), amount, running balance, by, doctor and how, witness, reason or case. Lines can't be edited or deleted; a doctor adds a correction line naming the original. Every booking also moves the stock line in Store and bags, saved together; if the two ever disagree, the register says so.

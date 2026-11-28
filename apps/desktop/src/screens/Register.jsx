@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { can, todayIn, formatCalendarDate, formatTimeIn } from "@md/core";
+import { can, todayIn, formatCalendarDate, formatTimeIn, isDoctorByProfession, mayApprove } from "@md/core";
 import Icon from "../components/Icon.jsx";
 import Dialog from "../components/Dialog.jsx";
 
@@ -10,12 +10,14 @@ const KIND = { opening: "Opening", in: "In", out: "Out", moved: "Moved", correct
 const HOW = { self: "took it out personally", pin: "in the room (PIN)", remote: "from own device", after: "approved afterwards" };
 
 export default function Register({ door, me, reg, tick, timeZone, dateStyle, toast }) {
-  const drugs = reg.drugs();
+  const former = reg.formerDrugs();                 // no longer controlled: register kept, read-only (F12.15)
+  const drugs = [...reg.drugs(), ...former];
   const [sel, setSel] = useState(null);
   const [dlg, setDlg] = useState(null);           // { kind: "out" | "in" | "move" | "correct" | "ask" | "revoke" | "pin", ... }
   const drug = drugs.find(d => d.id === sel) ?? drugs[0];
-  const doctor = reg.isDoctor(me.id);
-  const work = can(me.level, "changeStock");
+  const readOnly = former.some(d => d.id === drug?.id);
+  const doctor = reg.isDoctor(me.id) && !readOnly;
+  const work = can(me.level, "changeStock") && !readOnly;
   const name = (id) => id ? String(door.get("person", id)?.name ?? id) : "—";
   const when = (at) => `${formatCalendarDate(todayIn(timeZone, at), dateStyle === "short" ? "short" : "long")}, ${formatTimeIn(at, timeZone)}`;
   const place = (lineId) => { const l = door.get("line", String(lineId)); return l ? String(door.get("location", String(l.locationId))?.name ?? "?") : "?"; };
@@ -30,7 +32,7 @@ export default function Register({ door, me, reg, tick, timeZone, dateStyle, toa
 
   return (
     <div className="register" data-testid="register">
-      {doctor && waitingAll.length ? (
+      {reg.isDoctor(me.id) && waitingAll.length ? (
         <section className="panel waitpanel" data-testid="waiting">
           <div className="panel-head"><div><h2>Waiting for a doctor ({waitingAll.length})</h2><p className="muted">You're a doctor, so these come to you</p></div></div>
           <ul className="reqs">
@@ -69,6 +71,7 @@ export default function Register({ door, me, reg, tick, timeZone, dateStyle, toa
               <span className="cdname">{String(d.name)}</span>
               <span className="bal">{reg.balance(d.id)} <small>{String(d.unit ?? "")} · {reg.placesOf(d.id).map(l => String(door.get("location", String(l.locationId))?.name)).join(", ") || "nowhere"}</small></span>
               {w ? <span className="badge b-danger">waiting for doctor</span> : null}
+              {former.some(f => f.id === d.id) ? <span className="badge b-muted nodot">no longer controlled</span> : null}
             </button>
           );
         })}
@@ -85,9 +88,10 @@ export default function Register({ door, me, reg, tick, timeZone, dateStyle, toa
             </div>
           ) : null}
         </div>
+        {readOnly ? <div className="lockm" data-testid="former"><Icon name="lock" width={13} /> No longer a controlled drug{drug.controlledNote ? `: ${String(drug.controlledNote)}` : ""}. Its register stays here, read-only.</div> : null}
         {rows.length === 0 ? <div className="att att-warning" data-testid="not-opened"><Icon name="alertT" width={16} stroke={2} /><span>This drug has no register yet; the Store and bags hold {shelves}. {doctor ? "Open the register at that number, with a witness." : "A doctor opens it."}</span>
           {doctor ? <button type="button" className="btn small" onClick={() => setDlg({ kind: "open" })}>Open the register at {shelves}</button> : null}</div>
-          : bal !== shelves ? <div className="form-err" data-testid="mismatch">The register says {bal}, but the Store and bags hold {shelves}. A doctor adds a correction line to match what is really there.</div> : null}
+          : !readOnly && bal !== shelves ? <div className="form-err" data-testid="mismatch">The register says {bal}, but the Store and bags hold {shelves}. A doctor adds a correction line to match what is really there.</div> : null}
         <div className="tscroll">
           <table className="table ledger" data-testid="ledger">
             <thead><tr><th>When</th><th>Line</th><th className="n">Qty</th><th className="n">Balance</th><th>By</th><th>Doctor</th><th>Witness</th><th>Reason / case</th>{doctor ? <th></th> : null}</tr></thead>
@@ -136,7 +140,8 @@ function Doctors({ door, me, reg, name, when, setDlg, toast }) {
   const doctor = reg.isDoctor(me.id);
   const first = docs.length === 0;
   const canGrant = first ? can(me.level, "changeLevels") : doctor;
-  const people = door.records("person").filter(p => p.state === "Active" && p.cdRight !== true && (first || p.id !== me.id)).sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  // only doctors by profession (entered as Doctor, with their medical code) who aren't on the list yet (F12.13)
+  const people = door.records("person").filter(p => isDoctorByProfession(p) && !mayApprove(p) && (first || p.id !== me.id)).sort((a, b) => String(a.name).localeCompare(String(b.name)));
   const [pick, setPick] = useState("");
   const [why, setWhy] = useState("");
   const grant = async () => { setWhy(""); try { await reg.grant(me, pick); toast(`${name(pick)} may now approve controlled drugs. Logged, and every doctor sees it here.`, "success"); setPick(""); } catch (e) { setWhy(e.message); } };
@@ -147,7 +152,7 @@ function Doctors({ door, me, reg, name, when, setDlg, toast }) {
       {first ? <div className="att att-warning" data-testid="no-doctor"><Icon name="alertT" width={16} stroke={2} /><span>Nobody can approve controlled drugs yet. {canGrant ? "Set the first doctor now: this is done once." : "Management sets the first doctor, once."}</span></div> : null}
       <ul className="entries">
         {docs.map(p => (
-          <li key={p.id} data-doctor={p.id}><span className="en"><b>{String(p.name)}</b><small>{String(p.job ?? "")}{p.id === me.id ? " · you" : ""}</small></span>
+          <li key={p.id} data-doctor={p.id}><span className="en"><b>{String(p.name)}</b>{reg.isHead(p.id) ? <span className="badge b-accent nodot" data-testid="head-badge">Head Doctor</span> : null}<small>{String(p.job ?? "")}{p.medicalCode ? ` · code ${String(p.medicalCode)}` : ""}{p.id === me.id ? " · you" : ""}</small></span>
             {doctor ? <button type="button" className="iconbtn danger" aria-label={`Remove ${String(p.name)}'s right to approve`} title="Remove the right" onClick={() => setDlg({ kind: "revoke", person: p })}>✕</button> : null}</li>
         ))}
       </ul>

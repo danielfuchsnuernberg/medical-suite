@@ -5,6 +5,7 @@
 // Rights (F2.8, F12.2, Q16): the doctors' list (person.cdRight) decides, never the level. Manage level gives nothing here,
 // except setting the very first doctor once, while there is none (F12.6: "set once at setup").
 import { can, ledger, balanceOf, waiting, checkWitness, pinProblem, wholeNumber, matchingLine, expiryProblem, makeCredential, verifyPassword, newRecordId,
+  mayApprove, isDoctorByProfession, needsMedicalCode, headDoctors,
   type CdLine, type CdDecision, type LedgerRow, type Credential, type StoredRecord } from "@md/core";
 import { Door } from "./door";
 import { Refused } from "./accounts";
@@ -21,9 +22,15 @@ export class RegisterStore {
 
   // ---- reading ----
   person(id: string | null | undefined) { return id ? this.door.get("person", id) : undefined; }
-  isDoctor(id: string | null | undefined) { const p = this.person(id); return !!p && p.state === "Active" && p.cdRight === true; }
-  doctors() { return this.door.records("person").filter(p => p.state === "Active" && p.cdRight === true).sort((a, b) => String(a.name).localeCompare(String(b.name))); }
+  /** May approve: a doctor by profession (with their medical code) on the doctors' list (F12.13). */
+  isDoctor(id: string | null | undefined) { return mayApprove(this.person(id)); }
+  doctors() { return this.door.records("person").filter(p => mayApprove(p)).sort((a, b) => String(a.name).localeCompare(String(b.name))); }
+  /** Head Doctors (F12.14): named by Management, or the lone doctor automatically. */
+  heads() { return headDoctors(this.door.records("person")).sort((a, b) => String(a.name).localeCompare(String(b.name))); }
+  isHead(id: string | null | undefined) { return this.heads().some(p => p.id === id); }
   drugs() { return this.door.records("item").filter(i => i.controlled === true && i.state === "Active").sort((a, b) => String(a.name).localeCompare(String(b.name))); }
+  /** No longer controlled, but with a register: shown read-only (F12.15). */
+  formerDrugs() { const ids = new Set(this.lines().map(l => l.itemId)); return this.door.records("item").filter(i => i.controlled !== true && ids.has(i.id)).sort((a, b) => String(a.name).localeCompare(String(b.name))); }
   private lines() { return this.door.records("cdline") as unknown as CdLine[]; }
   private decisions() { return this.door.records("cddecision") as unknown as CdDecision[]; }
   ledger(itemId: string): LedgerRow[] { return ledger(this.lines(), this.decisions(), itemId); }
@@ -42,7 +49,12 @@ export class RegisterStore {
   }
   private doctor(actor: StoredRecord): StoredRecord {
     const p = this.worker(actor);
-    if (p.cdRight !== true) throw new Refused("Only a doctor can do this. Manage level gives no right here.");
+    if (!mayApprove(p)) throw new Refused(p.cdRight === true && needsMedicalCode(p) ? "Type your medical code first (you're asked when you sign in)." : "Only a doctor can do this. Manage level gives no right here.");
+    return p;
+  }
+  private head(actor: StoredRecord): StoredRecord {
+    const p = this.worker(actor);
+    if (!this.isHead(p.id)) throw new Refused(this.heads().length ? "Only a Head Doctor marks a drug as controlled." : "There is no Head Doctor. Management names one in Settings › People and access.");
     return p;
   }
   private drug(itemId: string): StoredRecord {
@@ -228,19 +240,58 @@ export class RegisterStore {
     });
   }
 
+  // ---- Head Doctors and the Controlled drug tick (F12.14, F12.15) ----
+  /** Management names the Head Doctor (exactly one: naming someone takes it from whoever had it), or takes it away. Management can do nothing else around controlled drugs. */
+  setHead(actor: StoredRecord, personId: string, on: boolean) {
+    return this.one(async () => {
+      const me = this.worker(actor);
+      if (!can(me.level, "changeLevels")) throw new Refused("Only Management names Head Doctors.");
+      const t = this.person(personId); if (!t || t.state !== "Active") throw new Refused("Pick someone from the people list.");
+      if (on && !mayApprove(t)) throw new Refused(`Only a doctor on the doctors' list can be Head Doctor. ${String(t.name)} isn't one.`);
+      if ((t.headDoctor === true) === on) return;
+      const others = on ? this.door.records("person").filter(p => p.id !== personId && p.headDoctor === true) : [];
+      await this.door.applyAll([...others.map(p => ({ recordType: "person", recordId: p.id, op: "set" as const, data: { headDoctor: false }, by: me.id })),
+        { recordType: "person", recordId: personId, op: "set" as const, data: { headDoctor: on }, by: me.id }]);
+    });
+  }
+  /**
+   * Only a Head Doctor ticks or unticks "Controlled drug", after a confirm box (the screen). Ticking asks for a witness and,
+   * in the same save, puts what the shelves hold into the register (an opening line, or a correction if it had a register before).
+   * Unticking asks for a reason; the register history stays, read-only.
+   */
+  setControlled(actor: StoredRecord, itemId: string, on: boolean, p: { witness?: string; reason?: string } = {}) {
+    return this.one(async () => {
+      const me = this.head(actor);
+      const it = this.door.get("item", itemId); if (!it || it.state !== "Active") throw new Refused("That item isn't there any more.");
+      if ((it.controlled === true) === on) throw new Refused(on ? "It is already a controlled drug." : "It isn't a controlled drug.");
+      if (!on) {
+        const reason = this.reason(p.reason, "Say why it is no longer a controlled drug.");
+        await this.door.apply({ recordType: "item", recordId: itemId, op: "set", data: { controlled: false, controlledNote: reason }, by: me.id });
+        return;
+      }
+      this.witnessOk(p.witness, me.id);
+      const shelves = this.onShelves(itemId), had = this.ledger(itemId), bal = balanceOf(had);
+      const msgs: Msg[] = [{ recordType: "item", recordId: itemId, op: "set", data: { controlled: true, controlledNote: "" }, by: me.id }];
+      if (!had.length) msgs.push(this.line({ itemId, kind: "opening", qty: shelves, witness: p.witness, reason: "Made a controlled drug: what the Store and bags held", doctor: me.id, how: "self" }, me.id));
+      else if (shelves !== bal) msgs.push(this.line({ itemId, kind: "correction", qty: shelves - bal, witness: p.witness, reason: "Made a controlled drug again: the register set to what the Store and bags hold", doctor: me.id, how: "self", ref: null }, me.id));
+      await this.save(msgs);
+    });
+  }
+
   // ---- the doctors' list (F12.6, F12.7, Q16 = B) ----
   /** Only a doctor gives the right, never to themselves. While nobody has it, a Manage-level person sets the first doctor, once. */
   grant(actor: StoredRecord, personId: string) {
     return this.one(async () => {
       const me = this.worker(actor);
       const t = this.person(personId); if (!t || t.state !== "Active") throw new Refused("Pick someone from the people list.");
-      if (t.cdRight === true) throw new Refused(`${String(t.name)} already has the right.`);
+      if (mayApprove(t)) throw new Refused(`${String(t.name)} already has the right.`);
       const first = this.doctors().length === 0;
       if (first) { if (!can(me.level, "changeLevels")) throw new Refused("The first doctor is set by Management, once."); }
       else {
         if (me.cdRight !== true) throw new Refused("Only a doctor can give this right. Manage level can't change the list.");
         if (personId === me.id) throw new Refused("Nobody can give the right to themselves.");
       }
+      if (!isDoctorByProfession(t)) throw new Refused(`Only a doctor with a medical code can be on this list. ${String(t.name)} ${t.profession === "Doctor" ? "hasn't typed their medical code yet" : "isn't entered as a doctor"}.`);
       await this.door.apply({ recordType: "person", recordId: personId, op: "set", data: { cdRight: true }, by: me.id });
     });
   }
@@ -248,7 +299,7 @@ export class RegisterStore {
   revoke(actor: StoredRecord, personId: string) {
     return this.one(async () => {
       const me = this.doctor(actor);
-      const t = this.person(personId); if (!t || t.cdRight !== true) throw new Refused("That person doesn't have the right.");
+      const t = this.person(personId); if (!t || !mayApprove(t)) throw new Refused("That person doesn't have the right.");
       if (this.doctors().length <= 1) throw new Refused(`${String(t.name)} is the only person who can approve controlled drugs. Give the right to someone else first.`);
       await this.door.apply({ recordType: "person", recordId: personId, op: "set", data: { cdRight: false }, by: me.id });
     });

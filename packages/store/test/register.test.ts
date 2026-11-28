@@ -12,6 +12,8 @@ const cara = (d: Door) => P(d, "demo-p3");      // Manage, not a doctor
 const dina = (d: Door) => P(d, "demo-p4");      // nurse, Work
 const M = "demo-i5", STORE = "demo-s7";          // Morphine in the Store: 5
 const qty = (d: Door, id: string) => d.get("line", id)!.qty;
+// Entered as a doctor, with a medical code (F12.12): only then can someone be on the doctors' list.
+const asDoctor = (d: Door, id: string) => d.apply({ recordType: "person", recordId: id, op: "set", data: { profession: "Doctor", medicalCode: "DEMO-MD-" + id }, by: "demo-p3" });
 const out = (o: Record<string, unknown> = {}) => ({ itemId: M, lineId: STORE, qty: 1, witness: "demo-p4", reason: "Pain relief · case 117", how: "self", ...o }) as any;
 
 describe("register (F12)", () => {
@@ -85,6 +87,7 @@ describe("register (F12)", () => {
     await expect(reg.takeOut(anna(door), out({ how: "request", doctor: "demo-p2", witness: "demo-p2" }))).rejects.toThrow("The approving doctor can't also be the witness.");
     await expect(reg.receive(anna(door), { itemId: M, locationId: "demo-l0", qty: 1, witness: "demo-p1", reason: "Delivery" })).rejects.toThrow("own witness");
     // a doctor who witnessed a request can't approve it
+    await asDoctor(door, "demo-p4");
     await door.apply({ recordType: "person", recordId: "demo-p4", op: "set", data: { cdRight: true }, by: "demo-p2" });
     const r = await reg.takeOut(anna(door), out({ how: "request", doctor: "demo-p4", witness: "demo-p2" }));
     await expect(reg.decide(ben(door), r, "approve")).rejects.toThrow("You were the witness");
@@ -95,6 +98,8 @@ describe("register (F12)", () => {
     const { door, reg } = await open();
     await expect(reg.grant(cara(door), "demo-p1")).rejects.toThrow("Only a doctor can give this right. Manage level can't change the list.");
     await expect(reg.grant(ben(door), "demo-p2")).rejects.toThrow("already has the right");
+    await expect(reg.grant(ben(door), "demo-p4")).rejects.toThrow("Only a doctor with a medical code can be on this list. Dina Test isn't entered as a doctor.");
+    await asDoctor(door, "demo-p4");
     await reg.grant(ben(door), "demo-p4");
     expect(reg.doctors().map(p => p.id).sort()).toEqual(["demo-p2", "demo-p4"]);
     await expect(reg.grant(dina(door), "demo-p4")).rejects.toThrow("already has the right");
@@ -110,6 +115,7 @@ describe("register (F12)", () => {
   it("F12.7 a doctor removes a right; logged; the last doctor can't be removed", async () => {
     const { door, reg } = await open();
     await expect(reg.revoke(ben(door), "demo-p2")).rejects.toThrow("is the only person who can approve controlled drugs.");
+    await asDoctor(door, "demo-p4");
     await reg.grant(ben(door), "demo-p4");
     await expect(reg.revoke(cara(door), "demo-p4")).rejects.toThrow("Only a doctor");
     await reg.revoke(ben(door), "demo-p4");
@@ -192,5 +198,83 @@ describe("register for data from before F12", () => {
     expect(reg.onShelves("old-cd")).toBe(3);
     expect(qty(door, "old-line")).toBe(3);                                                   // the shelves don't change
     await expect(reg.openRegister(ben(door), "old-cd", "demo-p4")).rejects.toThrow("already open");
+  });
+});
+
+import { Accounts } from "../src";
+import { headDoctors, medicalCodeProblem, needsMedicalCode } from "@md/core";
+
+describe("doctors, medical codes and Head Doctors (F12.12–F12.15)", () => {
+  it("F12.12 Management sets the profession; a doctor types their own medical code, unique, logged", async () => {
+    const { door } = await open(); const acc = new Accounts(door);
+    await expect(acc.setProfession(anna(door), "demo-p4", "Doctor")).rejects.toThrow("Only Manage level sets a profession.");
+    await expect(acc.setProfession(cara(door), "demo-p4", "Surgeon")).rejects.toThrow("Pick Doctor, Nurse or Other.");
+    await acc.setProfession(cara(door), "demo-p4", "Doctor");
+    expect(needsMedicalCode(dina(door))).toBe(true);
+    await expect(acc.setMedicalCode(anna(door), "MD-9")).rejects.toThrow("Only someone entered as a doctor types a medical code.");
+    await expect(acc.setMedicalCode(dina(door), "demo-md-0001")).rejects.toThrow("belongs to someone else");   // Dr Ben's, any capitals
+    await expect(acc.setMedicalCode(dina(door), "  ")).rejects.toThrow("Type your medical code.");
+    await acc.setMedicalCode(dina(door), " PNG-MB  4471 ");
+    expect(dina(door).medicalCode).toBe("PNG-MB 4471");
+    expect(door.log()[0]).toMatchObject({ by: "demo-p4", recordId: "demo-p4", changes: [{ field: "medicalCode", from: null, to: "PNG-MB 4471" }] });
+    expect(medicalCodeProblem("ab", [], "x")).toBe("A medical code is 3 to 40 characters.");
+  });
+  it("F12.13 only a doctor with a medical code can be on the doctors' list; without the code they can't approve", async () => {
+    const { door, reg } = await open(); const acc = new Accounts(door);
+    await acc.setProfession(cara(door), "demo-p4", "Doctor");
+    await expect(reg.grant(ben(door), "demo-p4")).rejects.toThrow("Dina Test hasn't typed their medical code yet.");
+    await acc.setMedicalCode(dina(door), "MD-44");
+    await reg.grant(ben(door), "demo-p4");
+    expect(reg.isDoctor("demo-p4")).toBe(true);
+    await acc.setProfession(cara(door), "demo-p4", "Nurse");                                 // no longer entered as a doctor
+    expect(reg.isDoctor("demo-p4")).toBe(false);
+    await expect(reg.takeOut(dina(door), out({ how: "self" }))).rejects.toThrow("Only a doctor");
+  });
+  it("F12.14 Management names the one Head Doctor; a lone doctor is it automatically; Management can do nothing else", async () => {
+    const { door, reg } = await open(); const acc = new Accounts(door);
+    expect(reg.heads().map(p => p.id)).toEqual(["demo-p2"]);                                  // the only doctor
+    await acc.setProfession(cara(door), "demo-p4", "Doctor"); await acc.setMedicalCode(dina(door), "MD-44"); await reg.grant(ben(door), "demo-p4");
+    expect(reg.heads()).toEqual([]);                                                          // two doctors, none named
+    await expect(reg.setHead(ben(door), "demo-p4", true)).resolves.toBeUndefined();          // Ben is Manage level too
+    await expect(reg.setHead(anna(door), "demo-p2", true)).rejects.toThrow("Only Management names Head Doctors.");
+    await expect(reg.setHead(cara(door), "demo-p1", true)).rejects.toThrow("Only a doctor on the doctors' list can be Head Doctor. Anna Example isn't one.");
+    expect(reg.heads().map(p => p.id)).toEqual(["demo-p4"]);
+    await reg.setHead(cara(door), "demo-p2", true);                                           // naming Ben takes it from Dina
+    expect(reg.heads().map(p => p.id)).toEqual(["demo-p2"]);
+    expect(dina(door).headDoctor).toBe(false);
+    await reg.setHead(cara(door), "demo-p2", false);
+    expect(reg.heads()).toEqual([]);                                                          // two doctors, none named
+    await reg.setHead(cara(door), "demo-p2", true);
+    await expect(reg.takeOut(cara(door), out({ how: "self" }))).rejects.toThrow("Manage level gives no right here.");   // still nothing else
+    await expect(reg.grant(cara(door), "demo-p1")).rejects.toThrow("Only a doctor can give this right.");
+    // the named Head Doctor archived: nobody, until Management names another
+    await door.apply({ recordType: "person", recordId: "demo-p2", op: "archive", data: {}, by: "demo-p3" });
+    expect(reg.heads().map(p => p.id)).toEqual(["demo-p4"]);                                  // Dina is now the only doctor: automatic
+    expect(headDoctors([{ id: "a", state: "Active", profession: "Doctor", medicalCode: "x", cdRight: true }, { id: "b", state: "Active", profession: "Doctor", medicalCode: "y", cdRight: true }])).toEqual([]);
+    // two named at once (two computers offline): only the one named last counts
+    expect(headDoctors([{ id: "a", state: "Active", profession: "Doctor", medicalCode: "x", cdRight: true, headDoctor: true, changedAt: 5 }, { id: "b", state: "Active", profession: "Doctor", medicalCode: "y", cdRight: true, headDoctor: true, changedAt: 9 }]).map(p => p.id)).toEqual(["b"]);
+  });
+  it("F12.15 only a Head Doctor ticks Controlled drug; ticking needs a witness and opens the register at what the shelves hold; unticking needs a reason; history stays", async () => {
+    const { door, reg, inv } = await open();
+    await expect(reg.setControlled(anna(door), "demo-i2", true, { witness: "demo-p4" })).rejects.toThrow("Only a Head Doctor marks a drug as controlled.");
+    await expect(reg.setControlled(cara(door), "demo-i2", true, { witness: "demo-p4" })).rejects.toThrow("Only a Head Doctor");
+    await expect(reg.setControlled(ben(door), "demo-i2", true, {})).rejects.toThrow("A witness has to sign");
+    await reg.setControlled(ben(door), "demo-i2", true, { witness: "demo-p4" });              // Saline: 4 + 24 on the shelves
+    expect(door.get("item", "demo-i2")!.controlled).toBe(true);
+    expect(reg.ledger("demo-i2").map(r => [r.line.kind, r.line.qty, r.line.witness])).toEqual([["opening", 28, "demo-p4"]]);
+    expect(reg.balance("demo-i2")).toBe(28);
+    await expect(inv.adjust(anna(door), "demo-s2", "dispense", 1)).rejects.toThrow("controlled-drug register");
+    await expect(reg.setControlled(ben(door), "demo-i2", false, { reason: " " })).rejects.toThrow("Say why");
+    await reg.setControlled(ben(door), "demo-i2", false, { reason: "Ticked by mistake" });
+    expect(door.get("item", "demo-i2")).toMatchObject({ controlled: false, controlledNote: "Ticked by mistake" });
+    expect(reg.formerDrugs().map(i => i.id)).toEqual(["demo-i2"]);                           // its register stays, read-only
+    await inv.adjust(anna(door), "demo-s2", "dispense", 1);                                   // ordinary stock again
+    await reg.setControlled(ben(door), "demo-i2", true, { witness: "demo-p4" });              // again: the register is set to the shelves
+    expect(reg.ledger("demo-i2").at(-1)!.line).toMatchObject({ kind: "correction", qty: -1 });
+    expect(reg.balance("demo-i2")).toBe(27);
+    // no Head Doctor: nobody ticks
+    await door.apply({ recordType: "person", recordId: "demo-p2", op: "archive", data: {}, by: "demo-p3" });
+    await expect(reg.setControlled(ben(door), "demo-i1", true, { witness: "demo-p4" })).rejects.toThrow();
+    expect(reg.heads()).toEqual([]);
   });
 });

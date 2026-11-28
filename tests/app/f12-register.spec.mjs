@@ -157,6 +157,7 @@ test("F12.5 every line has a witness: never yourself, never the approving doctor
 
 test("F12.6 only a doctor gives the right, never to themselves; the first doctor is set once; Manage can't change the list", async () => {
   await launch("Dr Ben Sample");
+  await page.evaluate(() => window.__mdTest.door.apply({ recordType: "person", recordId: "demo-p4", op: "set", data: { profession: "Doctor", medicalCode: "DEMO-MD-0004" }, by: "demo-p3" }));   // entered as a doctor, with a code (F12.12)
   const doctors = page.getByTestId("doctors");
   const offered = await doctors.getByLabel("Give the right to").locator("option").allTextContents();
   expect(offered.some(o => o.startsWith("Dr Ben Sample"))).toBe(false);                             // not himself
@@ -180,6 +181,7 @@ test("F12.6 only a doctor gives the right, never to themselves; the first doctor
 
 test("F12.7 a doctor removes a right with ✕; logged and every doctor sees it; the last doctor can't be removed", async () => {
   await launch("Dr Ben Sample");
+  await page.evaluate(() => window.__mdTest.door.apply({ recordType: "person", recordId: "demo-p4", op: "set", data: { profession: "Doctor", medicalCode: "DEMO-MD-0004" }, by: "demo-p3" }));   // entered as a doctor, with a code (F12.12)
   await page.getByRole("button", { name: "Remove Dr Ben Sample's right to approve" }).click();
   await dlg("revoke").getByRole("button", { name: "Remove" }).click();
   await expect(dlg("revoke").getByTestId("refusal")).toContainText("Dr Ben Sample is the only person who can approve controlled drugs. Give the right to someone else first.");

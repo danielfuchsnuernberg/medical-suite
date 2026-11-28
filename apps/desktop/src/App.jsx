@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { findEntry, MENU, can } from "@md/core";
+import { findEntry, MENU, can, needsMedicalCode } from "@md/core";
 import Sidebar from "./components/Sidebar.jsx";
 import SearchBox from "./components/SearchBox.jsx";
 import SyncLight from "./components/SyncLight.jsx";
@@ -17,7 +17,7 @@ import Count from "./screens/Count.jsx";
 import StockTakes from "./screens/StockTakes.jsx";
 import Register from "./screens/Register.jsx";
 import Dialog from "./components/Dialog.jsx";
-import { SignIn, ChooseOwn, SetUp } from "./screens/SignIn.jsx";
+import { SignIn, ChooseOwn, SetUp, MedicalCode } from "./screens/SignIn.jsx";
 import useToday from "./state/useToday.js";
 import useDoor from "./state/useDoor.js";
 
@@ -30,7 +30,7 @@ const crumbOf = (id) => {
 };
 
 export default function App() {
-  const { door, accounts, settings: settingsStore, inventory, register, error, tick } = useDoor();
+  const { door, accounts, settings: settingsStore, inventory, register, backups, error, tick } = useDoor();
   // The base's settings (F5), from the store. Until they are set: the computer's own time zone, and it says so.
   const base = door ? door.get("settings", "base") : null;
   const settings = {
@@ -141,6 +141,7 @@ export default function App() {
   const after = (t) => { if (t.id === "signout") signOutNow(); else goNow(t.id, t.f); };
   if (accounts.needsSetUp()) return <SetUp accounts={accounts} baseName={settings.baseName} demo={demo} onDone={(id) => setAuth({ id, mustChange: false, ready: true })} />;
   if (me && me.state === "Active" && auth.mustChange) return <ChooseOwn accounts={accounts} person={me} demo={demo} onDone={() => setAuth(a => ({ ...a, mustChange: false }))} onCancel={signOut} />;
+  if (signedIn && needsMedicalCode(me)) return <MedicalCode accounts={accounts} person={me} demo={demo} onDone={() => {}} onCancel={signOut} />;
   if (!signedIn) return <SignIn accounts={accounts} demo={demo} baseName={settings.baseName} onSignedIn={async (id, o) => {
     if (o.stay && !o.mustChange) { try { await accounts.stay(id); } catch (e) { toast(String(e.message || e), "danger"); } }
     setAuth({ id, mustChange: o.mustChange, ready: true });
@@ -151,6 +152,8 @@ export default function App() {
   const waitingCd = register.waitingAll();
   const cdBadge = register.isDoctor(me.id) ? waitingCd.length : 0;
   const emergencies = waitingCd.filter(r => r.status === "emergency");
+  // F12.14: Management is told when there is no Head Doctor (nobody can mark a controlled drug until it names one)
+  const noHead = can(me.level, "changeLevels") && register.heads().length === 0;
   const entry = findEntry(view);
   const title = view === "home" ? "Home" : view === "item" ? String(door.get("item", itemId)?.name ?? "Item") : entry ? entry.label : "";
   const openResult = (kind) => go(kind === "person" ? "staff" : "where"); // F7/F8/F14 bring the real screens
@@ -167,15 +170,15 @@ export default function App() {
         </header>
         <Banners status={status} flags={door.flags()} nameOf={nameOfLine} timeZone={settings.timeZone} offlineClosed={offlineClosed} onCloseOffline={() => setOfflineClosed(true)} />
         <main className="content" id="content">
-          {view === "home" ? <Home go={go} today={today} baseName={settings.baseName} emergencies={emergencies.length} />
+          {view === "home" ? <Home go={go} today={today} baseName={settings.baseName} emergencies={emergencies.length} noHead={noHead} />
             : view === "overview" ? <Overview inv={data.inv} today={today} dateStyle={settings.dateStyle} open={(f) => go("where", f)} openItem={(id) => { setItemId(id); setView("item"); }} />
             : view === "where" ? <StockList inv={data.inv} today={today} dateStyle={settings.dateStyle} filter={filter} setFilter={setFilter} openItem={(id) => { setItemId(id); setView("item"); }} me={me} store={inventory} toast={toast} openRegister={() => go("cd")} />
-            : view === "item" ? <ItemPage itemId={itemId} me={me} door={door} inv={data.inv} store={inventory} tick={tick} today={today} timeZone={settings.timeZone} dateStyle={settings.dateStyle} back={() => setView("where")} toast={toast} openRegister={() => go("cd")} />
+            : view === "item" ? <ItemPage itemId={itemId} me={me} door={door} inv={data.inv} store={inventory} tick={tick} today={today} timeZone={settings.timeZone} dateStyle={settings.dateStyle} back={() => setView("where")} toast={toast} openRegister={() => go("cd")} register={register} />
             : view === "count" ? <Count inv={data.inv} me={me} state={count} setState={(f) => { setCount(f); setCountResult(null); }} save={saveCounts} result={countResult} />
             : view === "takes" ? <StockTakes key={nav} door={door} me={me} store={inventory} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} toast={toast} typedCounts={typedCounts} />
             : view === "cd" ? <Register door={door} me={me} reg={register} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} toast={toast} />
             : view === "log" ? <Activity door={door} tick={tick} timeZone={settings.timeZone} dateStyle={settings.dateStyle} />
-            : view === "settings" ? <Settings me={me} accounts={accounts} store={settingsStore} door={door} tick={tick} toast={toast} />
+            : view === "settings" ? <Settings me={me} accounts={accounts} store={settingsStore} door={door} tick={tick} toast={toast} backups={backups} register={register} />
             : <Placeholder view={view} />}
         </main>
       </div>

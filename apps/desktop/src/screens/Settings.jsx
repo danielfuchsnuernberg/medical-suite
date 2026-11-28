@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { can, LEVELS, COUNTRIES, formatCalendarDate, todayIn } from "@md/core";
+import { can, LEVELS, COUNTRIES, PROFESSIONS, formatCalendarDate, todayIn, mayApprove, needsMedicalCode } from "@md/core";
 import Icon from "../components/Icon.jsx";
+import BackupImport from "./BackupImport.jsx";
 
 // Settings (F5) and People and access (F2). Everyone may look at the base's settings and lists; only Manage level
 // changes them, and only Manage level sees People and access (Q23 = C). Every rule is checked again where the
 // change is saved (SettingsStore, Accounts), not only here.
 
-export default function Settings({ me, accounts, store, door, tick, toast }) {
+export default function Settings({ me, accounts, store, door, tick, toast, backups, register }) {
   const edit = can(me.level, "changeSettings");
   return (
     <div className="settings">
@@ -21,7 +22,8 @@ export default function Settings({ me, accounts, store, door, tick, toast }) {
           <ListPanel kind="bag" title="Bags" me={me} store={store} edit={edit} toast={toast} tick={tick} />
         </div>
       </div>
-      {can(me.level, "seePeopleAccess") ? <PeopleAccess me={me} accounts={accounts} tick={tick} toast={toast} /> : null}
+      {can(me.level, "seePeopleAccess") ? <PeopleAccess me={me} accounts={accounts} tick={tick} toast={toast} register={register} /> : null}
+      {can(me.level, "changeSettings") && backups ? <BackupImport me={me} store={backups} tick={tick} toast={toast} /> : null}
     </div>
   );
 }
@@ -144,7 +146,27 @@ function ListPanel({ kind, title, me, store, edit, toast, tick }) {
 
 const PW_TEXT = { own: "Own password", "one-time": "One-time, not used yet", demo: "DEMO password", none: "No password on this computer" };
 
-function PeopleAccess({ me, accounts, tick, toast }) {
+// Profession (Management sets it), the doctor's medical code (the doctor types it), Head Doctor (Management names it).
+// Danny with the medical staff, 28 Nov: F12.12–F12.14. Management can do nothing else around controlled drugs.
+function Profession({ p, me, accounts, register, run }) {
+  const head = register ? register.heads().some(h => h.id === p.id) : false;
+  const auto = head && p.headDoctor !== true;
+  return (
+    <div className="prof">
+      <select aria-label={`Profession of ${p.name}`} value={String(p.profession ?? "")} onChange={e => run(() => accounts.setProfession(me, p.id, e.target.value))}>
+        {p.profession ? null : <option value="">Not set</option>}
+        {PROFESSIONS.map(x => <option key={x} value={x}>{x}</option>)}
+      </select>
+      {p.profession === "Doctor" ? (needsMedicalCode(p) ? <span className="badge b-warning nodot" data-testid="code-missing">medical code not typed yet</span> : <span className="muted small">code {String(p.medicalCode)}</span>) : null}
+      {mayApprove(p) ? (
+        <label className="check inline small"><input type="checkbox" aria-label={`Head Doctor: ${p.name}`} checked={p.headDoctor === true || auto} disabled={auto} onChange={e => run(() => register.setHead(me, p.id, e.target.checked))} />
+          <span>Head Doctor{auto ? " (the only doctor)" : ""}</span></label>
+      ) : null}
+    </div>
+  );
+}
+
+function PeopleAccess({ me, accounts, tick, toast, register }) {
   const [code, setCode] = useState(null);            // { name, code }: shown once
   const [refusal, run] = useRun(toast);
   const [adding, setAdding] = useState(false);
@@ -172,7 +194,7 @@ function PeopleAccess({ me, accounts, tick, toast }) {
           </div>
         ) : null}
         <table className="table">
-          <thead><tr><th>Name</th><th>Job</th><th>Level</th><th>Password on this computer</th><th /></tr></thead>
+          <thead><tr><th>Name</th><th>Job</th><th>Profession</th><th>Level</th><th>Password on this computer</th><th /></tr></thead>
           <tbody>
             {people.map(p => {
               const archived = p.state !== "Active";
@@ -180,6 +202,7 @@ function PeopleAccess({ me, accounts, tick, toast }) {
                 <tr key={p.id} data-person={p.id} className={archived ? "archived" : ""}>
                   <td>{String(p.name)}{p.id === me.id ? <span className="you">you</span> : null}</td>
                   <td>{String(p.job ?? "")}</td>
+                  <td>{archived ? null : <Profession p={p} me={me} accounts={accounts} register={register} run={run} />}</td>
                   <td>{archived ? <span className="muted">Archived</span> : (
                     <select aria-label={`Level of ${p.name}`} value={String(p.level)} onChange={e => run(() => accounts.setLevel(me, p.id, e.target.value))}>
                       {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}

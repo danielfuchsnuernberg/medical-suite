@@ -78,7 +78,7 @@ test("F5.3 every box in Settings looks like every other box in the app (B8)", as
   const looks = await page.evaluate(() => {
     const pick = (el) => { const s = getComputedStyle(el); return [s.borderTopWidth, s.borderTopStyle, s.borderTopColor, s.borderRadius, s.fontSize, s.fontFamily].join("|"); };
     const ref = pick(document.querySelector('[aria-label="New person\'s name"]'));
-    const boxes = [...document.querySelectorAll('.settings input:not([type=checkbox]), .settings select')].filter(el => !el.closest("[data-testid=people-access]"));
+    const boxes = [...document.querySelectorAll('.settings input:not([type=checkbox]):not([type=file]), .settings select')].filter(el => !el.closest("[data-testid=people-access]"));
     return { ref, n: boxes.length, odd: boxes.filter(el => pick(el) !== ref && !(el.matches(".rename input, .addrow input, .months input") && pick(el).split("|").slice(0, 4).join("|") === ref.split("|").slice(0, 4).join("|"))).map(el => el.getAttribute("aria-label")) };
   });
   expect(looks.n).toBeGreaterThan(8);

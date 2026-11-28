@@ -365,3 +365,23 @@ button.att:hover{filter:brightness(.97)}
 .dialog .field select{width:100%}
 @media (max-width:720px){ .ledger{min-width:720px} }
 .cdmode .seg{border-radius:var(--r-md);flex-wrap:wrap;align-self:stretch}.cdmode .seg button{flex:1 1 auto}
+
+/* F13: backup and import */
+.bk-row{display:flex;gap:8px;flex-wrap:wrap}
+.filebtn{position:relative;overflow:hidden;display:inline-flex;align-items:center}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+.bk-saved{display:flex;flex-direction:column;gap:4px;padding-top:8px;border-top:1px solid var(--border)}
+.nowafter .n{text-align:right;font-variant-numeric:tabular-nums}
+.nowafter tr.diff td{font-weight:700}
+.listcheck{display:flex;flex-direction:column;gap:12px;max-height:50vh;overflow:auto}
+.lc-sheet{display:flex;flex-direction:column;gap:4px}
+.lc-table td{vertical-align:top;font-size:var(--fs-xs)}
+.lc-table td .badge{white-space:normal;margin:0 4px 4px 0}
+.dialog[data-testid="list-check"]{max-width:min(760px,100%)}
+.lc-table .nowrap{white-space:nowrap}
+
+/* Head Doctor (Danny, 28 Nov): the Controlled drug box, People and access profession */
+.cdtick{display:flex;gap:10px;align-items:center;flex-wrap:wrap;align-self:stretch;padding:10px 14px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--border)}
+.cdtick.head{border-color:var(--accent-border)}
+.prof{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.prof select{font:inherit;font-size:var(--fs-sm);padding:4px 8px;border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--text)}

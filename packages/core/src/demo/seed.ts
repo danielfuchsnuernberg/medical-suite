@@ -27,11 +27,11 @@ export const demoCourses = [
 ];
 
 export const demoPeople = [
-  { id: "demo-p1", staffNo: "S-001", name: "Anna Example", job: "Nurse", level: "Work", departmentId: "demo-d1", ...stamp },
-  { id: "demo-p2", staffNo: "S-002", name: "Dr Ben Sample", job: "Doctor", level: "Manage", departmentId: "demo-d1", cdRight: true, ...stamp },   // the first doctor (F12.6)
-  { id: "demo-p3", staffNo: "S-003", name: "Cara Demo", job: "Base manager", level: "Manage", departmentId: "demo-d2", ...stamp },
-  { id: "demo-p4", staffNo: "S-004", name: "Dina Test", job: "Nurse", level: "Work", departmentId: "demo-d1", ...stamp },
-  { id: "demo-p5", staffNo: "S-005", name: "Finn Former", job: "Nurse", level: "Work", departmentId: "demo-d4", ...stamp, state: "Archived" as const },
+  { id: "demo-p1", staffNo: "S-001", name: "Anna Example", job: "Nurse", level: "Work", departmentId: "demo-d1", profession: "Nurse", ...stamp },
+  { id: "demo-p2", staffNo: "S-002", name: "Dr Ben Sample", job: "Doctor", level: "Manage", departmentId: "demo-d1", profession: "Doctor", medicalCode: "DEMO-MD-0001", cdRight: true, ...stamp },   // the first doctor (F12.6)
+  { id: "demo-p3", staffNo: "S-003", name: "Cara Demo", job: "Base manager", level: "Manage", departmentId: "demo-d2", profession: "Other", ...stamp },
+  { id: "demo-p4", staffNo: "S-004", name: "Dina Test", job: "Nurse", level: "Work", departmentId: "demo-d1", profession: "Nurse", ...stamp },
+  { id: "demo-p5", staffNo: "S-005", name: "Finn Former", job: "Nurse", level: "Work", departmentId: "demo-d4", profession: "Nurse", ...stamp, state: "Archived" as const },
 ];
 
 export const demoLocations = [

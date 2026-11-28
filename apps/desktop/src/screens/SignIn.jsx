@@ -89,6 +89,30 @@ export function ChooseOwn({ accounts, person, demo, onDone, onCancel }) {
   );
 }
 
+/** F12.12: someone entered as a doctor types their own medical code before they open the program. */
+export function MedicalCode({ accounts, person, demo, onDone, onCancel }) {
+  const [code, setCode] = useState("");
+  const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
+  const submit = async (e) => {
+    e.preventDefault(); setBusy(true); setErr("");
+    try { await accounts.setMedicalCode(person, code); onDone(); }
+    catch (e2) { setErr(String(e2.message || e2)); }
+    finally { setBusy(false); }
+  };
+  return (
+    <Frame title="Your medical code" sub={`${person.name}: Management entered you as a doctor. Type your medical code (your registration number). Only with it do you count as a doctor here: on the doctors' list, and as Head Doctor.`} demo={demo} testid="medical-code">
+      <form className="form" onSubmit={submit}>
+        <label className="field"><span>Medical code</span>
+          <input value={code} onChange={e => setCode(e.target.value)} aria-label="Medical code" autoComplete="off" /></label>
+        <p className="muted small">The program can't check it with the Medical Board: it's taken on trust, shown on the doctors' list and logged.</p>
+        <Problem text={err} />
+        <div className="row"><button type="submit" className="btn primary" disabled={busy}>Save and open</button>
+          <button type="button" className="btn" onClick={onCancel}>Sign out</button></div>
+      </form>
+    </Frame>
+  );
+}
+
 export function SetUp({ accounts, baseName, demo, onDone }) {
   const managers = accounts.people().filter(p => p.level === "Manage");
   const [who, setWho] = useState(managers.length ? "" : "new");
