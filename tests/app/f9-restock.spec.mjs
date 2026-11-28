@@ -92,7 +92,7 @@ test("F9.3 every booked movement is logged old → new (B19)", async () => {
 });
 
 test("F9.4 for a controlled drug, − leads to the register (F12); there's no plain dispense (Q8)", async () => {
-  await launch("Cara Demo");
+  await launch("Dr Ben Sample");   // A9
   for (const kind of ["Dispense", "Restock"]) {
     await page.getByRole("button", { name: `${kind} Morphine 10 mg/ml (demo) in Store (main)` }).click();
     await expect(dlg().getByTestId("cd-note")).toContainText("This is a controlled drug.");
@@ -105,7 +105,7 @@ test("F9.4 for a controlled drug, − leads to the register (F12); there's no pl
   await expect(page.locator('.side [data-view="cd"]')).toHaveAttribute("aria-current", "page");
   // not behind the screen either, and not through Edit or Move on the item page
   const why = await page.evaluate(async () => {
-    const t = window.__mdTest; const cara = t.door.get("person", "demo-p3"); const out = [];
+    const t = window.__mdTest; const cara = t.door.get("person", "demo-p2"); const out = [];   // A9: Dr Ben (a doctor), so the refusal is the register's
     for (const f of [() => t.inventory.adjust(cara, "demo-s7", "dispense", 1), () => t.inventory.editLine(cara, "demo-s7", { qty: 1, required: 5, lot: "M-3", expiry: "2027-07-24" }), () => t.inventory.move(cara, "demo-s7", "demo-l1", 1)]) {
       try { await f(); out.push("changed"); } catch (e) { out.push(e.message.includes("controlled-drug register") ? "register" : e.message); }
     }

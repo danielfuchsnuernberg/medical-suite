@@ -7,6 +7,10 @@ const path = require("path");
 // Test mode (program tests only): MD_TEST=1 gives the screens a stand-in server and test controls.
 // It is never set when Danny or the nurses start the program.
 const TEST = process.env.MD_TEST === "1";
+// B76 (A7, Q34 = A): the real-data trial on this Mac. Its own data folder in the Mac's Library (never in the project or Git),
+// no DEMO data, a red stripe. Started with `npm run trial` or the “REACH Medical Suite – real trial” app in ~/Applications.
+const TRIAL = process.env.MD_TRIAL === "1";
+if (TRIAL) app.setPath("userData", path.join(app.getPath("appData"), "REACH Medical Suite – real trial"));
 // A separate data folder (used by program tests, so they never touch the data of a program someone has open).
 if (process.env.MD_USER_DATA) app.setPath("userData", process.env.MD_USER_DATA);
 
@@ -15,7 +19,7 @@ if (!app.requestSingleInstanceLock()) { app.quit(); }
 function createWindow() {
   const win = new BrowserWindow({
     width: 1240, height: 820, minWidth: 360, minHeight: 560,
-    title: "REACH Medical Suite",   // until the page loads; then the name from Settings (B61) via document.title
+    title: TRIAL ? "REACH Medical Suite – real trial" : "REACH Medical Suite",   // until the page loads; then the name from Settings (B61) via document.title
     backgroundColor: "#F4F4F6",
     show: false,
     webPreferences: {
@@ -24,7 +28,7 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: true,
       spellcheck: false,
-      additionalArguments: TEST ? ["--md-test", ...(process.env.MD_TEST_OFFLINE === "1" ? ["--md-test-offline"] : []), ...(process.env.MD_TEST_EMPTY === "1" ? ["--md-test-empty"] : [])] : [],
+      additionalArguments: [...(TRIAL ? ["--md-trial"] : []), ...(TEST ? ["--md-test", ...(process.env.MD_TEST_OFFLINE === "1" ? ["--md-test-offline"] : []), ...(process.env.MD_TEST_EMPTY === "1" ? ["--md-test-empty"] : [])] : [])],
     },
   });
   win.once("ready-to-show", () => win.show());

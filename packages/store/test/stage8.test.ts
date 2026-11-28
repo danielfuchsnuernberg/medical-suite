@@ -42,7 +42,7 @@ describe("group 2: country, numbers, name, office", () => {
     const { door, st, inv } = await open();
     const cara = P(door, "demo-p3");
     await st.saveBase(cara, { ...st.base(), country: "PE", timeZone: "America/Lima", baseName: "Lima base" } as any);
-    await inv.addItem(cara, { name: "Peru gauze", locationId: "demo-l0", qty: 1 });
+    await inv.addItem(P(door, "demo-p2"), { name: "Peru gauze", locationId: "demo-l0", qty: 1 });
     expect(door.records("item").find(i => i.name === "Peru gauze")!.country).toBe("PE");
     await expect(st.addCountry(P(door, "demo-p1"), { code: "CL", name: "Chile", timeZone: "America/Santiago" })).rejects.toThrow("Only Manage level");
     await expect(st.addCountry(cara, { code: "C", name: "Chile", timeZone: "America/Santiago" })).rejects.toThrow("two letters");
@@ -50,7 +50,7 @@ describe("group 2: country, numbers, name, office", () => {
     await st.addCountry(cara, { code: "cl", name: "Chile", timeZone: "America/Santiago" });
     expect(st.countries().map(c => c.code)).toContain("CL");
     await st.saveBase(cara, { ...st.base(), country: "CL", timeZone: "America/Santiago" } as any);
-    await inv.addItem(cara, { name: "Chile gauze", locationId: "demo-l0", qty: 1 });
+    await inv.addItem(P(door, "demo-p2"), { name: "Chile gauze", locationId: "demo-l0", qty: 1 });
     expect(door.records("item").find(i => i.name === "Chile gauze")!.country).toBe("CL");
     expect(door.records("item").find(i => i.name === "Peru gauze")!.country).toBe("PE");     // stamped once, never moves
   });
@@ -59,7 +59,7 @@ describe("group 2: country, numbers, name, office", () => {
     const cara = P(door, "demo-p3");
     const eva = await acc.addPerson(cara, { name: "Eva Trial", job: "", level: "Work" });
     expect(eva.staffNo).toBe("S-006");
-    await inv.addItem(cara, { name: "New thing", locationId: "demo-l0", qty: 1 });
+    await inv.addItem(P(door, "demo-p2"), { name: "New thing", locationId: "demo-l0", qty: 1 });
     const it = door.records("item").find(i => i.name === "New thing")!;
     expect(it.itemNo).toMatch(/^I-\d{4}$/);
     const { shownNumbers } = await import("@md/core");
@@ -91,7 +91,7 @@ describe("group 3: restore keeps the log (Q32 = B), loading checks itself", () =
     const text = bs.exportFile(cara).text;
     const logBefore = door.log().length;
     await inv.adjust(anna, "demo-s1", "dispense", 5);                                    // after the backup
-    await inv.addItem(cara, { name: "Made after", locationId: "demo-l0", qty: 2 });
+    await inv.addItem(P(door, "demo-p2"), { name: "Made after", locationId: "demo-l0", qty: 2 });
     await inv.freezeStockTake(anna, "After the backup");
     await reg.receive(anna, { itemId: "demo-i5", locationId: "demo-l0", qty: 1, witness: "demo-p4", reason: "delivery" });
     const entriesBeforeRestore = door.log().length;

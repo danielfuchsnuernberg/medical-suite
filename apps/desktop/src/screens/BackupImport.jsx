@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { readXlsx, checkStockList, problemsText, planImport, rowKey } from "@md/core";
+import { readXlsx, checkStockList, problemsText, planImport, rowKey, juneStaff } from "@md/core";
 import Icon from "../components/Icon.jsx";
 import Dialog from "../components/Dialog.jsx";
 
@@ -9,7 +9,24 @@ import Dialog from "../components/Dialog.jsx";
 
 const ROWS = [["people", "People"], ["items", "Items"], ["lines", "Stock lines"], ["register", "Controlled-drug register lines"], ["stockTakes", "Stock takes"], ["messages", "Activity log entries"]];
 
-export default function BackupImport({ me, store, tick, toast, door, inventory }) {
+export default function BackupImport({ me, store, tick, toast, door, inventory, accounts }) {
+  const trial = !!(window.md && window.md.trial);
+  const [people, setPeople] = useState(null);       // B76: what loading the June people did
+  // B76 (A7, Q42 = A): the real-data trial only. Names, jobs and emails from the archived June app; professions from the job.
+  const loadJune = async (file) => {
+    setWhy(""); setPeople(null);
+    const found = juneStaff(await file.text());
+    if (!found.length) { setWhy("That isn't the June app: no people found in it. Nothing was added."); return; }
+    const out = [];
+    for (const p of found) {
+      try {
+        const added = await accounts.addPerson(me, { name: p.name, job: p.job, level: "Work", email: p.email || undefined });
+        if (p.profession !== "Other") await accounts.setProfession(me, added.id, p.profession);
+        out.push({ name: p.name, ok: `added: ${p.job || "no job"} → ${p.profession}${p.profession === "Doctor" ? " (types their medical code at first sign-in)" : ""}` });
+      } catch (e) { out.push({ name: p.name, ok: `not added: ${String(e.message || e)}` }); }
+    }
+    setPeople(out);
+  };
   const [saved, setSaved] = useState([]);
   const [preview, setPreview] = useState(null);     // { label, check, text }
   const [list, setList] = useState(null);           // { file, checked }
@@ -35,7 +52,7 @@ export default function BackupImport({ me, store, tick, toast, door, inventory }
   };
   const checkList = async (file) => {
     setWhy("");
-    try { setList({ file: file.name, checked: checkStockList(await readXlsx(new Uint8Array(await file.arrayBuffer()))) }); }
+    try { setList({ file: file.name, checked: checkStockList(await readXlsx(new Uint8Array(await file.arrayBuffer())), { trial: !!(window.md && window.md.trial) }) }); }
     catch (e) { setWhy(String(e.message || e)); }
   };
 
@@ -47,6 +64,11 @@ export default function BackupImport({ me, store, tick, toast, door, inventory }
         <label className="btn filebtn"><input type="file" accept=".json,application/json" aria-label="Restore from a backup file" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) openFile(f); }} />Restore from a file…</label>
         <label className="btn filebtn"><input type="file" accept=".xlsx" aria-label="Check a stock list (Excel)" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) checkList(f); }} />Check a stock list (Excel)…</label>
       </div>
+      {trial && accounts ? <div className="trial-people" data-testid="june-people">
+        <label className="btn filebtn"><input type="file" accept=".html,text/html" aria-label="Load people from the June app" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) loadJune(f); }} /><Icon name="users" width={14} stroke={2} />Load people from the June app…</label>
+        <span className="muted small">Real-data trial only. Names, jobs and emails; the June training records were made up by that app and are not loaded. Everyone comes in at Work level with no password: give each a one-time password in People and access.</span>
+        {people ? <ul data-testid="june-result">{people.map((p, i) => <li key={i}><b>{p.name}</b>: {p.ok}</li>)}</ul> : null}
+      </div> : null}
       {why ? <div className="form-err" role="alert" data-testid="refusal">{why}</div> : null}
       <div className="bk-saved">
         <b>Backups on this computer</b>

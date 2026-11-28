@@ -12,7 +12,8 @@
     "build": "npm run build -w apps/desktop",
     "start": "npm run build && npm run electron -w apps/desktop",
     "test": "vitest run",
-    "test:app": "npm run build && playwright test"
+    "test:app": "npm run build && playwright test",
+    "trial": "npm run build && MD_TRIAL=1 npm run electron -w apps/desktop"
   },
   "devDependencies": {
     "@playwright/test": "1.65.1",

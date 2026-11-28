@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { can, programName, LEVELS, COUNTRIES, PROFESSIONS, formatCalendarDate, todayIn, mayApprove, needsMedicalCode } from "@md/core";
+import { can, programName, LEVELS, COUNTRIES, PROFESSIONS, formatCalendarDate, todayIn, mayApprove, needsMedicalCode, isClinical } from "@md/core";
 import Icon from "../components/Icon.jsx";
 import BackupImport from "./BackupImport.jsx";
 
@@ -23,7 +23,7 @@ export default function Settings({ me, accounts, store, door, tick, toast, backu
         </div>
       </div>
       {can(me.level, "seePeopleAccess") ? <PeopleAccess me={me} accounts={accounts} tick={tick} toast={toast} register={register} /> : null}
-      {can(me.level, "changeSettings") && backups ? <BackupImport me={me} store={backups} tick={tick} toast={toast} door={door} inventory={inventory} /> : null}
+      {can(me.level, "changeSettings") && backups ? <BackupImport me={me} store={backups} tick={tick} toast={toast} door={door} inventory={inventory} accounts={accounts} /> : null}
     </div>
   );
 }
@@ -180,6 +180,7 @@ function Profession({ p, me, accounts, register, run }) {
         {p.profession ? null : <option value="">Not set</option>}
         {PROFESSIONS.map(x => <option key={x} value={x}>{x}</option>)}
       </select>
+      {can(p.level, "changeStock") && p.state === "Active" && !isClinical(p) ? <span className="muted small" data-testid="no-stock">{p.profession ? "can't change stock (not a doctor or nurse)" : "profession not set: can't change stock"}</span> : null}
       {p.profession === "Doctor" ? (needsMedicalCode(p) ? <span className="badge b-warning nodot" data-testid="code-missing">medical code not typed yet</span> : <span className="muted small">code {String(p.medicalCode)}</span>) : null}
       {mayApprove(p) ? (
         <label className="check inline small"><input type="checkbox" aria-label={`Head Doctor: ${p.name}`} checked={p.headDoctor === true || auto} disabled={auto} onChange={e => run(() => register.setHead(me, p.id, e.target.checked))} />

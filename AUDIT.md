@@ -69,3 +69,9 @@
 - Docs: BUGS, CHANGELOG, CHECKLIST, DECISIONS, PLAN, HANDOVER, docs/reach-notes.md, docs/requests/ (three question and plan pages).
 - **Result:** 188 of 188 unit tests, 113 of 113 program tests. 10 of 10 fixes, undone one at a time, made their test fail. Program looked at in five screenshots (Home, Settings with an open drop-down, Item list, an item with its Back, Staff with the menu folded).
 - Real data: the new pages and files were checked against the 781 real item names from the two spreadsheets: only generic words matched (“fluids”, “splint”, “trauma kit”, already in the DEMO data); nothing real added.
+
+## 2026-11-28 — A9 restock rights and A7 real-data trial (Workflow B step 9)
+- Changed, all planned: core access/stock.ts (new), importExport/stockList.ts (trial reading), loadPlan.ts (left-out rows, “to check”), juneStaff.ts (new), index.ts; store inventoryStore.ts (A9 rule, trial-only guesses, markChecked); desktop main.cjs, preload.cjs (trial mode), useDoor.js, appName.js, main.jsx (stripe), BackupImport.jsx (June people), Count, ItemList, ItemPage, StockList, Settings (A9 buttons and notes, To check), app.css; package.json (`npm run trial`).
+- Tests: new trialImport, juneStaff, store A9/B76, program B78 and B76 ×2; older tests that changed stock as Cara now act as Dr Ben (inventory, stage8, f8, f9, f11, f13, stage7). One screenshot redrawn by the tests (docs/stage7, DEMO).
+- Outside the project (Danny's Mac, approved Q34 = A): the launcher app ~/Applications/REACH Medical Suite – real trial.app; the empty trial folder ~/Library/Application Support/REACH Medical Suite – real trial (created by one start, nothing set up).
+- **Result:** 197 of 197 unit, 116 of 116 program; 6 of 6 rules undone made their tests fail; 789 real item and people names checked against every changed file: no real name (only generic words already in DEMO data).

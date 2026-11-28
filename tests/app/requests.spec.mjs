@@ -230,3 +230,103 @@ test("B74 the Item list at View level: no Add item", async () => {
   await expect(page.getByTestId("item-list")).toBeVisible();
   await expect(page.getByRole("button", { name: "Add item" })).toHaveCount(0);
 });
+
+test("B78 (A9) only doctors and nurses change stock: Cara (Manage, Other) sees no stock buttons and is told why; Anna (Nurse) has them", async () => {
+  await launch("Cara Demo");
+  const why = /Only doctors and nurses change stock \(your profession is Other\)/;
+  await page.click('.side [data-view="where"]');
+  await expect(page.getByTestId("not-clinical")).toHaveText(why);
+  await expect(page.locator("button[aria-label^='Restock ']")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Add item" })).toHaveCount(0);
+  await page.locator("table.stock .rowlink").first().click();
+  await expect(page.getByTestId("not-clinical")).toHaveText(why);
+  await expect(page.getByRole("button", { name: /^(Move|Edit|Restock)/ })).toHaveCount(0);
+  await page.click('.side [data-view="items"]');
+  await expect(page.getByRole("button", { name: "Add item" })).toHaveCount(0);
+  await page.click('.side [data-view="count"]');
+  await expect(page.getByTestId("not-clinical")).toHaveText(why);
+  await page.getByLabel("Place to count").selectOption({ index: 1 });
+  await expect(page.locator("input.cnt-in").first()).toBeDisabled();
+  // behind the screen too
+  const err = await page.evaluate(async () => { const t = window.__mdTest; try { await t.inventory.adjust(t.door.get("person", "demo-p3"), "demo-s1", "restock", 1); return "changed"; } catch (e) { return e.message; } });
+  expect(err).toMatch(why);
+  // what stays with Management: settings, freezing a stock take
+  await page.click('.side [data-view="takes"]');
+  await expect(page.getByRole("button", { name: /Freeze/ }).first()).toBeVisible();
+  // Settings flags who can't change stock
+  await page.click('.side [data-view="settings"]');
+  const row = (n) => page.getByTestId("people-access").locator("tr", { hasText: n });
+  await expect(row("Cara Demo").getByTestId("no-stock")).toHaveText("can't change stock (not a doctor or nurse)");
+  await expect(row("Anna Example").getByTestId("no-stock")).toHaveCount(0);
+  await expect(row("Dr Ben Sample").getByTestId("no-stock")).toHaveCount(0);
+  // Anna, a nurse at Work level, still restocks
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await signIn(page, "Anna Example");
+  await page.click('.side [data-view="where"]');
+  await expect(page.getByTestId("not-clinical")).toHaveCount(0);
+  await expect(page.locator("button[aria-label^='Restock ']").first()).toBeVisible();
+});
+
+test("B76 (A7) the real-data trial: its own folder, no DEMO data, a red stripe; guessed rows load marked “to check”; June people load without training", async () => {
+  const { makeXlsx } = await import("./xlsx-fixture.mjs");
+  const tdir = fs.mkdtempSync(path.join(os.tmpdir(), "md-trial-test-"));
+  app = await electron.launch({ args: [path.join(ROOT, "apps/desktop")], env: { ...process.env, TZ: "Pacific/Port_Moresby", MD_TEST: "1", MD_TRIAL: "1", MD_USER_DATA: tdir } });
+  page = await app.firstWindow();
+  await expect(page.getByTestId("trial-stripe")).toBeVisible();
+  await expect(page.getByTestId("setup")).toBeVisible();                            // no DEMO people: the first-start screen
+  await expect(page).toHaveTitle("REACH Medical Suite – real trial");
+  await page.getByLabel("Your name").fill("Trial Manager");
+  await page.getByLabel("Your job").fill("Base manager");
+  await page.getByLabel("New password", { exact: true }).fill("trial-pass-123");
+  await page.getByLabel("New password again").fill("trial-pass-123");
+  await page.getByRole("button", { name: "Set up and sign in" }).click();
+  await page.waitForSelector(".shell");
+  await expect(page.getByTestId("trial-stripe")).toBeVisible();
+  expect(await page.evaluate(() => window.__mdTest.door.records("item").length)).toBe(0);
+  // a list with rows the nurses' program refuses: here they load, marked
+  await page.click('.side [data-view="settings"]');
+  const x = await makeXlsx({ "Bag 1 (DEMO)": [["List Items", "Unit", "Required Qty", "Batch", "Exp Date", "Feb", "Mar"],
+    ["Gauze swabs (DEMO)", "pack", 4, "G-1", "05/2028", 3, "2 pkt"],
+    ["Splint set (DEMO)", "set", 2, "", "", null, "Full"],
+    ["Glucose gel (DEMO)", "tube", 2, "", "", null, "Half"],
+    ["Saline (DEMO)", "bag", 2, "", "03/27 & 08/27", null, 2]] });
+  await page.getByTestId("backup-import").getByLabel("Check a stock list (Excel)").setInputFiles({ name: "Bags (DEMO).xlsx", mimeType: "application/octet-stream", buffer: Buffer.from(x) });
+  const d = page.getByTestId("list-check");
+  await expect(d.getByTestId("list-summary")).toContainText("0 must be fixed");
+  await d.getByRole("button", { name: "Prepare loading…" }).click();
+  const lp = page.getByTestId("load-preview");
+  await lp.getByRole("button", { name: /^Load 3 lines/ }).click();
+  await expect(lp).toHaveCount(0);
+  const lines = await page.evaluate(() => window.__mdTest.door.records("line").map(l => ({ qty: l.qty, expiry: l.expiry, toCheck: l.toCheck ?? null })));
+  expect(lines).toHaveLength(3);                                                    // “Half” left out
+  expect(lines.map(l => l.qty).sort()).toEqual([2, 2, 2]);                           // 2 pkt → 2, Full → required 2, 2
+  expect(lines.every(l => l.toCheck)).toBe(true);
+  expect(lines.find(l => /two expiry dates/.test(l.toCheck)).expiry).toBe("2027-03-01");
+  // Store and bags: marked, a filter for them; the item page names the guess and, for a nurse, a Checked button
+  await page.click('.side [data-view="where"]');
+  await expect(page.getByTestId("to-check")).toHaveCount(3);
+  await page.getByLabel(/Only lines to check/).check();
+  await expect(page.locator("table.stock tbody tr[data-line]")).toHaveCount(3);
+  await page.evaluate(async () => { const t = window.__mdTest; const me = t.door.records("person")[0]; await t.accounts.setProfession(me, me.id, "Nurse"); });
+  await page.locator("table.stock .rowlink", { hasText: "Saline" }).click();
+  await expect(page.getByTestId("item-page").getByTestId("to-check")).toContainText("two expiry dates");
+  await page.getByTestId("item-page").getByRole("button", { name: "Checked" }).click();
+  await expect(page.getByTestId("item-page").getByTestId("to-check")).toHaveCount(0);
+  // the June people: names, jobs, professions; no training records
+  await page.click('.side [data-view="settings"]');
+  const html = `<script>const personnel=[ p({id:'PR-1',title:'Dr.',firstName:'Alex',lastName:'Sample',jobRole:'Physician',department:'Maternity',email:'alex@example.org',trainingRecords:[tr('CT-1','Completed',{})]}),
+    p({id:'PR-2',firstName:'Bea',lastName:'Demo',jobRole:'Midwife',email:'',trainingRecords:[]}), p({id:'PR-3',firstName:'System',lastName:'Administrator',jobRole:'Administrator',trainingRecords:[]}) ];</script>`;
+  await page.getByTestId("june-people").getByLabel("Load people from the June app").setInputFiles({ name: "medical-suite.html", mimeType: "text/html", buffer: Buffer.from(html) });
+  await expect(page.getByTestId("june-result").locator("li")).toHaveCount(2);
+  const ppl = await page.evaluate(() => window.__mdTest.door.records("person").map(p => ({ name: p.name, profession: p.profession ?? null, level: p.level })));
+  expect(ppl).toEqual(expect.arrayContaining([{ name: "Dr. Alex Sample", profession: "Doctor", level: "Work" }, { name: "Bea Demo", profession: "Nurse", level: "Work" }]));
+  expect(ppl.some(p => /Administrator/.test(p.name))).toBe(false);
+  expect(await page.evaluate(() => window.__mdTest.door.records("training").length)).toBe(0);
+});
+
+test("B76 the normal copy has no trial button and no stripe", async () => {
+  await launch("Cara Demo");
+  await expect(page.getByTestId("trial-stripe")).toHaveCount(0);
+  await page.click('.side [data-view="settings"]');
+  await expect(page.getByTestId("june-people")).toHaveCount(0);
+});

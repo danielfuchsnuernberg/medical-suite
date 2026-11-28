@@ -85,7 +85,7 @@ test("F13.4 a restore shows now vs after, needs a tick, and saves a backup of to
   await launch();
   await page.evaluate(() => window.__mdTest.setOnline(false));   // no server yet (SD2): a restore is this computer only. With a server, what a restore undoes is Q30.
   const f = await exportFile();
-  await page.evaluate(async () => { const t = window.__mdTest; await t.inventory.addItem(t.door.get("person", "demo-p3"), { name: "Burn dressing", locationId: "demo-l0", qty: 4 }); });
+  await page.evaluate(async () => { const t = window.__mdTest; await t.inventory.addItem(t.door.get("person", "demo-p2"), { name: "Burn dressing", locationId: "demo-l0", qty: 4 }); });
   await panel().getByLabel("Restore from a backup file").setInputFiles(f);
   const d = page.getByTestId("restore");
   await expect(d.locator('tr[data-row="items"] td')).toHaveText(["Items", "9", "8"]);           // now vs after

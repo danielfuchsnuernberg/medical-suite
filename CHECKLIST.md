@@ -1,5 +1,5 @@
 # CHECKLIST — REACH Medical Suite
-**Now:** Workflow B · A1–A6 built, tested, committed (28 Nov) · A9 restock rights next (round 2: GO given; answers 3 and 4 did not arrive on the page) on https://claude.ai/artifact/SMKox2VzjdMtXexbohYv4q; the A8 plan review (https://claude.ai/artifact/Cy5EPGd4HDZ8uCQa7kGb5Z); commit when he asks; his B60 steps; the server (REACH SD2)
+**Now:** Workflow B · A9 and A7 built, tested, committed (28 Nov) · waiting for Danny: start the trial (~/Applications › REACH Medical Suite – real trial), set yourself up, load the two files and the June people; set Professions in your own older copy; the A8 review; his B60 steps; the server (REACH SD2)
 
 ### STEP 6 — Requests A1–A8: wait for approval (Workflow B, 28 Nov 2026)
 **Goal:** Danny answers the questions on A1–A7, reviews the A8 plan, and says GO before anything is built.
@@ -31,6 +31,19 @@
 - [x] Files: BUGS, CHANGELOG, DECISIONS, HANDOVER, reach-notes (F53) ✅
 **Not in this step:** A7 real-data trial (waits for round 2: Q42, and A9 comes first), A9 restock rights (waits for round-2 answers and GO), A8 (Danny's review).
 **Status:** 🟢 DONE (28 Nov 2026), committed on Danny's word
+
+### STEP 7–10 — A9 restock rights and A7 real-data trial (Workflow B, 28 Nov 2026)
+**Goal:** build round 2 as answered (Q42–Q45) and the trial approved in round 1 (Q33, Q34).
+**Checklist:**
+- [x] B78 (A9): stock changes need Work+ and Doctor or Nurse, in the store; screens hide the buttons with the reason; Settings marks who can't. ✅ unit A9 ×2, program B78
+- [x] Freezing a stock take and the Excel loading stay with Management (Q45 = A). ✅ unit A9, store test B76
+- [x] B76 (A7): trial copy with its own folder, no DEMO, red stripe, title; `npm run trial` and ~/Applications launcher (started once here: folder created, closed before set-up). ✅ program B76
+- [x] Trial reading of the must-fix rows, “To check” marks, filter, Checked button; strict rule kept outside the trial. ✅ unit trialImport ×3, store B76, program B76
+- [x] June people: names, jobs, professions; no invented training; placeholder left out. ✅ unit juneStaff ×3, program B76
+- [x] Full pass: 197 unit, 116 program; 6 of 6 undo checks fail without the fix
+- [x] No real names in project files (789 real item and people names checked; only generic words such as “splint”)
+- [ ] Danny loads the real data in the trial himself (his password, his first start)
+**Status:** 🟢 built, tested, committed on Danny's word (28 Nov 2026)
 
 ### ARCHIVE — clear away the June prototype (26 Nov 2026)
 **Goal:** only the new app is left in sight; nothing is lost.

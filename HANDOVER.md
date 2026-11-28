@@ -6,7 +6,7 @@
 - **F1–F5 foundation:** window, menu and search; sign-in and levels (View / Work / Manage); works without internet (store door); Activity log; Settings (country, base, lists, program name).
 - **F6–F13 stock:** overview, Store and bags, item page, restock / dispense / move, counting, stock takes, the controlled-drug register (doctors, witness, PIN, Head Doctor), backup, restore and the Excel check and loading.
 - **F14–F15 people:** staff list and profiles, training and certificates.
-- **After release 1 (28 Nov, Danny's requests A1–A6):** the Item list (F22), the teal medical look with the program's own drop-down lists, a resizable and foldable menu, Back to where you came from, the Head Doctor shown on profiles. Still waiting: the real-data trial (A7), restock rights (A9), the privacy and legal plan's review (A8).
+- **After release 1 (28 Nov, Danny's requests A1–A6):** the Item list (F22), the teal medical look with the program's own drop-down lists, a resizable and foldable menu, Back to where you came from, the Head Doctor shown on profiles. Then: only doctors and nurses change stock (A9), and a separate real-data trial copy (A7). Still waiting: the privacy and legal plan's review (A8).
 - **Not in release 1 (planned):** the roster F16 (release 2, after Danny's roster rules), EDP's "used on a case" F17, Patient Archive F18, Calendar, Medical Library and SOPs F19–F21.
 
 It runs with DEMO data (invented people and stock, marked DEMO). The June prototype is archived (iCloud › AI Projects › REACH Inventory › Archive – June 2026 prototype), a reference only. Real source data: iCloud › AI Projects › REACH Inventory › Source data (real) — never in Git.
@@ -17,9 +17,11 @@ It runs with DEMO data (invented people and stock, marked DEMO). The June protot
 - **Signing in:** any DEMO person with the password **demo**. Cara Demo and Dr Ben Sample are Manage level (Settings › People and access); Anna Example and Dina Test are Work level; Finn Former is archived. Dr Ben is the DEMO doctor and Head Doctor: PIN **1234** until he sets his own, medical code DEMO-MD-0001.
 - **A new, empty computer:** the first Management person sets it up (name, office, own password); everyone else gets a one-time password from Settings › People and access.
 
+- **The real-data trial (this Mac only):** `npm run trial` in this folder, or open ~/Applications › REACH Medical Suite – real trial (it runs the last build). Its own data folder: ~/Library/Application Support/REACH Medical Suite – real trial (delete that folder to throw the trial away). First start: set yourself up as Management; then Settings › Backup and import › Check a stock list (the two files in iCloud › REACH Inventory › Source data (real)) and Load people from the June app (iCloud › REACH Inventory › Archive – June 2026 prototype › 1 Final app › medical-suite.html). Give each person a one-time password; set Professions (only doctors and nurses change stock).
+
 ## How to test it
-- **Unit tests:** `npx vitest run` → 188 tests (rules and stores).
-- **Program tests, in the real program:** `npm run test:app` → 113 tests (every Master Checklist line, the Stage 7 and 8 bugs, Danny's requests A1–A6, and the installed Mac app when one is built). They run in test mode (MD_TEST=1: a stand-in server and a second "computer") with their own data folder (MD_USER_DATA), so they run even while the program is open. Never set test mode by hand.
+- **Unit tests:** `npx vitest run` → 197 tests (rules and stores).
+- **Program tests, in the real program:** `npm run test:app` → 116 tests (every Master Checklist line, the Stage 7 and 8 bugs, Danny's requests A1–A9, and the installed Mac app when one is built). They run in test mode (MD_TEST=1: a stand-in server and a second "computer") with their own data folder (MD_USER_DATA), so they run even while the program is open. Never set test mode by hand.
 - **Real Excel files:** Settings › Backup and import › Check a stock list. The check lists every problem; loading is refused while a row must be fixed.
 - How the tests were proven able to fail (each rule broken on purpose): `CHECKLIST.md` › Stage 6–8 and `AUDIT.md`.
 
@@ -27,6 +29,7 @@ It runs with DEMO data (invented people and stock, marked DEMO). The June protot
 **Stages 1–9 signed off, 28 Nov 2026** (Danny: nothing missing from the brief). Latest commits: Stage 7 fixes db312d3, Stage 8 audit and fixes 72a9c13. Every decision is in `DECISIONS.md`, every answer of Danny's in `PLAN.md` › Q&A (Q1–Q32), every bug in `BUGS.md` (none open from the new app), every change in `CHANGELOG.md`. Question pages and demos are linked from `PLAN.md` and `CHECKLIST.md`. What touches the REACH ecosystem is written up for the REACH chat in `docs/reach-notes.md`.
 
 ## Known limits
+- **Stock rights follow the profession (A9):** someone at Work or Manage level whose Profession isn't Doctor or Nurse (or not set) can't change stock. Copies started before 28 Nov have every Profession “Not set”: set them in Settings › People and access first.
 - **No shared server yet (REACH SD2).** Each computer has its own copy and its own passwords and PINs; nothing syncs between computers in real use (the sync light stays grey). Sync, EDP entries in Activity, requests reaching a doctor's own computer and backups off this computer are built and tested with a stand-in server, and get tested again when REACH decides the server. Release 1 can't go to the nurses before that.
 - **Installers:** not signed. Macs warn "unidentified developer" until Danny makes a Developer ID certificate; Windows warns "unknown publisher" without a paid certificate. The Windows installer has not been run yet. Both use Electron's default icon until REACH has one.
 - **Two computers offline:** stock dispensed on both can go below zero; it is shown in red until counted (Q27). If both leave nobody at Manage level, the program gives Manage back automatically and says so on Home (B48).

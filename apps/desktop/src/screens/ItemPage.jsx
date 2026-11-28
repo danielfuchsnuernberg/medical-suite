@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { can, shownNumbers, stockStatus, todayIn, formatCalendarDate, formatTimeIn, isCalendarDate } from "@md/core";
+import { can, mayChangeStock, stockRefusal, shownNumbers, stockStatus, todayIn, formatCalendarDate, formatTimeIn, isCalendarDate } from "@md/core";
 import Icon from "../components/Icon.jsx";
 import ExpiryBadge from "../components/ExpiryBadge.jsx";
 import Dialog from "../components/Dialog.jsx";
@@ -21,7 +21,7 @@ export default function ItemPage({ itemId, me, door, inv, store, tick, today, ti
   const item = door.get("item", itemId);
   const [dlg, setDlg] = useState(null);          // { kind: "move" | "edit" | "add" | "delete", lineId?, type? }
   const [why, setWhy] = useState("");
-  const work = can(me.level, "changeStock");
+  const work = mayChangeStock(me);   // A9 (B78)
   const all = useMemo(() => door.log(), [door, tick]);
   const w = useMemo(() => words(door, all), [door, all]);
   if (!item) return <div className="placeholder" data-testid="item-page"><h2>This item isn't there any more.</h2><button type="button" className="btn" onClick={back}>{backLabel}</button></div>;
@@ -50,6 +50,7 @@ export default function ItemPage({ itemId, me, door, inv, store, tick, today, ti
   return (
     <div className="itempage" data-testid="item-page" data-item={itemId}>
       <button type="button" className="btn small backlink" onClick={back}><Icon name="back" width={14} stroke={2} />{backLabel}</button>
+      {!work && can(me.level, "changeStock") ? <p className="lockm" data-testid="not-clinical">{stockRefusal(me)}</p> : null}
       <div className="prof-head">
         <span className="appcard-ic"><Icon name="box" /></span>
         <div className="prof-main">
@@ -94,6 +95,8 @@ export default function ItemPage({ itemId, me, door, inv, store, tick, today, ti
                         {l.required !== null && l.required !== undefined ? ` · ${isStore ? "reorder at" : "required"} ${Number(l.required)}` : ""}
                         {l.lot ? ` · lot ${String(l.lot)}` : ""}</div>
                       <div className="badges"><span className={`badge ${cls}`} data-stock={Number(l.qty) < 0 ? "below" : stockStatus(l, { store: isStore })}>{word}</span><ExpiryBadge expiry={l.expiry} today={today} dateStyle={dateStyle} /></div>
+                      {l.toCheck ? <div className="tocheck" data-testid="to-check"><span className="badge b-warning nodot">To check</span> <span>{String(l.toCheck)}</span>
+                        {work ? <button type="button" className="btn small" onClick={() => run(() => store.markChecked(me, l.id), "Marked as checked.")}>Checked</button> : null}</div> : null}
                       {Number(l.qty) < 0 ? <div className="form-err" data-testid="below-zero">Below zero: two computers took the same stock. Count {placeName(l.locationId)}.</div> : null}
                     </div>
                     {work ? (

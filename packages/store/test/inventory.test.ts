@@ -7,6 +7,7 @@ const now = () => (clock += 1000);
 const open = async (b = new MemoryBackend()) => { const door = await Door.open({ backend: b, seed: demoSeedChanges, now }); return { b, door, inv: new InventoryStore(door) }; };
 const cara = (d: Door) => d.get("person", "demo-p3")!;          // Manage
 const anna = (d: Door) => d.get("person", "demo-p1")!;          // Work
+const ben = (d: Door) => d.get("person", "demo-p2")!;           // Manage, Doctor: A9 (B78) only doctors and nurses change stock
 const line = (d: Door, id: string) => d.get("line", id)!;
 
 describe("whole numbers and item names (F8.3, F8.4)", () => {
@@ -120,20 +121,20 @@ describe("inventory store (F8)", () => {
   });
   it("F8.4 delete for good: only Manage, only a mistake within 24 hours, an item only without lines; logged", async () => {
     const { door, inv } = await open();
-    const id = await inv.addItem(cara(door), { name: "Typo itme", locationId: "demo-l0", qty: 0 });
+    const id = await inv.addItem(ben(door), { name: "Typo itme", locationId: "demo-l0", qty: 0 });
     const lid = door.records("line").find(l => l.itemId === id)!.id;
     expect(inv.deleteProblem(anna(door), "line", lid)).toBe("Only Manage level can delete a mistake.");
     await expect(inv.deleteMistake(anna(door), "line", lid)).rejects.toThrow("Only Manage level");
-    expect(inv.deleteProblem(cara(door), "item", id)).toMatch(/still has 1 line/);
-    expect(inv.deleteProblem(cara(door), "line", "demo-s1")).toMatch(/within 24 hours/);           // DEMO lines are older
-    await inv.deleteMistake(cara(door), "line", lid);
-    await inv.deleteMistake(cara(door), "item", id);
+    expect(inv.deleteProblem(ben(door), "item", id)).toMatch(/still has 1 line/);
+    expect(inv.deleteProblem(ben(door), "line", "demo-s1")).toMatch(/within 24 hours/);           // DEMO lines are older
+    await inv.deleteMistake(ben(door), "line", lid);
+    await inv.deleteMistake(ben(door), "item", id);
     expect(door.get("item", id)).toBeUndefined();
-    expect(door.log()[0]).toMatchObject({ op: "delete", recordType: "item", by: "demo-p3", was: { name: "Typo itme" } });
+    expect(door.log()[0]).toMatchObject({ op: "delete", recordType: "item", by: "demo-p2", was: { name: "Typo itme" } });   // A9: Dr Ben (Manage, Doctor)
     clock += DAY_MS;
-    const late = await inv.addItem(cara(door), { name: "Late typo", locationId: "demo-l0", qty: 0 });
+    const late = await inv.addItem(ben(door), { name: "Late typo", locationId: "demo-l0", qty: 0 });
     clock += DAY_MS + 1;
-    expect(inv.deleteProblem(cara(door), "line", door.records("line").find(l => l.itemId === late)!.id)).toMatch(/within 24 hours/);
+    expect(inv.deleteProblem(ben(door), "line", door.records("line").find(l => l.itemId === late)!.id)).toMatch(/within 24 hours/);
   });
 });
 
@@ -165,11 +166,11 @@ describe("restock and dispense (F9)", () => {
   });
   it("F9.4 a controlled drug has no plain restock or dispense; its amount can't be edited or moved outside the register (Q8)", async () => {
     const { door, inv } = await open();
-    for (const f of [() => inv.adjust(anna(door), "demo-s7", "dispense", 1), () => inv.adjust(cara(door), "demo-s7", "restock", 1),
-      () => inv.editLine(cara(door), "demo-s7", { qty: 4, required: 5, lot: "M-3", expiry: "2027-07-24" }), () => inv.move(cara(door), "demo-s7", "demo-l1", 1)])
+    for (const f of [() => inv.adjust(anna(door), "demo-s7", "dispense", 1), () => inv.adjust(ben(door), "demo-s7", "restock", 1),
+      () => inv.editLine(ben(door), "demo-s7", { qty: 4, required: 5, lot: "M-3", expiry: "2027-07-24" }), () => inv.move(ben(door), "demo-s7", "demo-l1", 1)])
       await expect(f()).rejects.toThrow("controlled-drug register");
     expect(line(door, "demo-s7").qty).toBe(5);
-    expect(await inv.editLine(cara(door), "demo-s7", { qty: 5, required: 6, lot: "M-3", expiry: "2027-07-24" })).toBe(true);   // the reorder level may change
+    expect(await inv.editLine(ben(door), "demo-s7", { qty: 5, required: 6, lot: "M-3", expiry: "2027-07-24" })).toBe(true);   // the reorder level may change
   });
   it("View level and archived lines can't be restocked or dispensed", async () => {
     const { door, inv } = await open();
@@ -214,7 +215,7 @@ describe("count stock (F10)", () => {
   });
   it("controlled drugs are counted in the register, not here; View level can't count", async () => {
     const { door, inv } = await open();
-    await expect(inv.saveCounts(cara(door), { "demo-s7": "4" })).rejects.toThrow("controlled-drug register");
+    await expect(inv.saveCounts(ben(door), { "demo-s7": "4" })).rejects.toThrow("controlled-drug register");
     expect(line(door, "demo-s7").qty).toBe(5);
     await door.apply({ recordType: "person", recordId: "demo-p4", op: "set", data: { level: "View" }, by: "demo-p3" });
     await expect(inv.saveCounts(door.get("person", "demo-p4")!, { "demo-s1": "3" })).rejects.toThrow("View level");
@@ -262,11 +263,11 @@ describe("stock takes (F11)", () => {
   });
   it("F11.2 then vs now for every line; lines removed since are shown as removed (archived or deleted)", async () => {
     const { door, inv } = await open();
-    const lid = await inv.addLine(cara(door), "demo-i4", "demo-l0", { qty: 3, required: "", lot: "", expiry: "" });
+    const lid = await inv.addLine(ben(door), "demo-i4", "demo-l0", { qty: 3, required: "", lot: "", expiry: "" });
     const id = await inv.freezeStockTake(anna(door), "November");
     await inv.adjust(anna(door), "demo-s1", "dispense", 2);
     await inv.archive(anna(door), "line", "demo-s9");
-    await inv.deleteMistake(cara(door), "line", lid);
+    await inv.deleteMistake(ben(door), "line", lid);
     const rows = thenVsNow(door.get("stocktake", id) as any, (x) => door.get("line", x));
     const by = (x: string) => rows.find(r => r.line.lineId === x)!;
     expect(by("demo-s1")).toMatchObject({ now: 10, change: -2, state: "changed" });
@@ -293,5 +294,48 @@ describe("stock takes (F11)", () => {
     const again = await Door.open({ backend: b, seed: demoSeedChanges, now });          // the next version opens the same data
     expect(again.get("stocktake", id)).toMatchObject({ name: "November" });
     expect((await b.load()).outbox).toContain(again.messages().find(m => m.recordId === id)!.messageId);   // waiting to go to the server
+  });
+});
+
+describe("A9 (B78): only doctors and nurses change stock, at Work or Manage level (Q43 = A, Q44 = C, Q45 = A)", () => {
+  it("Management that isn't a doctor or nurse is refused every stock change, by the store itself", async () => {
+    const { door, inv } = await open();
+    const c = cara(door);                                                            // Manage, profession Other
+    const refused = /Only doctors and nurses change stock \(your profession is Other\)/;
+    await expect(inv.addItem(c, { name: "Burn gel", locationId: "demo-l0", qty: 1 })).rejects.toThrow(refused);
+    await expect(inv.addLine(c, "demo-i4", "demo-l0", { qty: 1, required: "", lot: "", expiry: "" })).rejects.toThrow(refused);
+    await expect(inv.adjust(c, "demo-s1", "restock", 1)).rejects.toThrow(refused);
+    await expect(inv.adjust(c, "demo-s1", "dispense", 1)).rejects.toThrow(refused);
+    await expect(inv.saveCounts(c, { "demo-s1": "3" })).rejects.toThrow(refused);
+    await expect(inv.move(c, "demo-s1", "demo-l1", 1)).rejects.toThrow(refused);
+    await expect(inv.editLine(c, "demo-s1", { qty: 1, required: "", lot: "", expiry: "" })).rejects.toThrow(refused);
+    await expect(inv.archive(c, "line", "demo-s1")).rejects.toThrow(refused);
+    expect(inv.deleteProblem(c, "line", "demo-s1")).not.toBeNull();
+    // what stays with Management: freezing a stock take (a record, not a change)
+    await expect(inv.freezeStockTake(c, "End of month")).resolves.toBeTruthy();
+  });
+  it("a nurse at Work level and a doctor at Manage level change stock; a nurse at View level doesn't; no profession set is refused", async () => {
+    const { door, inv } = await open();
+    await inv.adjust(anna(door), "demo-s1", "restock", 1);                            // Work, Nurse
+    await inv.adjust(ben(door), "demo-s1", "dispense", 1);                            // Manage, Doctor
+    await door.apply({ recordType: "person", recordId: "demo-p1", op: "set", data: { level: "View" }, by: "demo-p3" });
+    await expect(inv.adjust(anna(door), "demo-s1", "restock", 1)).rejects.toThrow("View level can look but not change anything.");
+    await door.apply({ recordType: "person", recordId: "demo-p1", op: "set", data: { level: "Work", profession: null }, by: "demo-p3" });
+    await expect(inv.adjust(anna(door), "demo-s1", "restock", 1)).rejects.toThrow("your profession isn't set yet");
+  });
+});
+
+describe("B76 (A7): guessed readings load only in the real-data trial", () => {
+  const plan = (check: string | null) => ({ sheets: [{ name: "Bag 1", target: { kind: "place" as const, id: "demo-l1" }, rows: [{ key: "Bag 1#2", sheet: "Bag 1", row: 2, item: "Burn gel (DEMO)", itemId: null, unit: "tube", qty: 2, month: "May", lot: "", expiry: null, required: 2, waits: null, blocking: false, check }] }], load: 1, waiting: 0, newItems: 1, newBags: [], skipped: 0 });
+  it("the nurses' program refuses a plan with guesses; the trial loads it with the mark; Checked clears it (doctors and nurses only)", async () => {
+    const { door, inv } = await open();
+    await expect(inv.loadImport(cara(door), plan("count “2 pkt” read as 2"), "bags.xlsx", 0)).rejects.toThrow("load only in the real-data trial");
+    const trial = new InventoryStore(door, { trial: true });
+    await trial.loadImport(cara(door), plan("count “2 pkt” read as 2"), "bags.xlsx", 0);   // Q45 = A: loading stays with Management
+    const l = door.records("line").find(x => x.toCheck)!;
+    expect(l).toMatchObject({ qty: 2, toCheck: "count “2 pkt” read as 2" });
+    await expect(trial.markChecked(cara(door), l.id)).rejects.toThrow("Only doctors and nurses");
+    expect(await trial.markChecked(anna(door), l.id)).toBe(true);
+    expect(door.get("line", l.id)!.toCheck).toBeNull();
   });
 });

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { listLines, readiness, readinessLine, stockStatus, linesCsv, csvFileName, can } from "@md/core";
+import { listLines, readiness, readinessLine, stockStatus, linesCsv, csvFileName, can, mayChangeStock, stockRefusal } from "@md/core";
 import Dialog from "../components/Dialog.jsx";
 import AdjustDialog from "../components/AdjustDialog.jsx";
 import Icon from "../components/Icon.jsx";
@@ -18,7 +18,7 @@ const STOCK_WORDS = {
 export default function StockList({ inv, today, dateStyle, filter, setFilter, openItem, me, store, toast, openRegister }) {
   const [adding, setAdding] = useState(false);
   const [adj, setAdj] = useState(null);          // F9: { lineId, kind }
-  const work = can(me.level, "changeStock");
+  const work = mayChangeStock(me);   // A9 (B78)
   const { lines, archivedLines, items, locations, categories } = inv;
   const f = filter || {};
   const set = (k, v) => setFilter({ ...f, [k]: v || undefined });
@@ -27,9 +27,10 @@ export default function StockList({ inv, today, dateStyle, filter, setFilter, op
   const isStore = (id) => (locations.find(l => l.id === id) ?? inv.locs.get(id))?.kind === "store";
   const itemOf = (id) => { const i = items.get(id); return i ? { name: String(i.name), categoryId: i.categoryId ?? null, unit: i.unit ?? "" } : undefined; };
   const archivedIds = new Set(archivedLines.map(l => l.id));
-  const shown = listLines(lines, archivedLines, f, today, itemOf);
+  const toCheck = lines.filter(l => l.toCheck).length;                        // B76: lines the trial loaded with a guess
+  const shown = listLines(lines, archivedLines, f, today, itemOf).filter(l => !f.toCheck || l.toCheck);
   const r = loc ? readiness(lines.filter(l => l.locationId === loc.id), today) : null;
-  const filtered = !!(f.locationId || f.categoryId || f.stock || f.expiry);   // B69: the place is a filter too
+  const filtered = !!(f.locationId || f.categoryId || f.stock || f.expiry || f.toCheck);   // B69: the place is a filter too
   const usedCats = new Set([...lines, ...archivedLines].map(l => items.get(l.itemId)?.categoryId).filter(Boolean));
   const catList = categories.filter(c => usedCats.has(c.id) || c.id === f.categoryId);
 
@@ -89,8 +90,10 @@ export default function StockList({ inv, today, dateStyle, filter, setFilter, op
           <option value="qtyLow">Amount (lowest first)</option>
         </select>
         <label className="check inline small"><input type="checkbox" checked={!!f.archived} onChange={e => set("archived", e.target.checked)} /><span>Show archived</span></label>
+        {toCheck || f.toCheck ? <label className="check inline small"><input type="checkbox" checked={!!f.toCheck} onChange={e => set("toCheck", e.target.checked)} /><span>Only lines to check ({toCheck})</span></label> : null}
         {filtered ? <button type="button" className="btn small" onClick={() => setFilter({ sort: f.sort, archived: f.archived })}>Clear filters</button> : null}
       </div>
+      {!work && can(me.level, "changeStock") ? <p className="lockm" data-testid="not-clinical">{stockRefusal(me)}</p> : null}
       <section className="panel">
         <div className="panel-head">
           <div><h2>{loc ? String(loc.name) : "All places"}</h2><p className="muted" data-testid="count">{shown.length} {shown.length === 1 ? "line" : "lines"}</p></div>
@@ -112,7 +115,8 @@ export default function StockList({ inv, today, dateStyle, filter, setFilter, op
                   <tr key={l.id} data-line={l.id} className={`click${arch ? " archived" : ""}`} onClick={() => openItem(l.itemId)}>
                     <td><button type="button" className="rowlink" onClick={(e) => { e.stopPropagation(); openItem(l.itemId); }}>{String(it?.name ?? "?")}</button>
                       {arch ? <span className="badge b-muted nodot arch">Archived</span> : null}
-                      {l.lot ? <div className="muted lot">Lot {String(l.lot)}</div> : null}</td>
+                      {l.lot ? <div className="muted lot">Lot {String(l.lot)}</div> : null}
+                      {l.toCheck ? <span className="badge b-warning nodot arch" title={String(l.toCheck)} data-testid="to-check">To check</span> : null}</td>
                     <td className="muted hide-sm">{it?.categoryId ? String(categories.find(c => c.id === it.categoryId)?.name ?? inv.categoryName(it.categoryId)) : "—"}</td>
                     {loc ? null : <td className="muted">{placeName(l.locationId)}</td>}
                     <td><b>{Number(l.qty)}</b> <span className="muted">{String(it?.unit ?? "")}</span></td>

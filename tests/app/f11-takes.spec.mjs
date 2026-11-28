@@ -65,7 +65,7 @@ test("F11.1 freeze a stock take: every line, date, who, label; it can't be chang
 });
 
 test("F11.2 then vs now for every line; lines removed since are shown as removed", async () => {
-  await launch({ who: "Cara Demo" });
+  await launch({ who: "Dr Ben Sample" });   // A9: deleting a line is a stock change
   await freeze("November");
   const t = (p) => page.evaluate((p) => window.__mdTest.save(p), p);
   await t({ recordType: "line", recordId: "demo-s1", op: "delta", data: { field: "qty", by: -3 } });
@@ -79,14 +79,14 @@ test("F11.2 then vs now for every line; lines removed since are shown as removed
   await expect(rowOf("demo-s9").getByTestId("change")).toHaveText("removed (archived since)");
   await expect(rowOf("demo-s9")).toContainText("Bandage 8 cm");                                        // still named
   // a line added after freezing isn't in it, and says so
-  await page.evaluate(async () => { const t = window.__mdTest; await t.inventory.addLine(t.door.get("person", "demo-p3"), "demo-i4", "demo-l0", { qty: 1, required: "", lot: "", expiry: "" }); });
+  await page.evaluate(async () => { const t = window.__mdTest; await t.inventory.addLine(t.door.get("person", "demo-p2"), "demo-i4", "demo-l0", { qty: 1, required: "", lot: "", expiry: "" }); });
   await expect(page.getByTestId("stock-take")).toContainText("1 line added since (not in this stock take)");
   // deleted (a mistake within 24 h): removed, still named. The menu goes back to the list from inside a stock take.
   await page.click('.side [data-view="takes"]');
   await expect(page.getByTestId("takes")).toBeVisible();
   await freeze("After adding");
   const lid = await page.evaluate(() => window.__mdTest.door.records("line").find(l => l.itemId === "demo-i4" && l.locationId === "demo-l0").id);
-  await page.evaluate(async (lid) => { const t = window.__mdTest; await t.inventory.deleteMistake(t.door.get("person", "demo-p3"), "line", lid); }, lid);
+  await page.evaluate(async (lid) => { const t = window.__mdTest; await t.inventory.deleteMistake(t.door.get("person", "demo-p2"), "line", lid); }, lid);
   await expect(rowOf(lid).getByTestId("change")).toHaveText("removed (deleted since)");
   await expect(rowOf(lid)).toContainText("IV cannula 18G");
 });

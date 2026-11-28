@@ -9,8 +9,9 @@ let opening = null;
 async function openDoor() {
   const test = !!(window.md && window.md.test);
   const backend = new IdbBackend();
-  if (!test) { const door = await Door.open({ backend, seed: demoSeedChanges, device: "this-computer" }); return { door, accounts: new Accounts(door), settings: new SettingsStore(door), inventory: new InventoryStore(door), register: new RegisterStore(door), training: new TrainingStore(door), backups: nightly(new BackupStore(door, window.md.backups)) }; }
-  const seed = window.md.testEmpty ? null : demoSeedChanges;          // a computer with no data and no people (Q22 first start)
+  const trial = !!(window.md && window.md.trial);                        // B76: the real-data trial: no DEMO data, guesses may load
+  if (!test) { const door = await Door.open({ backend, seed: trial ? null : demoSeedChanges, device: "this-computer" }); return { door, accounts: new Accounts(door), settings: new SettingsStore(door), inventory: new InventoryStore(door, { trial }), register: new RegisterStore(door), training: new TrainingStore(door), backups: nightly(new BackupStore(door, window.md.backups)) }; }
+  const seed = window.md.testEmpty || trial ? null : demoSeedChanges;          // a computer with no data and no people (Q22 first start)
   const server = new FakeServer();
   if (seed) server.receive(seed());
   const here = server.connect();
@@ -21,7 +22,7 @@ async function openDoor() {
   await door.sync(); await other.sync();
   const accounts = new Accounts(door);
   const settings = new SettingsStore(door);
-  const inventory = new InventoryStore(door);
+  const inventory = new InventoryStore(door, { trial });
   const register = new RegisterStore(door);
   const training = new TrainingStore(door);
   const backups = nightly(new BackupStore(door, window.md.backups));

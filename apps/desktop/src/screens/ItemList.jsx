@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { itemRows, filterItems, itemsCsv, ITEM_STATUS_WORD, can, csvFileName } from "@md/core";
+import { itemRows, filterItems, itemsCsv, ITEM_STATUS_WORD, can, mayChangeStock, stockRefusal, csvFileName } from "@md/core";
 import Icon from "../components/Icon.jsx";
 import ExpiryBadge from "../components/ExpiryBadge.jsx";
 import { AddItem } from "./StockList.jsx";
@@ -13,7 +13,7 @@ const STATUS_BADGE = { below: "b-danger", out: "b-danger", low: "b-warning", non
 export default function ItemList({ inv, door, me, today, dateStyle, openItem, store, toast, tick, filter, setFilter }) {
   const [adding, setAdding] = useState(false);
   void tick;
-  const work = can(me.level, "changeStock");
+  const work = mayChangeStock(me);   // A9 (B78)
   const f = filter || {};
   const set = (k, v) => setFilter({ ...f, [k]: v || undefined });
   const isStore = (id) => inv.locs.get(id)?.kind === "store";
@@ -43,6 +43,7 @@ export default function ItemList({ inv, door, me, today, dateStyle, openItem, st
         <label className="check inline small"><input type="checkbox" checked={!!f.archived} onChange={e => set("archived", e.target.checked)} /><span>Show archived</span></label>
         {f.q || f.categoryId ? <button type="button" className="btn small" onClick={() => setFilter({ archived: f.archived })}>Clear filters</button> : null}
       </div>
+      {!work && can(me.level, "changeStock") ? <p className="lockm" data-testid="not-clinical">{stockRefusal(me)}</p> : null}
       <section className="panel">
         <div className="panel-head">
           <div><h2>All items</h2><p className="muted" data-testid="count">{shown.length} of {active} {active === 1 ? "item" : "items"} · totals over the Store and every bag</p></div>

@@ -8,8 +8,12 @@ import { isCalendarDate } from "../reachCore/dates";
 
 export type Col = "item" | "unit" | "lot" | "expiry" | "required" | "section";
 export interface Columns { item: number; unit?: number; lot?: number; expiry?: number; required?: number; section?: number; counts: { index: number; label: string }[] }
-export interface Flag { text: string; blocking: boolean }
-export interface CheckedRow { sheet: string; row: number; item: string; tidied: string; unit: string; lot: string; expiry: string; required: number | null; counts: (number | null)[]; flags: Flag[] }
+export interface Flag { text: string; blocking: boolean; check?: boolean }
+/** `skip`: the trial leaves the row out (its count can't be read). `check`: what the trial read differently from the sheet. */
+export interface CheckedRow { sheet: string; row: number; item: string; tidied: string; unit: string; lot: string; expiry: string; required: number | null; counts: (number | null)[]; flags: Flag[]; skip?: boolean; check?: string[] }
+/** B76 (A7, Q33 = A): the real-data trial on this Mac only. Rows that must be fixed are read where it is safe, each guess
+ *  marked “to check”; the nurses' program keeps the strict rule (nothing loads while a row must be fixed). */
+export interface CheckOptions { trial?: boolean }
 export interface CheckedSheet { name: string; header: number; columns: Columns | null; rows: CheckedRow[]; note?: string }
 export interface Checked { sheets: CheckedSheet[]; rows: number; blocking: number; notes: number }
 
@@ -71,7 +75,8 @@ export function readExpiry(v: unknown): { date: string } | { bad: string } | nul
 const looksLikeDate = (v: unknown) => typeof v === "number" ? v > 36500 && v < 73000 : /^(\d{4}-\d{1,2}-\d{1,2}|\d{1,2}[./]\d{1,2}[./]\d{2,4})$/.test(String(v ?? "").trim());
 
 /** Checks every sheet. Nothing is loaded; the result lists what is wrong where. */
-export function checkStockList(sheets: Sheet[]): Checked {
+export function checkStockList(sheets: Sheet[], opts: CheckOptions = {}): Checked {
+  const trial = opts.trial === true;
   const out: CheckedSheet[] = [];
   for (const s of sheets) {
     const found = findColumns(s.rows);
@@ -89,26 +94,64 @@ export function checkStockList(sheets: Sheet[]): Checked {
       const unit = c.unit !== undefined ? String(r[c.unit] ?? "").trim() : "";
       if (c.unit !== undefined && !unit) flags.push({ text: "no unit", blocking: false });
       const lotRaw = c.lot !== undefined ? r[c.lot] : null;
-      const exp = c.expiry !== undefined ? readExpiry(r[c.expiry]) : null;
-      if (exp && "bad" in exp) flags.push({ text: exp.bad, blocking: true });
-      if (lotRaw !== null && lotRaw !== undefined && looksLikeDate(lotRaw)) flags.push({ text: "the lot number looks like a date: is it the expiry?", blocking: true });
-      const lot = lotRaw === null || lotRaw === undefined ? "" : typeof lotRaw === "number" && looksLikeDate(lotRaw) ? excelDate(lotRaw) : String(lotRaw).trim();
+      let exp = c.expiry !== undefined ? readExpiry(r[c.expiry]) : null;
+      const check: string[] = [];
+      if (exp && "bad" in exp) {
+        if (!trial) flags.push({ text: exp.bad, blocking: true });
+        else {
+          const raw = String(r[c.expiry!] ?? "").trim();
+          const dates = (raw.match(/\d{1,2}[./-]\d{1,2}[./-]\s?\d{2,4}|\d{1,2}[./-]\d{2,4}/g) ?? []).map(x => x.replace(/\s/g, "")).map(x => /^\d{1,2}[./-]\d{2}$/.test(x) ? x.replace(/(\d{2})$/, "20$1") : x).map(x => readExpiry(x)).filter((x): x is { date: string } => !!x && "date" in x).map(x => x.date).sort();
+          if (dates.length >= 2) { exp = { date: dates[0] }; check.push(`two expiry dates (“${raw}”): loaded with the earlier one, ${dates[0]}; split it into two lots`); }
+          else { exp = null; check.push(`expiry “${typeof r[c.expiry!] === "number" ? excelDate(r[c.expiry!] as number) : raw}” looked wrong: loaded without an expiry`); }
+        }
+      }
+      let lotDate = false;
+      if (lotRaw !== null && lotRaw !== undefined && looksLikeDate(lotRaw)) {
+        if (!trial) flags.push({ text: "the lot number looks like a date: is it the expiry?", blocking: true });
+        else lotDate = true;
+      }
+      let lot = lotRaw === null || lotRaw === undefined ? "" : typeof lotRaw === "number" && looksLikeDate(lotRaw) ? excelDate(lotRaw) : String(lotRaw).trim();
+      if (lotDate) {
+        const asDate = readExpiry(lotRaw);
+        if (!exp && asDate && "date" in asDate) { exp = { date: asDate.date }; check.push(`the lot number “${lot}” is a date: loaded as the expiry, no lot`); lot = ""; }
+        else check.push(`the lot number “${lot}” looks like a date: kept as the lot`);
+      }
       const key = `${normKey(tidied)}|${lot.toLowerCase()}|${exp && "date" in exp ? exp.date : ""}`;
       const twin = seen.get(key);
-      if (twin) flags.push({ text: `the same item twice in this place, same lot and expiry (also row ${twin.row}${twin.name !== tidied ? `, written “${twin.name}”` : ""})`, blocking: true });
-      else seen.set(key, { row: i + 1, name: tidied });
+      if (twin && !trial) flags.push({ text: `the same item twice in this place, same lot and expiry (also row ${twin.row}${twin.name !== tidied ? `, written “${twin.name}”` : ""})`, blocking: true });
+      else if (!twin) seen.set(key, { row: i + 1, name: tidied });
       // B38: a count typed as text ("5") counts; text that isn't a whole number has to be fixed
+      let skip = false;
       const counts = c.counts.map(k => {
         const v = r[k.index];
         if (typeof v === "number") return v;
         const t = String(v ?? "").trim();
         if (/^\d+$/.test(t)) return Number(t);
-        if (!EMPTY_COUNT.test(t)) flags.push({ text: `the count “${t}” in ${k.label} isn't a whole number`, blocking: true });
-        return null;
+        if (EMPTY_COUNT.test(t)) return null;
+        if (!trial) { flags.push({ text: `the count “${t}” in ${k.label} isn't a whole number`, blocking: true }); return null; }
+        const sum = /=\s*(\d+)\s*$/.exec(t);                                    // “1 +2 +3 = 6”
+        const unit = /^(\d+)\s*x?\s*[a-z][a-z .]*$/i.exec(t);                   // “2 pkt”, “3pairs”, “2x roll”
+        const req = c.required !== undefined && typeof r[c.required] === "number" ? Math.max(0, Math.round(r[c.required] as number)) : null;
+        if (sum) { check.push(`count “${t}” in ${k.label} read as ${sum[1]}`); return Number(sum[1]); }
+        if (unit) { check.push(`count “${t}” in ${k.label} read as ${unit[1]}`); return Number(unit[1]); }
+        if (/^full$/i.test(t) && req !== null) { check.push(`count “${t}” in ${k.label} read as the required amount, ${req}`); return req; }
+        check.push(`not loaded: the count “${t}” in ${k.label} can't be read`); skip = true; return null;
       });
       if (!c.counts.length) flags.push({ text: "no month or SOH column found in this sheet, so the amount can't be read: put the month (for example SOH FEB) in the header row", blocking: true });   // B39
       const req = c.required !== undefined && typeof r[c.required] === "number" ? Math.max(0, Math.round(r[c.required] as number)) : null;
-      rows.push({ sheet: s.name.trim(), row: i + 1, item: raw, tidied, unit, lot, expiry: exp && "date" in exp ? exp.date : "", required: req, counts, flags });
+      const row: CheckedRow = { sheet: s.name.trim(), row: i + 1, item: raw, tidied, unit, lot, expiry: exp && "date" in exp ? exp.date : "", required: req, counts, flags };
+      if (trial && twin) {                                                          // the same item twice: added together into the first row
+        const first = rows.find(x => x.row === twin.row);
+        if (first && !first.skip && !skip) {
+          first.counts = first.counts.map((v, j) => (typeof v === "number" || typeof counts[j] === "number") ? (Number(v ?? 0) + Number(counts[j] ?? 0)) : null);
+          (first.check ??= []).push(`row ${i + 1} (the same item, lot and expiry) added to this one`);
+          first.flags.push({ text: `to check: row ${i + 1} (the same item, lot and expiry) added to this one`, blocking: false, check: true });
+          skip = true; check.push(`added to row ${twin.row} (the same item, lot and expiry)`);
+        }
+      }
+      if (check.length) { row.check = check; for (const t of check) flags.push({ text: `to check: ${t}`, blocking: false, check: true }); }
+      if (skip) row.skip = true;
+      rows.push(row);
     }
     out.push({ name: s.name.trim(), header, columns: c, rows });
   }

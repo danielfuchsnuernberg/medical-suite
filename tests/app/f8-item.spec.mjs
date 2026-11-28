@@ -9,7 +9,7 @@ import { signIn } from "./sign-in.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 let app, page;
 
-async function launch(who = "Cara Demo") {
+async function launch(who = "Dr Ben Sample") {   // A9 (B78): Manage level and a doctor (Cara, Manage but Other, changes no stock)
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "md-test-"));
   app = await electron.launch({ args: [path.join(ROOT, "apps/desktop")], env: { ...process.env, TZ: "Pacific/Port_Moresby", MD_TEST: "1", MD_USER_DATA: dir } });
   page = await app.firstWindow();

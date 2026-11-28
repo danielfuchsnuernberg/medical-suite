@@ -1,7 +1,7 @@
 // Inventory (F8) behind the store door: add, edit, move, archive, restore, delete for good.
 // Every rule is checked here, against the actor as stored now, one change at a time (as Accounts, B27).
 // Rights (F2.7): View looks only; Work and Manage change and archive stock; delete for good only Manage, a mistake, within 24 hours.
-import { can, checkDelete, nextNumber, wholeNumber, itemNameProblem, matchingLine, expiryProblem, newRecordId, type StoredRecord, type Plan } from "@md/core";
+import { can, checkDelete, stockRefusal, nextNumber, wholeNumber, itemNameProblem, matchingLine, expiryProblem, newRecordId, type StoredRecord, type Plan } from "@md/core";
 import { Door } from "./door";
 import { Refused } from "./accounts";
 
@@ -9,11 +9,14 @@ export interface LineValues { qty: unknown; required: unknown; lot?: unknown; ex
 
 export class InventoryStore {
   private queue: Promise<unknown> = Promise.resolve();
-  constructor(private door: Door) {}
+  /** `trial`: B76, the real-data trial on this Mac (its own data folder); only there may a loading carry “to check” guesses. */
+  constructor(private door: Door, private opts: { trial?: boolean } = {}) {}
   private one<T>(fn: () => Promise<T>): Promise<T> { const done = this.door.hold(); const p = this.queue.then(fn, fn).finally(done); this.queue = p.catch(() => undefined); return p; }   // B37: counted from the click
-  private allowed(actor: StoredRecord, action: "changeStock" | "archiveStock"): StoredRecord {
+  /** A9 (B78): a stock change needs Work level or more AND the profession Doctor or Nurse. Freezing a stock take needs the level only. */
+  private allowed(actor: StoredRecord, action: "changeStock" | "archiveStock" | "freeze"): StoredRecord {
     const p = this.door.get("person", actor.id);
-    if (!p || p.state !== "Active" || !can(p.level, action)) throw new Refused("View level can look but not change anything.");
+    if (!p || p.state !== "Active" || !can(p.level, action === "freeze" ? "changeStock" : action)) throw new Refused("View level can look but not change anything.");
+    if (action !== "freeze") { const why = stockRefusal(p); if (why) throw new Refused(why); }
     return p;
   }
   private line(id: string): StoredRecord { const l = this.door.get("line", id); if (!l) throw new Refused("That line isn't there any more."); return l; }
@@ -118,7 +121,7 @@ export class InventoryStore {
    */
   freezeStockTake(actor: StoredRecord, label: string) {
     return this.one(async () => {
-      const me = this.allowed(actor, "changeStock");
+      const me = this.allowed(actor, "freeze");
       const name = String(label ?? "").trim().replace(/\s+/g, " ");
       if (!name) throw new Refused("Give the stock take a label, e.g. “Stock take, November 2026”.");
       const places = new Map(this.door.records("location").filter(p => p.state === "Active").map(p => [p.id, p]));
@@ -143,6 +146,7 @@ export class InventoryStore {
       if (!p || p.state !== "Active" || !can(p.level, "changeSettings")) throw new Refused("Only Manage level imports stock lists.");
       blocking = Math.max(blocking, plan.sheets.flatMap(sh => sh.rows).filter(r => r.blocking).length);   // B64: counted here, not taken from the screen
       if (blocking > 0) throw new Refused(`${blocking} ${blocking === 1 ? "row has" : "rows have"} to be fixed in the spreadsheet first. Nothing was loaded.`);
+      if (!this.opts.trial && plan.sheets.some(sh => sh.rows.some(r => r.check))) throw new Refused("Guessed readings (“to check”) load only in the real-data trial. Nothing was loaded.");
       const msgs: any[] = [];
       const by = p.id;
       const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").replace(/[^a-z0-9 ]/g, "").trim();
@@ -171,8 +175,8 @@ export class InventoryStore {
           if (!itemId) { itemId = newRecordId(); itemIds.set(norm(r.item), itemId); const itemNo = nextNumber("I", [...this.door.records("item"), ...msgs.filter(m => m.recordType === "item").map(m => ({ id: m.recordId, ...m.data }))], "itemNo", 4); msgs.push({ recordType: "item", recordId: itemId, op: "create", data: { itemNo, name: r.item, categoryId: null, unit: r.unit, controlled: false }, by }); }
           else if (this.door.get("item", itemId)?.controlled === true) throw new Refused(`${r.item} is a controlled drug: it can only wait for the Head Doctor. Nothing was loaded.`);
           const same = lines.find(l => l.itemId === itemId && l.locationId === placeId && String(l.lot ?? "").trim().toLowerCase() === r.lot.trim().toLowerCase() && String(l.expiry ?? "") === String(r.expiry ?? ""));
-          if (same) msgs.push({ recordType: "line", recordId: same.id, op: "count", data: { qty: r.qty, basedOn: same.lastCountAt ?? null, from: fileName }, by });
-          else msgs.push({ recordType: "line", op: "create", data: { itemId, locationId: placeId, qty: r.qty, required: r.required, lot: r.lot, expiry: r.expiry }, by });
+          if (same) { msgs.push({ recordType: "line", recordId: same.id, op: "count", data: { qty: r.qty, basedOn: same.lastCountAt ?? null, from: fileName }, by }); if (r.check) msgs.push({ recordType: "line", recordId: same.id, op: "set", data: { toCheck: r.check }, by }); }
+          else msgs.push({ recordType: "line", op: "create", data: { itemId, locationId: placeId, qty: r.qty, required: r.required, lot: r.lot, expiry: r.expiry, ...(r.check ? { toCheck: r.check } : {}) }, by });
           loaded++;
         }
       }
@@ -180,6 +184,16 @@ export class InventoryStore {
       msgs.push({ recordType: "event", op: "create", data: { what: "imported a stock list", file: fileName, lines: loaded, waiting }, by });
       await this.door.applyAll(msgs);
       return { loaded, waiting, newBags: bagIds.size };
+    });
+  }
+
+  /** B76: a “to check” mark from the trial's loading is cleared once someone has checked the line (a stock change: A9 rule). */
+  markChecked(actor: StoredRecord, lineId: string) {
+    return this.one(async () => {
+      const me = this.allowed(actor, "changeStock");
+      const l = this.line(lineId); if (!l.toCheck) return false;
+      await this.door.apply({ recordType: "line", recordId: lineId, op: "set", data: { toCheck: null }, by: me.id });
+      return true;
     });
   }
 
@@ -254,6 +268,7 @@ export class InventoryStore {
     const r = this.door.get(type, id);
     if (!p || p.state !== "Active" || !r) return "Not found.";
     const ok = checkDelete(type, r, p as any, this.door.now()); if (!ok.ok) return ok.why;
+    const clin = stockRefusal(p); if (clin) return clin;                                     // A9: deleting stock is a stock change
     if (type === "line" && this.controlled(r) && Number(r.qty) !== 0) return InventoryStore.CD_REGISTER;   // B35
     if (type === "item") {
       const n = this.door.records("line").filter(l => l.itemId === id).length;

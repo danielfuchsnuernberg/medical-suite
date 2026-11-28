@@ -21,7 +21,7 @@ test.afterEach(async () => { if (app) await app.close(); app = null; });
 const messages = () => page.evaluate(() => window.__mdTest.door.messages().length);
 
 test("B37 a double click on Restock, Freeze it or Save saves once", async () => {
-  await launch("Cara Demo");
+  await launch("Dr Ben Sample");   // A9
   await page.click('.side [data-view="where"]');
   await page.locator("button[aria-label='Restock Bandage 8 cm in Trauma kit']").click();
   const qty = () => page.evaluate(() => { const d = window.__mdTest.door; return d.records("line").find(l => d.get("item", l.itemId)?.name === "Bandage 8 cm" && d.get("location", l.locationId)?.name === "Trauma kit")?.qty; });

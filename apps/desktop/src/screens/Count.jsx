@@ -1,4 +1,4 @@
-import { can, wholeNumber } from "@md/core";
+import { can, wholeNumber, mayChangeStock, stockRefusal } from "@md/core";
 import { InventoryStore } from "@md/store";
 import Icon from "../components/Icon.jsx";
 
@@ -13,7 +13,7 @@ export default function Count({ inv, me, state, setState, save, result }) {
   const q = state.q.trim().toLowerCase();
   const shown = placeLines.filter(l => !q || String(items.get(l.itemId)?.name ?? "").toLowerCase().includes(q));
   const typed = Object.entries(state.drafts).filter(([, v]) => String(v).trim() !== "");
-  const work = can(me.level, "changeStock");
+  const work = mayChangeStock(me);   // A9 (B78): Work level or more AND a doctor or nurse
   const set = (patch) => setState(s => ({ ...s, ...patch }));
   const setDraft = (id, v) => setState(s => ({ ...s, drafts: { ...s.drafts, [id]: v } }));
 
@@ -29,7 +29,7 @@ export default function Count({ inv, me, state, setState, save, result }) {
       <section className="panel">
         <div className="panel-head"><div><h2>Count {String(locations.find(l => l.id === loc)?.name ?? "")}</h2>
           <p className="muted">{placeLines.length} lines · type what you find; leave a box empty if you didn't count that line</p></div></div>
-        {!work ? <p className="lockm">View level can look but not count.</p> : null}
+        {!work ? <p className="lockm" data-testid="not-clinical">{can(me.level, "changeStock") ? stockRefusal(me) : "View level can look but not count."}</p> : null}
         {shown.length === 0 ? <p className="empty">{placeLines.length ? `Nothing in this list matches “${state.q}”. Your typed counts are still kept.` : "No lines in this place yet."}</p> : (
           <table className="table counttable" data-testid="count-lines">
             <thead><tr><th>Item</th><th>Expected</th><th>Counted</th><th>Difference</th></tr></thead>
