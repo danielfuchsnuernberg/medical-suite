@@ -36,7 +36,7 @@ export default function StockList({ inv, today, dateStyle, filter, setFilter, op
   const exportCsv = () => {
     const text = linesCsv(shown, {
       item: itemOf, category: (id) => String(categories.find(c => c.id === id)?.name ?? inv.categoryName(id)), place: placeName,
-      archived: (l) => archivedIds.has(l.id), stockWord: (l) => STOCK_WORDS[stockStatus(l)](isStore(l.locationId))[1],
+      archived: (l) => archivedIds.has(l.id), stockWord: (l) => Number(l.qty) < 0 ? "Below zero: count it" : STOCK_WORDS[stockStatus(l, { store: isStore(l.locationId) })](isStore(l.locationId))[1],
     });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([text], { type: "text/csv;charset=utf-8" }));
@@ -104,7 +104,7 @@ export default function StockList({ inv, today, dateStyle, filter, setFilter, op
             <tbody>
               {shown.map(l => {
                 const store = isStore(l.locationId);
-                const [cls, word] = STOCK_WORDS[stockStatus(l)](store);
+                const [cls, word] = Number(l.qty) < 0 ? ["b-danger", "Below zero: count it"] : STOCK_WORDS[stockStatus(l, { store })](store);   // Q27 = A
                 const it = items.get(l.itemId);
                 const arch = archivedIds.has(l.id);
                 return (
@@ -116,7 +116,7 @@ export default function StockList({ inv, today, dateStyle, filter, setFilter, op
                     {loc ? null : <td className="muted">{placeName(l.locationId)}</td>}
                     <td><b>{Number(l.qty)}</b> <span className="muted">{String(it?.unit ?? "")}</span></td>
                     <td className="muted" data-testid="required" data-label={store ? "Reorder at" : "Required"}>{l.required === null || l.required === undefined ? "—" : Number(l.required)}</td>
-                    <td><span className={`badge ${cls}`} data-stock={stockStatus(l)}>{word}</span></td>
+                    <td><span className={`badge ${cls}`} data-stock={Number(l.qty) < 0 ? "below" : stockStatus(l, { store })}>{word}</span></td>
                     <td><ExpiryBadge expiry={l.expiry} today={today} dateStyle={dateStyle} /></td>
                     {work ? <td className="acts-cell" onClick={e => e.stopPropagation()}>{arch ? null : <>
                       <button type="button" className="iconbtn" aria-label={`Restock ${String(it?.name ?? "")} in ${placeName(l.locationId)}`} title="Restock (+)" onClick={() => setAdj({ lineId: l.id, kind: "restock" })}><Icon name="plus" width={15} stroke={2.2} /></button>

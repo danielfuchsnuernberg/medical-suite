@@ -37,7 +37,7 @@ const activeManagers = (people: Person[]) => people.filter(p => p.state === "Act
 export function checkLevelChange(people: Person[], actor: Person, target: Person, to: unknown): Check {
   if (!can(actor.level, "changeLevels")) return no("Only Manage level can change levels.");
   if (!isLevel(to)) return no("A level is View, Work or Manage.");
-  if (target.level === "Manage" && to !== "Manage" && activeManagers(people).length <= 1)
+  if (target.level === "Manage" && target.state === "Active" && to !== "Manage" && activeManagers(people).length <= 1)   // B55: archived people lock nobody out
     return no(`${target.name} is the last Manage-level person. Give someone else Manage level first, so somebody can still change settings and levels.`);
   return OK;
 }

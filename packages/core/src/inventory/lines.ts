@@ -4,14 +4,21 @@ import { isCalendarDate } from "../reachCore/dates";
 
 export type WholeNumber = { ok: true; n: number } | { ok: false; why: string; tooMany?: boolean };
 
-/** Amounts are whole numbers (demo 2: try 0, −5, 2.7 or an empty box). */
+/** B34: no single line holds more than this; a bigger number is a typing mistake. */
+export const AMOUNT_LIMIT = 1_000_000;
+
+/**
+ * Amounts are whole numbers (demo 2: try 0, −5, 2.7 or an empty box). Q28 = A (B33): a comma or a point is refused, never
+ * guessed (“1,000” could be a thousand or one). Every save uses the number this returns, never its own reading (B32).
+ */
 export function wholeNumber(raw: unknown, o: { min?: number; max?: number; what?: string } = {}): WholeNumber {
   const min = o.min ?? 1, max = o.max ?? Infinity, what = o.what ?? "amount";
   const s = String(raw ?? "").trim();
   if (s === "") return { ok: false, why: `Type the ${what}.` };
-  if (!/^[-−]?\d+([.,]\d+)?$/.test(s)) return { ok: false, why: `“${s}” isn't a number.` };
-  const n = Number(s.replace(",", ".").replace("−", "-"));
-  if (!Number.isInteger(n)) return { ok: false, why: `Whole numbers only. ${s} isn't allowed.` };
+  if (/^[-−]?[\d.,\s]*\d[\d.,\s]*$/.test(s) && /[.,\s]/.test(s)) return { ok: false, why: `Whole numbers only. ${s} isn't allowed: type it without commas or points, for example 1000.` };
+  if (!/^[-−]?\d+$/.test(s)) return { ok: false, why: `“${s}” isn't a number.` };
+  const n = Number(s.replace("−", "-")) || 0;   // “−0” is 0
+  if (Math.abs(n) > AMOUNT_LIMIT) return { ok: false, why: `That's more than one line can hold (${AMOUNT_LIMIT.toLocaleString("en")}). Check the number.` };
   if (n < min) return { ok: false, why: min === 1 ? `It has to be at least 1. ${n} isn't allowed.` : `It can't be below ${min}.` };
   if (n > max) return { ok: false, why: `Only ${max} on hand, so ${n} can't be taken.`, tooMany: true };
   return { ok: true, n };

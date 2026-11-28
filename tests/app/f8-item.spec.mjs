@@ -101,7 +101,7 @@ test("F8.3 edit a line: the place can't be edited there (use Move); every change
   await pline("Bag 1 (adult)").getByRole("button", { name: "Edit" }).click();
   await expect(dlg().getByLabel("Place")).toBeDisabled();
   await expect(dlg()).toContainText("To change the place, use Move.");
-  for (const [bad, msg] of [["2.7", "Whole numbers only. 2.7 isn't allowed."], ["-5", "It can't be below 0."], ["", "Type the amount on hand."], ["ten", "“ten” isn't a number."]]) {
+  for (const [bad, msg] of [["2.7", "Whole numbers only. 2.7 isn't allowed: type it without commas or points, for example 1000."], ["-5", "It can't be below 0."], ["", "Type the amount on hand."], ["ten", "“ten” isn't a number."]]) {
     await dlg().getByLabel("On hand").fill(bad);
     await dlg().getByRole("button", { name: "Save changes" }).click();
     await expect(dlg().getByTestId("refusal")).toHaveText(`${msg} Nothing was saved.`);

@@ -50,7 +50,7 @@ function createWindow() {
 
 // F13.1: backups on this computer (until the server keeps them): the program's backups folder, the last 30 nightly ones kept.
 // Only names the program makes are accepted, so nothing outside the folder can be read or written.
-const BACKUP_NAME = /^medical-suite-backup-\d{4}-\d{2}-\d{2}(-before-restore-\d{6})?\.json$/;
+const BACKUP_NAME = /^medical-suite-backup-\d{4}-\d{2}-\d{2}(-before-restore-\d{6}(-\d{1,3})?)?\.json$/;   // B30: -2, -3 … never overwrite
 const NIGHTLY = /^medical-suite-backup-\d{4}-\d{2}-\d{2}\.json$/;
 const backupDir = () => { const d = path.join(app.getPath("userData"), "backups"); fs.mkdirSync(d, { recursive: true }); return d; };
 ipcMain.handle("backups:list", () => fs.readdirSync(backupDir()).filter(n => BACKUP_NAME.test(n)).sort().reverse().map(name => ({ name, size: fs.statSync(path.join(backupDir(), name)).size })));

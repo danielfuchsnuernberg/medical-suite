@@ -9,8 +9,9 @@ export interface StockLine { id: string; itemId: string; locationId: string; qty
 export type StockStatus = "out" | "low" | "none" | "ok";
 
 /** B1: holding exactly the required amount is OK, not low. B25: no required amount is "none", never OK. B10: the Store uses the same rule with its reorder level. */
-export function stockStatus(line: Pick<StockLine, "qty" | "required">): StockStatus {
+export function stockStatus(line: Pick<StockLine, "qty" | "required">, o: { store?: boolean } = {}): StockStatus {
   const qty = Number(line.qty);
+  if (qty === 0 && !o.store && line.required !== null && line.required !== undefined && Number(line.required) === 0) return "ok";   // Q29 = A (B57)
   if (!(qty > 0)) return "out";
   const req = line.required;
   if (req === null || req === undefined || Number.isNaN(Number(req))) return "none";
@@ -74,6 +75,7 @@ export function overview(lines: StockLine[], today: CalendarDate) {
     itemTypes: new Set(lines.map(l => l.itemId)).size,
     units: lines.reduce((s, l) => s + (Number(l.qty) > 0 ? Number(l.qty) : 0), 0),
     out: count({ stock: "out" }),
+    below: lines.filter(l => Number(l.qty) < 0).length,   // Q27 = A (B31): two computers took the same stock; count it
     low: count({ stock: "low" }),
     none: count({ stock: "none" }),
     expired,

@@ -7,7 +7,7 @@ import { Refused } from "./accounts";
 export class TrainingStore {
   private queue: Promise<unknown> = Promise.resolve();
   constructor(private door: Door) {}
-  private one<T>(fn: () => Promise<T>): Promise<T> { const p = this.queue.then(fn, fn); this.queue = p.catch(() => undefined); return p; }
+  private one<T>(fn: () => Promise<T>): Promise<T> { const done = this.door.hold(); const p = this.queue.then(fn, fn).finally(done); this.queue = p.catch(() => undefined); return p; }   // B37: counted from the click
   private manager(actor: StoredRecord): StoredRecord {
     const p = this.door.get("person", actor.id);
     if (!p || p.state !== "Active" || !can(p.level, "manageTraining")) throw new Refused("Only Manage level assigns and completes courses.");
@@ -50,7 +50,8 @@ export class TrainingStore {
       const r = this.door.get("training", recordId);
       if (!r || r.state !== "Active") throw new Refused("Not found.");
       const p = this.door.get("person", String(r.personId));
-      if (!p || p.state !== "Active") throw new Refused(`${p?.name ?? "That person"} is archived: their courses can't be changed.`);
+      if (!p) throw new Refused("That person isn't in the list any more.");   // B52 wording
+      if (p.state !== "Active") throw new Refused(`${p.name} is archived: their courses can't be changed.`);
       const why = completionProblem(completedOn, this.today()); if (why) throw new Refused(why);
       const expires = expiryFor(completedOn, this.door.get("course", String(r.courseId)));
       await this.door.apply({ recordType: "training", recordId, op: "set", data: { status: "done", completedOn, expires }, by: me.id });

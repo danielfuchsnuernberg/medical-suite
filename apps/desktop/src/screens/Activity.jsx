@@ -96,7 +96,7 @@ export function words(door, log, dateStyle = "long") {
     if (lastName.has(type + "|" + id)) return lastName.get(type + "|" + id);
     return r && r.caseNo ? String(r.caseNo) : `${KIND[type] || type} ${id.slice(0, 6)}`;
   };
-  const who = (by) => by === "demo" ? "DEMO data" : by === "setup" ? "Set-up" : person(by)?.name ? String(person(by).name) : lastName.get("person|" + by) ?? String(by);
+  const who = (by) => by === "demo" ? "DEMO data" : by === "setup" ? "Set-up" : by === "system" ? "The program" : person(by)?.name ? String(person(by).name) : lastName.get("person|" + by) ?? String(by);
   const field = (k) => FIELD[k] || k;
   const value = (k, v) => {
     if (v === null || v === undefined || v === "") return "—";

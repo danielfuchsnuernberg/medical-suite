@@ -31,8 +31,9 @@ export function checkBackup(textOrObject: string | unknown, current?: Summary): 
   catch { return { ok: false, why: "This file can't be read as a backup. Refused: nothing was changed." }; }
   if (!o || o.app !== APP_CODE || o.kind !== "backup" || !o.data || !Array.isArray(o.data.messages))
     return { ok: false, why: "This isn't a REACH Medical Suite backup (for example a backup of the June app). Refused: nothing was changed." };
-  if (typeof o.dataVersion !== "number" || o.dataVersion > SCHEMA_VERSION)
+  if (typeof o.dataVersion === "number" && Number.isInteger(o.dataVersion) && o.dataVersion > SCHEMA_VERSION)
     return { ok: false, why: "This backup comes from a newer version of the program. Update this computer first. Refused: nothing was changed." };
+  if (!Number.isInteger(o.dataVersion) || o.dataVersion < 0) return { ok: false, why: "This backup is damaged. Refused: nothing was changed." };   // B49
   if (!o.data.messages.every(isChange)) return { ok: false, why: "This backup is damaged. Refused: nothing was changed." };
   const s = summaryOf(o.data.messages);
   if (s.lines === 0)

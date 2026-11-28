@@ -13,12 +13,15 @@ import { Refused } from "./accounts";
 /** DEMO doctors (R11) approve with this PIN until they set their own on this computer, like the DEMO password. */
 export const DEMO_PIN = "1234";
 const pinKey = (id: string) => "pin:" + id;
+const triesKey = (id: string) => "pintries:" + id;
+/** B46: after this many wrong PINs for one doctor, PIN approval for that doctor stops on this computer for a while. */
+export const PIN_TRIES = 5, PIN_LOCK_MS = 15 * 60 * 1000;
 type Msg = { recordType: string; recordId?: string; op: "create" | "delta" | "set" | "archive"; data: Record<string, unknown>; by: string };
 
 export class RegisterStore {
   private queue: Promise<unknown> = Promise.resolve();
   constructor(private door: Door) {}
-  private one<T>(fn: () => Promise<T>): Promise<T> { const p = this.queue.then(fn, fn); this.queue = p.catch(() => undefined); return p; }
+  private one<T>(fn: () => Promise<T>): Promise<T> { const done = this.door.hold(); const p = this.queue.then(fn, fn).finally(done); this.queue = p.catch(() => undefined); return p; }   // B37: counted from the click
 
   // ---- reading ----
   person(id: string | null | undefined) { return id ? this.door.get("person", id) : undefined; }
@@ -42,6 +45,11 @@ export class RegisterStore {
   rightsLog() { return this.door.log().filter(e => e.recordType === "person" && e.changes.some(c => c.field === "cdRight")).slice(0, 10); }
 
   // ---- checks ----
+  /** B36: once a drug is no longer controlled, its register is read-only. */
+  private stillControlled(itemId: string) {
+    const it = this.door.get("item", itemId);
+    if (!it || it.controlled !== true) throw new Refused(`${String(it?.name ?? "This item")} is no longer a controlled drug. Its register is kept, read-only.`);
+  }
   private worker(actor: StoredRecord): StoredRecord {
     const p = this.person(actor.id);
     if (!p || p.state !== "Active" || !can(p.level, "changeStock")) throw new Refused("View level can look but not change anything.");
@@ -97,6 +105,30 @@ export class RegisterStore {
     return this.person(doctorId)?.demo === true && String(pin) === DEMO_PIN;
   }
 
+  /** B46: is PIN approval for this doctor paused on this computer (too many wrong PINs)? Minutes left, or 0. */
+  pinLocked(doctorId: string): number {
+    const t = this.door.local<{ n: number; until: number }>(triesKey(doctorId));
+    const left = t && t.until ? t.until - this.door.now() : 0;
+    return left > 0 ? Math.ceil(left / 60000) : 0;
+  }
+  /** B46: wrong-PIN pauses for this doctor (logged, synced), newest first: shown to the doctor in the register. */
+  pinAlerts(doctorId: string) { return this.door.records("event").filter(e => e.what === "PIN approval paused" && e.personId === doctorId).sort((a, b) => Number(b.createdAt) - Number(a.createdAt)); }
+  private async pinTry(doctorId: string, pin: string, me: StoredRecord): Promise<void> {
+    const name = String(this.person(doctorId)!.name);
+    const mins = this.pinLocked(doctorId);
+    if (mins) throw new Refused(`Too many wrong PINs for ${name}. PIN approval for ${name} is paused for ${mins} more minute${mins === 1 ? "" : "s"}; ask for approval another way.`);
+    if (await this.pinOk(doctorId, pin)) { await this.door.setLocal(triesKey(doctorId), null); return; }
+    const t = this.door.local<{ n: number; until: number }>(triesKey(doctorId));
+    const n = (t && !t.until ? t.n : 0) + 1;
+    if (n >= PIN_TRIES) {
+      await this.door.setLocal(triesKey(doctorId), { n, until: this.door.now() + PIN_LOCK_MS });
+      await this.door.apply({ recordType: "event", op: "create", data: { what: "PIN approval paused", personId: doctorId, tries: n }, by: me.id });
+      throw new Refused(`That isn't ${name}'s PIN. After ${n} wrong tries, PIN approval for ${name} is paused for 15 minutes, and ${name} is told.`);
+    }
+    await this.door.setLocal(triesKey(doctorId), { n, until: 0 });
+    throw new Refused(`That isn't ${name}'s PIN. ${PIN_TRIES - n} ${PIN_TRIES - n === 1 ? "try" : "tries"} left.`);
+  }
+
   // ---- taking out (F12.2, F12.3, F12.4, F12.10) ----
   /**
    * how: "self" (the actor is a doctor), "pin" (a doctor in the room types their PIN), "request" (sent to a doctor; nothing comes off
@@ -118,7 +150,7 @@ export class RegisterStore {
         if (!this.isDoctor(p.doctor)) throw new Refused("Pick a doctor from the doctors' list.");
         if (p.doctor === me.id) throw new Refused("You're the doctor: take it out yourself.");
         this.witnessOk(p.witness, me.id, p.doctor);
-        if (!(await this.pinOk(String(p.doctor), String(p.pin ?? "")))) throw new Refused(`That isn't ${String(this.person(p.doctor)!.name)}'s PIN.`);
+        await this.pinTry(String(p.doctor), String(p.pin ?? ""), me);
         await this.save([this.line({ ...base, how: "pin", doctor: p.doctor }, me.id, id), this.take(p.lineId, n, id, me.id)]);
       } else if (p.how === "request") {
         if (!this.isDoctor(p.doctor)) throw new Refused("Pick a doctor from the doctors' list.");
@@ -139,6 +171,7 @@ export class RegisterStore {
       const me = this.doctor(actor);
       const l = this.door.get("cdline", cdlineId) as unknown as CdLine | undefined;
       if (!l) throw new Refused("That register line isn't there.");
+      this.stillControlled(l.itemId);
       const row = this.ledger(l.itemId).find(r => r.line.id === cdlineId)!;
       if (row.status !== "pending" && row.status !== "emergency" && row.status !== "queried") throw new Refused("This line has already been answered.");
       if (l.createdBy === me.id) throw new Refused("A doctor can't approve their own request or emergency.");
@@ -205,6 +238,7 @@ export class RegisterStore {
       const me = this.doctor(actor);
       const ref = this.door.get("cdline", p.refId) as unknown as CdLine | undefined;
       if (!ref) throw new Refused("That register line isn't there.");
+      this.stillControlled(ref.itemId);
       const row = this.ledger(ref.itemId).find(r => r.line.id === ref.id)!;
       if (!row.counts) throw new Refused("Only a booked line can be corrected.");
       if (ref.kind === "moved") throw new Refused("A move doesn't change the balance. Correct the line that does.");
@@ -265,6 +299,9 @@ export class RegisterStore {
       const it = this.door.get("item", itemId); if (!it || it.state !== "Active") throw new Refused("That item isn't there any more.");
       if ((it.controlled === true) === on) throw new Refused(on ? "It is already a controlled drug." : "It isn't a controlled drug.");
       if (!on) {
+        // B36: nothing may be left half-open: a request or an emergency is decided first
+        const open = this.ledger(itemId).filter(r => r.status === "pending" || r.status === "emergency" || r.status === "queried").length;
+        if (open) throw new Refused(`${open} take-out${open === 1 ? "" : "s"} of ${String(it.name)} still wait${open === 1 ? "s" : ""} for a doctor. Decide ${open === 1 ? "it" : "them"} first.`);
         const reason = this.reason(p.reason, "Say why it is no longer a controlled drug.");
         await this.door.apply({ recordType: "item", recordId: itemId, op: "set", data: { controlled: false, controlledNote: reason }, by: me.id });
         return;
@@ -327,7 +364,7 @@ export class RegisterStore {
       const first = this.doctors().length === 0;
       if (first) { if (!can(me.level, "changeLevels")) throw new Refused("The first doctor is set by Management, once."); }
       else {
-        if (me.cdRight !== true) throw new Refused("Only a doctor can give this right. Manage level can't change the list.");
+        if (!mayApprove(me)) throw new Refused("Only a doctor can give this right. Manage level can't change the list.");
         if (personId === me.id) throw new Refused("Nobody can give the right to themselves.");
       }
       if (!isDoctorByProfession(t)) throw new Refused(`Only a doctor with a medical code can be on this list. ${String(t.name)} ${t.profession === "Doctor" ? "hasn't typed their medical code yet" : "isn't entered as a doctor"}.`);

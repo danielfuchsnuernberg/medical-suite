@@ -81,7 +81,7 @@ describe("checking a stock list before loading (F13.6, B6)", () => {
     expect(by("Store (DEMO)", "Betadine 10%").flags).toEqual([{ text: "the lot number looks like a date: is it the expiry?", blocking: true }]);
     expect(by("Store (DEMO)", "Saline 0.9% 500 ml").flags).toEqual([]);
     const second = c.sheets[0].rows.filter(r => r.tidied === "Saline 0.9% 500 ml")[1];
-    expect(second.flags.map(f => f.text)).toEqual(["double spaces in the name, tidied to “Saline 0.9% 500 ml”", "two expiry dates in one cell (“3/12/2027 & 05/2028”): split it into two rows, one per lot", "the same item twice in this place (also row 5)"]);
+    expect(second.flags.map(f => f.text)).toEqual(["double spaces in the name, tidied to “Saline 0.9% 500 ml”", "two expiry dates in one cell (“3/12/2027 & 05/2028”): split it into two rows, one per lot"]);   // B40: another lot (S-2) is not the same line
     expect(by("Store (DEMO)", "Oxygen mask").flags.map(f => f.text)).toContain("“31/13/2027” isn't a date");
     expect(by("Bag 1 (DEMO)", "Oxygen mask").flags).toEqual([]);                 // the same item in another place is fine
     expect(by("Bag 1 (DEMO)", "Oxygen mask").expiry).toBe("2028-05-01");
@@ -109,5 +109,45 @@ describe("nothing real is built in (F13.7, B9)", () => {
     expect(made.length).toBeGreaterThan(30);
     expect(made.filter(c => c.data.demo !== true).map(c => c.recordType + ":" + c.recordId)).toEqual([]);
     expect(demoSeedChanges().every(c => c.messageId.startsWith("seed-"))).toBe(true);
+  });
+});
+
+describe("Stage 7 group 5: the Excel check (B38–B42)", () => {
+  const check = async (rows: unknown[][]) => checkStockList(await readXlsx(await xlsx({ "Store (DEMO)": rows })));
+  it("B38 a count typed as text counts; text that isn't a whole number must be fixed", async () => {
+    const c = await check([["Item", "Unit", "SOH JAN", "SOH FEB"], ["Gauze", "pack", 30, "5"], ["Tape", "roll", 3, "2 pkt"], ["Swab", "box", 4, "NA"]]);
+    expect(c.sheets[0].rows[0].counts).toEqual([30, 5]);
+    expect(c.sheets[0].rows[0].flags).toEqual([]);
+    expect(c.sheets[0].rows[1].flags).toEqual([{ text: "the count “2 pkt” in SOH FEB isn't a whole number", blocking: true }]);
+    expect(c.sheets[0].rows[2].flags).toEqual([]);                                  // NA is an empty cell
+  });
+  it("B39 month columns written in full, month-year or numbered are found; no count column at all must be fixed", async () => {
+    for (const head of ["March 2026", "Mar-26", "MARCH SOH", "2026-03", "03/2026", "Quantity", "Sep-26"]) {
+      const c = await check([["Item", head], ["Gauze", 30]]);
+      expect([head, c.sheets[0].rows[0].counts]).toEqual([head, [30]]);
+    }
+    const none = await check([["Item", "Unit", "Notes"], ["Gauze", "pack", "x"]]);
+    expect(none.blocking).toBe(1);
+    expect(none.sheets[0].rows[0].flags[0].text).toMatch(/no month or SOH column found/);
+    expect(problemsText(none, "x.xlsx")).not.toContain("No problems found");
+  });
+  it("B40 two lots of one item are fine; the same item, lot and expiry twice is flagged", async () => {
+    const c = await check([["Item", "Batch", "Exp", "SOH FEB"], ["Gauze", "A1", "01/03/2027", 2], ["Gauze", "A2", "01/05/2027", 3], ["Gauze", "A2", "01/05/2027", 1]]);
+    expect(c.sheets[0].rows.map(r => r.flags.length)).toEqual([0, 0, 1]);
+    expect(c.sheets[0].rows[2].flags[0].text).toBe("the same item twice in this place, same lot and expiry (also row 3)");
+  });
+  it("B41 names written slightly differently are compared the way loading compares them", async () => {
+    const c = await check([["Item", "SOH FEB"], ["Paracetamol 500mg", 100], ["Paracetamol (500mg)", 40]]);
+    expect(c.blocking).toBe(1);
+    expect(c.sheets[0].rows[1].flags[0].text).toBe("the same item twice in this place, same lot and expiry (also row 2, written “Paracetamol 500mg”)");
+  });
+  it("B42 a short empty row (<row r=\"2\"/>) doesn't shift the next row's number", async () => {
+    const b = await zip({
+      "xl/workbook.xml": `<workbook><sheets><sheet name="S" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+      "xl/_rels/workbook.xml.rels": `<Relationships><Relationship Id="rId1" Target="worksheets/sheet1.xml"/></Relationships>`,
+      "xl/worksheets/sheet1.xml": `<worksheet><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Item</t></is></c><c r="B1" t="inlineStr"><is><t>SOH FEB</t></is></c></row><row r="2" spans="1:2"/><row r="3"><c r="A3" t="inlineStr"><is><t>Gauze</t></is></c><c r="B3"><v>30</v></c></row></sheetData></worksheet>`,
+    });
+    const c = checkStockList(await readXlsx(b));
+    expect(c.sheets[0].rows.map(r => [r.tidied, r.row])).toEqual([["Gauze", 3]]);
   });
 });

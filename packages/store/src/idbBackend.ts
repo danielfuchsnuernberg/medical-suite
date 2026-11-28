@@ -43,11 +43,11 @@ export class IdbBackend implements Backend {
     for (const [k, v] of Object.entries(e)) tx.store.put(v, k);
     await tx.done;
   }
-  async replace(changes: Change[]) {
+  async replace(changes: Change[], opts: { toOutbox?: boolean } = {}) {
     if (this.failNext > 0) { this.failNext--; throw new Error("This computer couldn't store the change."); }
     const db = await this.dbp; const tx = db.transaction(["changes", "outbox"], "readwrite");
     await tx.objectStore("changes").clear(); await tx.objectStore("outbox").clear();
-    for (const c of changes) tx.objectStore("changes").put(c);
+    for (const c of changes) { tx.objectStore("changes").put(c); if (opts.toOutbox) tx.objectStore("outbox").put(true, c.messageId); }
     await tx.done; // one transaction: if anything fails, the old data stays
   }
   async rewrite(changes: Change[]) {

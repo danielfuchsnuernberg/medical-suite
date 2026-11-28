@@ -22,7 +22,12 @@ const HEAD: Record<Col, RegExp> = {
   required: /^(required( qty| quantity)?|sta[nr]dard( quantity)?|par)$/,
   section: /^(sections?|bag compartment)$/,
 };
-const MONTH = /^(soh\b.*|order .*|jan|feb|mar|apr|apri|april|may|jun|june|jul|july|aug|sep|sept|oct|nov|dec)(\s*soh)?(\s*\d{2,4})?$/;
+const MON = "jan(uary)?|feb(ruary)?|mar(ch)?|apri?l?|may|june?|july?|aug(ust)?|sep(t(ember)?)?|oct(ober)?|nov(ember)?|dec(ember)?";
+// B39: "SOH FEB", "Feb", "February 2026", "Mar-26", "MARCH SOH", "2026-03", "03/2026", and a plain "Quantity" / "On hand" column
+const MONTH = new RegExp(`^(soh\\b.*|order .*|(${MON})(\\s*soh)?([\\s\\-/'.]*\\d{2,4})?(\\s*soh)?|\\d{4}[-/.]\\d{1,2}|\\d{1,2}[-/.]\\d{4}|quantity|qty|on hand|stock on hand|count)$`);
+/** B38: what counts as an empty count cell; anything else that isn't a whole number has to be fixed. */
+const EMPTY_COUNT = /^(|-+|–|n\/?a|nil|none)$/i;
+const normKey = (s: string) => s.toLowerCase().replace(/\s+/g, " ").replace(/[^a-z0-9 ]/g, "").trim();   // B41: the same as loading
 
 /** Finds the header row (the first with an item column) and what each column holds. Counts are the SOH / month columns, left to right. */
 export function findColumns(rows: Sheet["rows"]): { header: number; columns: Columns } | null {
@@ -73,7 +78,7 @@ export function checkStockList(sheets: Sheet[]): Checked {
     if (!found) { out.push({ name: s.name.trim(), header: -1, columns: null, rows: [], note: s.rows.some(r => r.some(x => x !== null && x !== "")) ? "No item column found: this sheet is skipped." : "Empty sheet." }); continue; }
     const { header, columns: c } = found;
     const rows: CheckedRow[] = [];
-    const seen = new Map<string, number>();
+    const seen = new Map<string, { row: number; name: string }>();
     for (let i = header + 1; i < s.rows.length; i++) {
       const r = s.rows[i] ?? [];
       const raw = String(r[c.item] ?? "");
@@ -87,12 +92,23 @@ export function checkStockList(sheets: Sheet[]): Checked {
       const exp = c.expiry !== undefined ? readExpiry(r[c.expiry]) : null;
       if (exp && "bad" in exp) flags.push({ text: exp.bad, blocking: true });
       if (lotRaw !== null && lotRaw !== undefined && looksLikeDate(lotRaw)) flags.push({ text: "the lot number looks like a date: is it the expiry?", blocking: true });
-      const key = tidied.toLowerCase();
-      if (seen.has(key)) flags.push({ text: `the same item twice in this place (also row ${seen.get(key)})`, blocking: true });
-      else seen.set(key, i + 1);
       const lot = lotRaw === null || lotRaw === undefined ? "" : typeof lotRaw === "number" && looksLikeDate(lotRaw) ? excelDate(lotRaw) : String(lotRaw).trim();
+      const key = `${normKey(tidied)}|${lot.toLowerCase()}|${exp && "date" in exp ? exp.date : ""}`;
+      const twin = seen.get(key);
+      if (twin) flags.push({ text: `the same item twice in this place, same lot and expiry (also row ${twin.row}${twin.name !== tidied ? `, written “${twin.name}”` : ""})`, blocking: true });
+      else seen.set(key, { row: i + 1, name: tidied });
+      // B38: a count typed as text ("5") counts; text that isn't a whole number has to be fixed
+      const counts = c.counts.map(k => {
+        const v = r[k.index];
+        if (typeof v === "number") return v;
+        const t = String(v ?? "").trim();
+        if (/^\d+$/.test(t)) return Number(t);
+        if (!EMPTY_COUNT.test(t)) flags.push({ text: `the count “${t}” in ${k.label} isn't a whole number`, blocking: true });
+        return null;
+      });
+      if (!c.counts.length) flags.push({ text: "no month or SOH column found in this sheet, so the amount can't be read: put the month (for example SOH FEB) in the header row", blocking: true });   // B39
       const req = c.required !== undefined && typeof r[c.required] === "number" ? Math.max(0, Math.round(r[c.required] as number)) : null;
-      rows.push({ sheet: s.name.trim(), row: i + 1, item: raw, tidied, unit, lot, expiry: exp && "date" in exp ? exp.date : "", required: req, counts: c.counts.map(k => typeof r[k.index] === "number" ? (r[k.index] as number) : null), flags });
+      rows.push({ sheet: s.name.trim(), row: i + 1, item: raw, tidied, unit, lot, expiry: exp && "date" in exp ? exp.date : "", required: req, counts, flags });
     }
     out.push({ name: s.name.trim(), header, columns: c, rows });
   }

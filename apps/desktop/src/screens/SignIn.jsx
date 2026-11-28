@@ -37,7 +37,7 @@ export function SignIn({ accounts, demo, baseName, onSignedIn }) {
     try {
       const r = await accounts.signIn(who, pw);
       if (!r.ok) { setErr(r.why); setPw(""); return; }
-      onSignedIn(who, { stay, mustChange: r.mustChange });
+      onSignedIn(who, { stay, mustChange: r.mustChange, proof: r.mustChange ? pw : "" });
     } catch (e2) { setErr(String(e2.message || e2)); }
     finally { setBusy(false); }
   };
@@ -65,12 +65,12 @@ export function SignIn({ accounts, demo, baseName, onSignedIn }) {
   );
 }
 
-export function ChooseOwn({ accounts, person, demo, onDone, onCancel }) {
+export function ChooseOwn({ accounts, person, proof, demo, onDone, onCancel }) {
   const [pw, setPw] = useState(""); const [again, setAgain] = useState("");
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
   const submit = async (e) => {
     e.preventDefault(); setBusy(true); setErr("");
-    try { await accounts.setOwnPassword(person.id, pw, again); onDone(); }
+    try { await accounts.setOwnPassword(person.id, proof, pw, again); onDone(); }
     catch (e2) { setErr(String(e2.message || e2)); }
     finally { setBusy(false); }
   };

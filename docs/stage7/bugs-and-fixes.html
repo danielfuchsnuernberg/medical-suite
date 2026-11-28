@@ -1,0 +1,289 @@
+<title>Stage 7 Fixes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Danny: Stage 7, 29 bugs, Q27–Q29 and GO for the fixes (Workflow B steps 4–6). Answers save to db collection "stage7". */
+:root{--bg:#F4F4F6;--surface:#FFFFFF;--surface-2:#FAFAFB;--border:#E4E4EA;--border-strong:#D2D2DA;--text:#1B1B23;--muted:#6B6B78;--faint:#9B9BA6;--accent:#4F46E5;--accent-soft:#EEEDFD;--accent-border:#C9C6F7;--on-accent:#FFFFFF;--ok:#1E9E62;--ok-soft:#E7F5EE;--warn:#C77A12;--warn-soft:#F8EFDF;--bad:#D14343;--bad-soft:#FAEAEA;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121218;--surface:#1B1B23;--surface-2:#20202A;--border:#2C2C38;--border-strong:#3A3A48;--text:#ECECF2;--muted:#A3A3B2;--faint:#76768A;--accent:#8B85F5;--accent-soft:#25234A;--accent-border:#3F3B7A;--on-accent:#121218;--ok:#4CC48A;--ok-soft:#173326;--warn:#E0A247;--warn-soft:#352812;--bad:#EE7474;--bad-soft:#3A1C1C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121218;--surface:#1B1B23;--surface-2:#20202A;--border:#2C2C38;--border-strong:#3A3A48;--text:#ECECF2;--muted:#A3A3B2;--faint:#76768A;--accent:#8B85F5;--accent-soft:#25234A;--accent-border:#3F3B7A;--on-accent:#121218;--ok:#4CC48A;--ok-soft:#173326;--warn:#E0A247;--warn-soft:#352812;--bad:#EE7474;--bad-soft:#3A1C1C;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;margin:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:64px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0} h1{font-size:27px;font-weight:700;letter-spacing:-.4px} h2{font-size:19px;font-weight:700}
+p{margin:0;max-width:72ch}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:13px}
+header{padding-top:32px;display:flex;flex-direction:column;gap:10px}
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:780px){.why{grid-template-columns:1fr}}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:5px;font-size:14px;min-width:0}
+.k{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+.risk{border-color:var(--bad);background:var(--bad-soft)} .risk .k{color:var(--bad)}
+.flow{display:flex;gap:0;align-items:stretch;overflow-x:auto;padding-bottom:4px}
+.fs{flex:1 0 170px;min-width:170px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:3px}
+.fs .w{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent)}
+.fs.bad{border-color:var(--bad)} .fs.bad .w{color:var(--bad)} .fs.good{border-color:var(--ok)} .fs.good .w{color:var(--ok)}
+.to{flex:none;display:flex;align-items:center;padding:0 6px;color:var(--faint)}
+.qgrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.qgrid{grid-template-columns:1fr}}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:12px;border:1px solid var(--border-strong);background:var(--surface)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt[aria-pressed="true"]{border:2px solid var(--accent);background:var(--accent-soft);padding:11px 13px}
+.opt .l{font-weight:600;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.opt .d{font-size:13px;color:var(--muted)}
+.opt .cons{font-size:12.5px;display:flex;flex-direction:column;gap:2px;margin-top:3px}
+.opt .cons span::before{content:"+ ";color:var(--ok);font-weight:700} .opt .cons span.minus::before{content:"− ";color:var(--bad)}
+.prop{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--ok);color:#fff}
+.ans{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--border-strong)}
+.ans .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13.5px}
+.ans button{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.ans button[aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:#fff}
+.ans textarea{min-height:54px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);resize:vertical}
+.ans .state{font-size:12px;color:var(--faint)}
+.note{font-size:13px;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--border)}
+/* mock screens (June look) */
+.mocks{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.mocks{grid-template-columns:1fr}}
+.m{color-scheme:light;background:#F4F4F6;color:#1B1B23;border:1px solid #D2D2DA;border-radius:12px;overflow:hidden;font-size:12px;line-height:1.4}
+.m .cap{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#9B9BA6;padding:6px 10px;background:#F0F0F3;border-bottom:1px solid #E4E4EA}
+.m .body{padding:10px;display:flex;flex-direction:column;gap:7px}
+.m .card{background:#fff;border:1px solid #E4E4EA;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.m .t{font-weight:700;font-size:13px}
+.m .f{display:flex;flex-direction:column;gap:2px} .m .f span{font-size:10.5px;font-weight:600;color:#6B6B78} .m .f i{font-style:normal;border:1px solid #D2D2DA;border-radius:6px;padding:4px 7px;background:#fff;color:#6B6B78}
+.m .btn{align-self:flex-start;font-weight:600;font-size:11.5px;padding:5px 10px;border-radius:6px;background:#4F46E5;color:#fff}
+.m .ghost{background:#fff;color:#1B1B23;border:1px solid #E4E4EA}
+.m .warn{background:#FAEAEA;color:#D14343;border-radius:7px;padding:6px 8px;font-size:11px}
+.m .okm{background:#E7F5EE;color:#14663f;border-radius:7px;padding:6px 8px;font-size:11px}
+.m .pick{display:flex;flex-direction:column;gap:4px}
+.m .pick b{font-weight:600;border:1px solid #E4E4EA;border-radius:7px;padding:5px 8px;background:#FAFAFB}
+footer{padding-top:18px;font-size:12.5px;color:var(--faint)}
+</style>
+<style>
+.steps{display:flex;gap:6px;flex-wrap:wrap}
+.steps button{font:inherit;font-size:13px;padding:7px 12px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.steps button[aria-current="step"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.steps .done{margin-left:6px;color:var(--ok);font-weight:700}
+.steps button[aria-current="step"] .done{color:var(--on-accent)}
+.navrow{display:flex;justify-content:space-between;gap:8px}
+.navrow button{font:inherit;font-size:14px;padding:8px 14px;border-radius:10px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.navrow button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.navrow button:disabled{opacity:.4;cursor:default}
+.chg{display:flex;flex-direction:column;gap:3px}
+.saved{color:var(--ok);font-weight:600}
+.sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:700px){.sum{grid-template-columns:1fr 1fr}}
+.sum .box b{font-size:24px;letter-spacing:-.5px}
+.grp{display:flex;flex-direction:column;gap:8px}
+.grp h3{font-size:16px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.grp h3 .muted{font-weight:500;font-size:13px}
+.bug{display:grid;grid-template-columns:62px minmax(0,1fr) minmax(0,1fr);gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-size:13.5px}
+@media (max-width:700px){.bug{grid-template-columns:1fr}}
+.bug .id{font-family:var(--mono);font-weight:600;font-size:13px;display:flex;flex-direction:column;gap:4px}
+.sev{font-family:var(--sans);font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 6px;border-radius:5px;align-self:flex-start}
+.sev.d{background:var(--bad-soft);color:var(--bad)} .sev.s{background:var(--warn-soft);color:var(--warn)} .sev.b{background:var(--accent-soft);color:var(--accent)} .sev.m{background:var(--surface-2);color:var(--muted);border:1px solid var(--border)}
+.bug .now,.bug .aft{display:flex;flex-direction:column;gap:3px;min-width:0}
+.bug .now .k{color:var(--bad)} .bug .aft .k{color:var(--ok)}
+.ex{font-family:var(--mono);font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:5px 8px;overflow-wrap:anywhere}
+.qref{font-size:11px;font-weight:700;color:var(--warn)}
+.go{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:12px;border:2px solid var(--accent);background:var(--accent-soft)}
+.go .row{display:flex;gap:8px;flex-wrap:wrap}
+.go button{font:inherit;font-size:14px;font-weight:600;padding:9px 16px;border-radius:10px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer}
+.go button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.m .row2{display:flex;justify-content:space-between;align-items:center;gap:8px;border:1px solid #E4E4EA;border-radius:8px;padding:6px 8px;background:#fff}
+.m .neg{color:#D14343;font-weight:700}
+.m .pill{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px}
+.m .p-ok{background:#E7F5EE;color:#14663f} .m .p-bad{background:#FAEAEA;color:#D14343} .m .p-warn{background:#F8EFDF;color:#9a5d0c}
+.m .hole{background:#F8EFDF;color:#9a5d0c;border-radius:7px;padding:6px 8px;font-size:11px}
+details.more{font-size:13px} details.more summary{cursor:pointer;color:var(--accent);font-weight:600}
+details.more ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+</style>
+<div class="wrap">
+<header>
+  <span class="eyebrow">REACH Medical Suite · Stage 7 · testing release 1</span>
+  <h1>29 bugs found. Three questions, then your GO</h1>
+  <p class="muted">Three testers each tried to break one part of the program, and I tried the screens myself (phone width, double clicks). Every bug below was made to happen, not guessed. <b>Nothing is fixed yet.</b> First three questions only you can answer, then the whole fix list, each with what happens now and after the fix.</p>
+  <div class="sum">
+    <div class="box"><span class="k">Can lose or falsify data</span><b id="n-d"></b><span class="small muted">stock, register, restore</span></div>
+    <div class="box"><span class="k">Security</span><b id="n-s"></b><span class="small muted">passwords, PINs, rights</span></div>
+    <div class="box"><span class="k">Broken</span><b id="n-b"></b><span class="small muted">something doesn't work</span></div>
+    <div class="box"><span class="k">Minor</span><b id="n-m"></b><span class="small muted">wrong words, odd input</span></div>
+  </div>
+</header>
+<nav class="steps" id="steps" role="tablist" aria-label="Parts"></nav>
+<section id="part"></section>
+<footer>Answers save for Claude (collection “stage7”). Source: <code>docs/stage7/bugs-and-fixes.html</code>; the full list with causes is in <code>BUGS.md</code> (B29–B57).</footer>
+</div>
+<script>
+(function(){
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+// ---- the three questions ----
+const Q = {
+  q27: { title: "Q27 · Stock below zero after two computers worked offline", bug: "B31",
+    about: "Two medics on two computers, both without internet, each dispense the last 12 Gauze from Bag 1. Both are right on their own computer. When the computers meet again, both dispenses count, and the line says −12.",
+    why: "Both dispenses really happened, so neither may be thrown away (that would hide medicine that left the bag). But today the −12 just sits there, with no warning, and the bag looks like it has a number.",
+    changes: "A shows it loudly and asks for a count. B refuses the second dispense, but it can only be refused after the fact, when the medicine is already gone. C hides the problem.",
+    opts: {
+      A: { l: "Flag it and ask for a count", prop: true, d: "The line turns red: “Below zero: two computers took the same stock. Count Bag 1.” It shows on Overview and Home until someone counts it.", pro: ["No dispense is lost", "Someone checks the real bag"], con: [], lines: ["the −12 is shown, in red, with why", "Overview and Home list it until a count fixes the number", "both dispenses stay in the log"] },
+      B: { l: "Undo the later dispense", d: "When the computers meet, the second dispense is cancelled.", pro: ["The number never goes below 0"], con: ["The medicine was really given: the record would be wrong"], lines: ["the second medic's dispense is cancelled", "the bag shows 0, but 24 packs were given"] },
+      C: { l: "Show 0 and say nothing", d: "Below zero is shown as 0.", pro: ["Looks tidy"], con: ["Hides that stock is missing", "Nobody counts the bag"], lines: ["the bag shows 0", "no warning anywhere"] },
+    },
+    mock(o){ const row = o==="A" ? `<div class="row2"><span>Gauze 10×10 · Bag 1</span><span class="neg">−12 pack</span></div><div class="warn">Below zero: two computers took the same stock. Count Bag 1.</div><div class="btn">Count Bag 1</div>`
+      : o==="B" ? `<div class="row2"><span>Gauze 10×10 · Bag 1</span><span>0 pack</span></div><div class="hole">Dina's dispense of 12 (given to a patient on the flight) was cancelled.</div>`
+      : `<div class="row2"><span>Gauze 10×10 · Bag 1</span><span>0 pack</span></div><div class="hole">Nothing tells anyone that 12 packs are unaccounted for.</div>`;
+      return `<div class="m"><div class="cap">Bag 1, after both computers are back online</div><div class="body"><div class="card"><span class="t">Computer A: Anna dispensed 12 · Computer B: Dina dispensed 12</span>${row}</div></div></div>`; } },
+  q28: { title: "Q28 · A comma in an amount (“1,000”)", bug: "B33",
+    about: "Typing an amount for a restock, a dispense or a count. Some people write a thousand as “1,000”, others write a half as “0,5”. Today “1,000” is read as 1.000, which is 1.",
+    why: "A restock of “1,000” adds 1 instead of 1000, and nobody notices. The same box can't safely guess which of the two habits the person has.",
+    changes: "A refuses the comma and says what to type. B reads the comma as thousands, so “12,0” becomes 120. C keeps today's reading (a decimal point), the bug.",
+    opts: {
+      A: { l: "Refuse commas and points", prop: true, d: "“Type a whole number without commas or points, for example 1000.” Nothing is saved until it's clear.", pro: ["Never guesses", "Amounts are whole numbers anyway"], con: ["One extra second for someone who types 1,000"], lines: ["“1,000” → refused, with the example 1000", "“12,0” → refused", "“1000” → saved"] },
+      B: { l: "Comma = thousands", d: "“1,000” is a thousand.", pro: ["1,000 works"], con: ["“12,0” (a count of 12) becomes 120"], lines: ["“1,000” → 1000", "“12,0” → 120 (wrong)"] },
+      C: { l: "Comma = decimal point (today)", d: "“1,000” is 1.", pro: [], con: ["The bug stays: 1,000 adds 1"], lines: ["“1,000” → 1 (wrong)"] },
+    },
+    mock(o){ const msg = o==="A" ? `<div class="warn">Type a whole number without commas or points, for example 1000. Nothing was changed.</div>`
+      : o==="B" ? `<div class="okm">Restocked 1000. (But a count typed “12,0” would save 120.)</div>` : `<div class="hole">Restocked 1. The 999 others are missing from the program.</div>`;
+      return `<div class="m"><div class="cap">Restock: Saline 500 ml · Store</div><div class="body"><div class="card"><div class="f"><span>How many to add</span><i>1,000</i></div>${msg}<div class="btn">Restock</div></div></div></div>`; } },
+  q29: { title: "Q29 · A bag line with “required 0”", bug: "B57",
+    about: "Each bag line can have a required amount (what must be in the bag). A medic might set it to 0 for something that is in the bag's list but isn't needed right now.",
+    why: "Today a line with required 0 and nothing on hand shows “Not ready”, so the whole bag looks not ready for something nobody needs.",
+    changes: "A treats required 0 as “nothing needed”: 0 on hand is fine. B doesn't allow 0: leave the box empty instead (then the line is “No required amount”).",
+    opts: {
+      A: { l: "Required 0 means nothing needed", prop: true, d: "0 on hand with required 0 counts as OK, like any line holding what it needs.", pro: ["Matches the rule “holding exactly the required amount is OK”"], con: [], lines: ["required 0, on hand 0 → OK", "the bag can be Ready"] },
+      B: { l: "0 isn't allowed as required", d: "Typing 0 is refused: “Leave it empty if nothing is required.”", pro: ["Only one way to say “nothing required”"], con: ["Old lists with 0 need changing"], lines: ["required 0 → refused", "an empty required box → “No required amount”"] },
+    },
+    mock(o){ return `<div class="m"><div class="cap">Snake bite kit · readiness</div><div class="body"><div class="card"><span class="t">Snake bite kit</span>
+      <div class="row2"><span>Pressure bandage · required 2</span><span>2 <span class="pill p-ok">OK</span></span></div>
+      <div class="row2"><span>Splint (spare) · required ${o==="B"?"—":"0"}</span><span>0 <span class="pill ${o==="B"?"p-warn":"p-ok"}">${o==="B"?"No required amount":"OK"}</span></span></div>
+      ${o==="A"?`<div class="okm">Bag: Ready</div>`:`<div class="hole">Required 0 is refused; the box is left empty instead.</div>`}</div></div></div>`; } },
+};
+// ---- the fix list, in fix order (roots first) ----
+const G = [
+  { t: "1 · Controlled drugs: nothing outside the register", why: "The register is the legal record; these come first.", bugs: [
+    ["B35","d","Archiving or restoring a Morphine line, “Add a place”, deleting a line as a mistake, or importing an archived controlled drug changes the shelves outside the register.","Archive Morphine line: shelves 0, register still 5.","Each of these is refused for a controlled drug and points to the register (“Controlled drugs go through the register: Receive, Move or a correction”). An archived controlled drug in an import waits for the Head Doctor.","Refused: Morphine is a controlled drug. Use the register."],
+    ["B36","d","Unticking “Controlled drug” while a take-out waits: the waiting request and the unapproved emergency vanish, and can still be approved later.","Waiting 2 → 0 after unticking; approve still took 2 off.","Unticking is refused while anything waits: “2 take-outs wait for a doctor. Decide them first.” A drug that isn't controlled any more can't be approved or corrected in the register.","Refused: 2 take-outs still wait for a doctor."],
+    ["B45","s","A doctor whose profession was changed to Nurse can still put people on the doctors' list.","Ben (now Nurse) grants Anna: accepted.","Only someone who is a doctor now (profession Doctor, medical code, on the list) can give the right.","Refused: only a doctor on the list gives this right."],
+    ["B46","s","A doctor's PIN can be guessed by trying again and again.","1234 found on try 1,235, no pause.","After 5 wrong PINs for a doctor, PIN approval for that doctor stops for 15 minutes and the doctor sees a note; the tries are logged.","5 wrong PINs: wait 15 minutes. Dr Ben is told."],
+  ]},
+  { t: "2 · Amounts and double clicks", why: "The same few lines feed every stock change.", bugs: [
+    ["B32","d","A count typed “12,0”, “1,000” or “−0” saves “not a number”: the line shows Out and dispense has no limit.","Count 12,0 → qty empty.","The count is saved exactly as checked; anything that isn't a plain whole number is refused before saving.","12,0 → refused, nothing saved."],
+    ["B33","d","“1,000” adds 1. (Q28)","Restock 1,000: 12 → 13.","As you answer Q28 (proposed: refuse commas and points, with the example 1000).","1,000 → “type 1000”."],
+    ["B34","m","Any amount is accepted, even 100000000000000000000.","Restock 1e20 accepted.","Amounts above 1,000,000 are refused: “That's more than one line can hold. Check the number.”","1e20 → refused."],
+    ["B37","d","A double click on a save button saves twice: restock +2 adds 4, two stock takes, a course completed twice.","Double click Restock +2: two additions.","Every save button is locked from the first click until the save is done (it shows “Saving…”). Stock takes can't be frozen twice within a minute by the same person.","Double click Restock +2: one addition."],
+  ]},
+  { t: "3 · Sign-in and people", why: "Who may do what must hold even when someone tries.", bugs: [
+    ["B43","s","Anyone at the computer can set anyone's password, skip the one-time password, even for archived people; nothing logged.","Cara's account taken over with no password.","Changing a password needs the current password, or the one-time password at first sign-in. Archived people and unknown names are refused. Every change is logged (never the password itself).","Wrong current password → refused, logged."],
+    ["B44","s","A password of 8 spaces is accepted.","“        ” accepted.","A password needs at least 8 characters that aren't spaces.","8 spaces → refused."],
+    ["B47","s","The first-start set-up accepts an archived Manage person and can run twice.","Archived m1 set up, then m2 too.","Only an active Manage person can set up, and only once.","Archived person → refused."],
+    ["B48","b","Two computers offline can leave nobody at Manage level.","After sync: 0 active Manage people.","When the computers meet and nobody active is left at Manage, the change that came last is undone automatically, logged, and Management sees a red note.","After sync: Cara keeps Manage; a note says why."],
+    ["B50","b","Once a department is archived, nobody in it can have details changed.","Email-only change refused.","A person keeps their archived department until it's changed; other details save. A new person can't be put into an archived department.","Anna's email changed; still Clinical (archived)."],
+    ["B52","m","Deleting a person added by mistake leaves their training behind.","Training record still Active.","Deleting a mistaken person also removes their training records in the same save (all within the 24 hours), logged.","Person and training gone, logged."],
+    ["B55","m","Lowering an archived Manage person says “the last Manage-level person”.","Wrong refusal.","Archived people are left out of that check: the change is allowed (it doesn't lock anyone out).","Allowed."],
+    ["B56","m","“Anna  Example” (two spaces) or a differently typed accent counts as a new name; a 100,000-letter name is accepted.","Duplicate accepted.","Names are tidied before comparing (spaces, accents typed two ways) and limited to 80 letters.","“Anna  Example” → already in the list."],
+    ["B53","m","Through the program's code, a duplicate or nameless department or course can be added (not through the screen).","Second “Clinical”.","The checked name can't be overwritten.","Refused."],
+    ["B54","m","Renaming the Store as if it were a bag works; changing something that doesn't exist “succeeds” and is logged.","Store renamed through the bag list.","Each change checks the record exists and is the right kind.","Refused: not a bag."],
+  ]},
+  { t: "4 · Backup, restore and two computers", why: "These protect against losing everything at once.", bugs: [
+    ["B29","d","After a restore, this computer and the others disagree for good; anything only in the backup never reaches them.","A shows 12, B shows 9, forever.","After a restore this computer sends the restored data to the server and fetches everything again, so all computers agree. (Until the server exists, SD2, it's this computer only, as today.)","A and B both show the same."],
+    ["B30","d","Two restores in the same second overwrite the safety copy from before the first.","Safety copy replaced.","Safety copies never overwrite each other (each gets its own name), and Restore is locked while one runs.","Two safety copies kept."],
+    ["B31","d","Two computers offline dispense the same stock: −12, no warning. (Q27)","Both show −12, no flag.","As you answer Q27 (proposed: red flag, on Overview and Home, until counted).","“Below zero: count Bag 1.”"],
+    ["B49","b","A backup with a damaged version number passes the check, then the restore crashes.","“MIGRATIONS[v] is not a function”.","Refused before anything happens: “This backup is damaged.”","Refused, nothing changed."],
+  ]},
+  { t: "5 · Checking the medics' Excel lists", why: "The real lists must load right the first time.", bugs: [
+    ["B38","d","A count stored as text in Excel (the green triangle) is ignored: “5” in FEB loads JAN's 30.","Loads 30 (SOH JAN).","Text that is a whole number counts as a number; text that isn't one is a must-fix row.","Loads 5 (SOH FEB)."],
+    ["B39","d","Month columns like “March 2026”, “Mar-26”, “2026-03” or a two-row header aren't found: every row would load at 0, and the check says “No problems found”.","Gauze 30 → loads 0, no flag.","Full month names, month-year and numbered months are recognised; a sheet with no count column is a must-fix problem: “No month or SOH column found.”","Sheet refused with that note."],
+    ["B40","b","The check says “split into two rows, one per lot”, then blocks the split rows as “the same item twice”.","Split rows blocked.","Two rows of the same item with different lots are fine; only the same item, lot and expiry twice is flagged.","Lots A1 and A2 load as two lines."],
+    ["B41","d","“Paracetamol 500mg” and “Paracetamol (500mg)” pass the check, then load as one item with two lines.","1 item, 2 Store lines.","The check and the loading compare names the same way, so the check shows them as the same item twice (must fix).","Flagged before loading."],
+    ["B42","m","An empty row in Excel's short form shifts the row numbers by one.","Row 3 reported as row 2.","The row number is read from the file, never counted.","Row 3."],
+  ]},
+  { t: "6 · Screens", why: "", bugs: [
+    ["B51","b","On a phone, a register line shows only half: the amount, who and witness are off to the right.","At 375 px: 2 of 8 parts visible.","On a phone each register line is a small card: when, kind, amount and balance, who, doctor, witness, reason, each with its label.","All 8 parts visible."],
+    ["B57","m","A bag line with required 0 and nothing on hand shows “Not ready”. (Q29)","Bag Not ready.","As you answer Q29 (proposed: required 0 means nothing needed).","Bag Ready."],
+  ]},
+];
+const SEV = { d:["d","data"], s:["s","security"], b:["b","broken"], m:["m","minor"] };
+const all = G.flatMap(g=>g.bugs); ["d","s","b","m"].forEach(k=>document.getElementById("n-"+k).textContent = all.filter(b=>b[1]===k).length);
+const KEYS = ["q27","q28","q29","fixes"];
+let part = "q27", answers = {}, notes = {}, savedAt = null, db = null, pending = 0;
+function qPart(k){
+  const P = Q[k], pick = answers[k], shown = pick && P.opts[pick] ? pick : Object.keys(P.opts).find(o=>P.opts[o].prop);
+  return `<div style="display:flex;flex-direction:column;gap:14px">
+    <h2>${esc(P.title)} <span class="muted small">(bug ${P.bug})</span></h2>
+    <div class="why">
+      <div class="box"><span class="k">What it's about</span><p>${esc(P.about)}</p></div>
+      <div class="box risk"><span class="k">Why it matters</span><p>${esc(P.why)}</p></div>
+      <div class="box"><span class="k">What each answer changes</span><p>${esc(P.changes)}</p></div>
+    </div>
+    <div class="qgrid">
+      <div class="mocks" style="grid-template-columns:1fr">${P.mock(shown)}</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="opts">${Object.entries(P.opts).map(([o,v])=>`<button type="button" class="opt" data-o="${o}" aria-pressed="${pick===o}"><span class="l">${o} · ${esc(v.l)}${v.prop?' <span class="prop">Proposed</span>':""}</span><span class="d">${esc(v.d)}</span><span class="cons">${v.pro.map(p=>`<span>${esc(p)}</span>`).join("")}${v.con.map(p=>`<span class="minus">${esc(p)}</span>`).join("")}</span></button>`).join("")}</div>
+        <div class="ans"><div class="row"><b>Your answer:</b> <span>${pick ? (pick==="unsure"?"Not sure":pick+" · "+esc(P.opts[pick].l)) : "not picked yet (showing the proposed one)"}</span></div>
+          <div class="row"><button type="button" id="unsure" aria-pressed="${pick==="unsure"}">Not sure</button></div>
+          <textarea id="note" placeholder="Anything to add? (optional)"></textarea><span class="state" id="st"></span></div>
+        <div class="note chg"><span><b>${esc(shown)}</b> means:</span>${P.opts[shown].lines.map(l=>`<span>· ${esc(l)}</span>`).join("")}</div>
+      </div>
+    </div></div>`;
+}
+function fixPart(){
+  const pick = answers.fixes;
+  return `<div style="display:flex;flex-direction:column;gap:18px">
+    <h2>The fixes, in the order I'd build them</h2>
+    <p class="muted">Roots first: the controlled-drug register, then the few lines every amount goes through, then people, backups, the Excel check and the screens. Each fix gets a test that fails before the fix and passes after it; then all ${"145 + 94"} tests run again.</p>
+    ${G.map(g=>`<div class="grp"><h3>${esc(g.t)} ${g.why?`<span class="muted">${esc(g.why)}</span>`:""}</h3>
+      ${g.bugs.map(([id,s,what,ex,fix,ex2])=>`<div class="bug"><div class="id">${id}<span class="sev ${SEV[s][0]}">${SEV[s][1]}</span></div>
+        <div class="now"><span class="k">Now</span><span>${esc(what)}</span><span class="ex">${esc(ex)}</span></div>
+        <div class="aft"><span class="k">After the fix</span><span>${esc(fix)}</span><span class="ex">${esc(ex2)}</span></div></div>`).join("")}</div>`).join("")}
+    <details class="more"><summary>What held up, and what I'm keeping for later (not bugs yet)</summary>
+      <ul><li><b>Held up:</b> messages arriving twice, failed saves, secrets in backups (none), frozen stock takes and register lines, damaged files, dates (29 Feb, 1900), CSV formulas, a nurse approving, being your own witness, approving twice, taking out more than the balance, archived people acting, Electron security.</li>
+      <li><b>For later:</b> “Order FEB” columns and a sheet with the newest month on the left (decided when the real lists are loaded); negative or half counts in Excel; a second computer joining the future server would show its own DEMO data (with SD2); the set-up screen can't prove who is setting up; “stay signed in” survives a new one-time password.</li></ul></details>
+    <div class="go"><b>Your GO</b><span class="small">GO means: fix all 29 in this order, with your answers to Q27–Q29.</span>
+      <div class="row"><button type="button" data-go="GO" aria-pressed="${pick==="GO"}">GO: fix all, in this order</button><button type="button" data-go="hold" aria-pressed="${pick==="hold"}">Not yet: I have notes</button></div>
+      <textarea id="note" placeholder="Notes: a fix to change, skip or do first (optional)" style="min-height:54px;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text)"></textarea>
+      <span class="state" id="st"></span></div>
+  </div>`;
+}
+function render(){
+  document.getElementById("steps").innerHTML = KEYS.map(k=>`<button type="button" role="tab" data-part="${k}" ${k===part?'aria-current="step"':""}>${k==="fixes"?"The fixes and GO":esc(Q[k].title.split(" · ")[0])}${answers[k]?'<span class="done">✓</span>':""}</button>`).join("");
+  const el = document.getElementById("part");
+  el.innerHTML = (part==="fixes" ? fixPart() : qPart(part)) + `<div class="navrow" style="margin-top:14px"><button type="button" id="prev" ${part===KEYS[0]?"disabled":""}>← Previous</button><button type="button" id="next" class="primary" ${part===KEYS[KEYS.length-1]?"disabled":""}>Next →</button></div>`;
+  document.getElementById("note").value = notes[part] ?? "";
+  status();
+  document.querySelectorAll("[data-part]").forEach(b=>b.onclick=()=>{ part=b.dataset.part; render(); scrollTo(0,0); });
+  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{ answers[part]=b.dataset.o; render(); save(); });
+  document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{ answers.fixes=b.dataset.go; render(); save(); });
+  const u = document.getElementById("unsure"); if (u) u.onclick=()=>{ answers[part]="unsure"; render(); save(); };
+  let t; document.getElementById("note").oninput=e=>{ notes[part]=e.target.value; clearTimeout(t); t=setTimeout(save,800); };
+  document.getElementById("prev").onclick=()=>{ part=KEYS[Math.max(0,KEYS.indexOf(part)-1)]; render(); scrollTo(0,0); };
+  document.getElementById("next").onclick=()=>{ part=KEYS[Math.min(KEYS.length-1,KEYS.indexOf(part)+1)]; render(); scrollTo(0,0); };
+}
+function status(msg){
+  const st = document.getElementById("st"); if (!st) return;
+  if (msg) { st.textContent = msg; return; }
+  const n = KEYS.filter(k=>answers[k]).length;
+  st.innerHTML = !db ? "Can't be saved in this view. Open the page from its link, or type your answers in chat."
+    : pending ? "Saving…" : savedAt ? `<span class="saved">✓ Saved for Claude</span> · ${n} of ${KEYS.length} answered · ${new Date(savedAt).toLocaleTimeString()}` : "Not answered yet.";
+}
+// B28: every save sends all answers; a copy coming back from the server never overwrites a newer click.
+async function save(){
+  if (!db) { status(); return; }
+  const rec = {q:"stage7", answers:{...answers}, notes:{...notes}, at:new Date().toISOString()};
+  pending++; status();
+  try { await db.collection("stage7").doc("stage7").set(rec); savedAt = rec.at; }
+  catch(e){ pending--; status("Not saved ("+(e&&e.code||"error")+"). Type your answers in chat instead."); return; }
+  pending--; status();
+}
+render();
+(async function(){
+  try{ db = await (window.claude && window.claude.use ? window.claude.use("db") : null); }catch(e){ db=null; }
+  status();
+  if (!db) return;
+  db.collection("stage7").onSnapshot(s=>{ (s.docs||[]).forEach(d=>{ const r=typeof d.data==="function"?d.data():d.data;
+    if (!r || r.q!=="stage7" || pending) return;
+    if (savedAt && r.at && r.at < savedAt) return;
+    answers = {...(r.answers||{}), ...answers}; notes = {...(r.notes||{}), ...notes}; savedAt = r.at; render(); }); }, ()=>{});
+})();
+})();
+</script>

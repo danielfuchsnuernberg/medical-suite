@@ -363,7 +363,7 @@ button.att:hover{filter:brightness(.97)}
 .rightslog b{color:var(--text)}
 .myreq{display:block}
 .dialog .field select{width:100%}
-@media (max-width:720px){ .ledger{min-width:720px} }
+/* B51: the 720 px minimum width that pushed half of each register line off a phone screen is gone (cards below) */
 .cdmode .seg{border-radius:var(--r-md);flex-wrap:wrap;align-self:stretch}.cdmode .seg button{flex:1 1 auto}
 
 /* F13: backup and import */
@@ -420,3 +420,14 @@ button.att:hover{filter:brightness(.97)}
 @media (max-width:640px){.staff .stats{grid-template-columns:1fr 1fr}}
 .readout{font-size:var(--fs-sm);padding:8px 10px;border-radius:var(--r-sm);background:var(--surface-2);margin-top:8px}
 @media (min-width:900px){.prof-grid [data-testid="prof-training"]{grid-column:span 2}}
+/* B37: a save button between the first click and the end of the save */
+button[data-saving]{opacity:.65;cursor:progress}
+/* B51: on a phone each register line is a small card, every part with its label */
+@media (max-width:720px){
+  .table.ledger tr{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 12px}
+  .table.ledger td,.ledger .nowrap{white-space:normal;font-size:var(--fs-sm);color:var(--text);min-width:0;overflow-wrap:anywhere}
+  .table.ledger td:nth-child(2),.table.ledger td:nth-child(4){grid-column:auto;font-size:var(--fs-sm);color:var(--text)}
+  .table.ledger td.reason{grid-column:1 / -1;max-width:none}
+  .table.ledger td.n{text-align:left}
+  .ledger td[data-label]::before{content:attr(data-label) ": ";font-size:var(--fs-xs);color:var(--text-muted);font-weight:600}
+}

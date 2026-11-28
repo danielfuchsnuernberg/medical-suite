@@ -80,7 +80,7 @@ test("F12.3 with a doctor's approval: PIN in the room, or a request (Approve / A
   // in the room: wrong PIN, then right
   let d = await takeOut({ doctor: "Dr Ben Sample", pin: "0000" });
   await d.getByRole("button", { name: "Take out" }).click();
-  await expect(d.getByTestId("refusal")).toHaveText("That isn't Dr Ben Sample's PIN. Nothing was booked.");
+  await expect(d.getByTestId("refusal")).toHaveText("That isn't Dr Ben Sample's PIN. 4 tries left. Nothing was booked.");
   await d.getByLabel("Doctor's PIN").fill("1234");                                                // the DEMO doctor's PIN
   await d.getByRole("button", { name: "Take out" }).click();
   await expect(balance()).toHaveText("Balance 4 amp");

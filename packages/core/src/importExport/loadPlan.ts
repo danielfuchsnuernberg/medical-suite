@@ -36,6 +36,8 @@ export function newestCount(r: CheckedRow, labels: string[]): { qty: number; mon
 
 export function planImport(c: Checked, fileName: string, places: KnownPlace[], items: KnownItem[], choices: { targets?: Record<string, Target>; suggested?: Set<string> } = {}): Plan {
   const byName = new Map(items.filter(i => i.state === undefined || i.state === "Active").map(i => [norm(i.name), i]));
+  // B35: an archived controlled drug is still a controlled drug; it never comes back in as ordinary stock
+  const controlledNames = new Set(items.filter(i => i.controlled === true).map(i => norm(i.name)));
   const placeKind = (t: Target) => t.kind === "new" ? "bag" : t.kind === "place" ? places.find(p => p.id === t.id)?.kind : null;
   const sheets: PlanSheet[] = [];
   const newItems = new Set<string>(), newBags = new Set<string>();
@@ -49,7 +51,7 @@ export function planImport(c: Checked, fileName: string, places: KnownPlace[], i
       const it = byName.get(norm(r.tidied));
       const { qty, month } = newestCount(r, labels);
       const key = rowKey(r);
-      const waits = it?.controlled === true ? "controlled" as const : choices.suggested?.has(key) ? "suggested" as const : null;
+      const waits = it?.controlled === true || controlledNames.has(norm(r.tidied)) ? "controlled" as const : choices.suggested?.has(key) ? "suggested" as const : null;
       return { key, sheet: s.name, row: r.row, item: r.tidied, itemId: it?.id ?? null, unit: r.unit, qty, month, lot: r.lot, expiry: r.expiry || null, required: bag ? r.required ?? null : null, waits };
     });
     if (target.kind === "skip") { skipped += rows.length; }

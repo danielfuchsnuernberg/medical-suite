@@ -141,7 +141,7 @@ describe("restock and dispense (F9)", () => {
   it("F9.1 a whole number, 1 or more; 0, negatives, decimals and an empty box are refused and nothing changes (B17)", async () => {
     const { door, inv, b } = await open();
     const before = (await b.load()).changes.length;
-    for (const [bad, why] of [["0", "It has to be at least 1. 0 isn't allowed."], ["-5", "It has to be at least 1."], ["2.7", "Whole numbers only. 2.7 isn't allowed."], ["", "Type the amount."], ["  ", "Type the amount."], ["3 boxes", "isn't a number"]] as const) {
+    for (const [bad, why] of [["0", "It has to be at least 1. 0 isn't allowed."], ["-5", "It has to be at least 1."], ["2.7", "Whole numbers only. 2.7 isn't allowed"], ["", "Type the amount."], ["  ", "Type the amount."], ["3 boxes", "isn't a number"]] as const) {
       await expect(inv.adjust(anna(door), "demo-s1", "restock", bad)).rejects.toThrow(why);
       await expect(inv.adjust(anna(door), "demo-s1", "dispense", bad)).rejects.toThrow(why);
     }

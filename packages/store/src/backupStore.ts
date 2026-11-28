@@ -17,7 +17,7 @@ export const KEEP = 30;
 export class BackupStore {
   private queue: Promise<unknown> = Promise.resolve();
   constructor(private door: Door, private files: BackupFiles) {}
-  private one<T>(fn: () => Promise<T>): Promise<T> { const p = this.queue.then(fn, fn); this.queue = p.catch(() => undefined); return p; }
+  private one<T>(fn: () => Promise<T>): Promise<T> { const done = this.door.hold(); const p = this.queue.then(fn, fn).finally(done); this.queue = p.catch(() => undefined); return p; }   // B37: counted from the click
   private manager(actor: StoredRecord): StoredRecord {
     const p = this.door.get("person", actor.id);
     if (!p || p.state !== "Active" || !can(p.level, "changeSettings")) throw new Refused("Only Manage level exports, imports or restores backups.");
@@ -58,7 +58,9 @@ export class BackupStore {
       const c = checkBackup(text, this.current()); if (!c.ok) throw new Refused(c.why);
       const now = this.door.now();
       const stamp = formatTimeIn(now, this.tz()).replace(":", "") + String(new Date(now).getUTCSeconds()).padStart(2, "0");   // base time (B13)
-      const safety = `medical-suite-backup-${this.today()}-before-restore-${stamp}.json`;
+      const taken = new Set((await this.files.list()).map(f => f.name));
+      let safety = `medical-suite-backup-${this.today()}-before-restore-${stamp}.json`;
+      for (let n = 2; taken.has(safety); n++) safety = `medical-suite-backup-${this.today()}-before-restore-${stamp}-${n}.json`;   // B30
       await this.files.save(safety, this.text(me.id));
       await this.door.restore(c.messages, c.dataVersion);
       return { safety, summary: c.summary };

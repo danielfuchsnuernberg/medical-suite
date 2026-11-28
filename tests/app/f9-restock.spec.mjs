@@ -31,7 +31,7 @@ test("F9.1 + and − ask for a whole number, 1 or more; 0, negatives, decimals a
     await page.getByRole("button", { name: `${kind} Gauze 10×10 cm in Bag 1 (adult)` }).click();
     await expect(dlg()).toContainText("Bag 1 (adult) · currently 12 pack");
     const box = dlg().getByRole("textbox");
-    for (const [bad, msg] of [["0", "It has to be at least 1. 0 isn't allowed."], ["-5", "It has to be at least 1. -5 isn't allowed."], ["2.7", "Whole numbers only. 2.7 isn't allowed."], ["", "Type the amount."]]) {
+    for (const [bad, msg] of [["0", "It has to be at least 1. 0 isn't allowed."], ["-5", "It has to be at least 1. -5 isn't allowed."], ["2.7", "Whole numbers only. 2.7 isn't allowed: type it without commas or points, for example 1000."], ["", "Type the amount."]]) {
       await box.fill(bad);
       await dlg().getByRole("button", { name: kind }).click();
       await expect(dlg().getByTestId("refusal")).toHaveText(`${msg} Nothing was changed.`);

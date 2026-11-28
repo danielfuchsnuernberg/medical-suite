@@ -8,7 +8,7 @@ import { Refused } from "./accounts";
 export class SettingsStore {
   private queue: Promise<unknown> = Promise.resolve();
   constructor(private door: Door) {}
-  private one<T>(fn: () => Promise<T>): Promise<T> { const p = this.queue.then(fn, fn); this.queue = p.catch(() => undefined); return p; }
+  private one<T>(fn: () => Promise<T>): Promise<T> { const done = this.door.hold(); const p = this.queue.then(fn, fn).finally(done); this.queue = p.catch(() => undefined); return p; }   // B37: counted from the click
   private manager(actor: StoredRecord): StoredRecord {
     const p = this.door.get("person", actor.id);
     if (!p || p.state !== "Active" || !can(p.level, "changeSettings")) throw new Refused("Only Manage level changes settings.");
@@ -49,16 +49,25 @@ export class SettingsStore {
     return this.one(async () => {
       const me = this.manager(actor);
       const ok = checkListName(kind, this.entries(kind), name); if (!ok.ok) throw new Refused(ok.why);
-      const data: Record<string, unknown> = { name: name.trim().replace(/\s+/g, " "), ...extra };
+      const { name: _n, kind: _k, state: _s, ...rest } = extra;   // B53: extra fields can't replace the checked name
+      const data: Record<string, unknown> = { ...rest, name: name.trim().replace(/\s+/g, " ") };
       if (kind === "bag") data.kind = "bag";
       if (kind === "course") { const m = Number(extra.validMonths); if (!Number.isInteger(m) || m < 1 || m > 120) throw new Refused("Valid for: a whole number of months, 1 to 120."); data.validMonths = m; }
       return (await this.door.apply({ recordType: LIST_STORE[kind].recordType, op: "create", data, by: me.id })).recordId;
     });
   }
 
+  /** B54: the entry must exist and be of this kind (a bag is a place of kind "bag", never the Store). */
+  private entry(kind: ListKind, id: string): StoredRecord {
+    const e = this.door.get(LIST_STORE[kind].recordType, id);
+    if (!e || (kind === "bag" && e.kind !== "bag")) throw new Refused("Not found.");
+    return e;
+  }
+
   rename(actor: StoredRecord, kind: ListKind, id: string, name: string) {
     return this.one(async () => {
       const me = this.manager(actor);
+      this.entry(kind, id);
       const ok = checkListName(kind, this.entries(kind), name, id); if (!ok.ok) throw new Refused(ok.why);
       const n = name.trim().replace(/\s+/g, " ");
       if (this.door.get(LIST_STORE[kind].recordType, id)?.name === n) return;
@@ -70,6 +79,7 @@ export class SettingsStore {
     return this.one(async () => {
       const me = this.manager(actor);
       if (!Number.isInteger(months) || months < 1 || months > 120) throw new Refused("Valid for: a whole number of months, 1 to 120.");
+      this.entry("course", id);
       await this.door.apply({ recordType: "course", recordId: id, op: "set", data: { validMonths: months }, by: me.id });
     });
   }
@@ -77,7 +87,7 @@ export class SettingsStore {
   archive(actor: StoredRecord, kind: ListKind, id: string) {
     return this.one(async () => {
       const me = this.manager(actor);
-      const e = this.door.get(LIST_STORE[kind].recordType, id); if (!e) throw new Refused("Not found.");
+      const e = this.entry(kind, id);
       if (kind === "bag") { const ok = checkBagArchive(e, this.uses(kind, id)); if (!ok.ok) throw new Refused(ok.why); }
       await this.door.apply({ recordType: LIST_STORE[kind].recordType, recordId: id, op: "archive", by: me.id });
     });
@@ -85,13 +95,14 @@ export class SettingsStore {
   restore(actor: StoredRecord, kind: ListKind, id: string) {
     return this.one(async () => {
       const me = this.manager(actor);
+      this.entry(kind, id);
       await this.door.apply({ recordType: LIST_STORE[kind].recordType, recordId: id, op: "restore", by: me.id });
     });
   }
   delete(actor: StoredRecord, kind: ListKind, id: string) {
     return this.one(async () => {
       const me = this.manager(actor);
-      const e = this.door.get(LIST_STORE[kind].recordType, id); if (!e) throw new Refused("Not found.");
+      const e = this.entry(kind, id);
       const ok = checkListDelete(kind, e, this.uses(kind, id), me, this.door.now()); if (!ok.ok) throw new Refused(ok.why);
       await this.door.apply({ recordType: LIST_STORE[kind].recordType, recordId: id, op: "delete", data: { reason: "mistake", name: e.name }, by: me.id });
     });

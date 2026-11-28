@@ -4,6 +4,12 @@ What this app built or decided that touches the REACH ecosystem: the shared Peop
 
 ---
 
+## 28 Nov 2026 — Stage 7: things the shared server (SD2) will have to decide
+
+- **Q30, what a restore means once there is a server.** Today a restore replaces everything on one computer. With a server, this app now sends the backup's messages and fetches everything again, so all computers agree; but that means a restore can't undo what other computers already have. Whether a restore should roll back on every computer is a server rule. **For REACH to decide with SD2**, for every app's restore (R10).
+- **The “last Manage-level person” across computers.** Two computers offline can each pass the check and together leave nobody at Manage level. This app now repairs it automatically after syncing (the latest change is undone and logged). **For REACH to note:** EDP and Ops Management have the same risk with their admins; the server could refuse it instead.
+- **Wrong-PIN pauses are per computer** until there is a server; the pause is logged and synced.
+
 ## 28 Nov 2026 — Training records (F15)
 
 - Each certificate is a record `training` { personId, courseId, status (required / in progress / done), completedOn, expires }, pointing to the person and the course by hidden ID (R5). Dates are plain calendar dates (R6). Courses (with “valid for N months”) are this app's own Settings list.

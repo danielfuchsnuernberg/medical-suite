@@ -58,7 +58,7 @@ export async function readXlsx(bytes: Uint8Array): Promise<Sheet[]> {
     const path = t.startsWith("/") ? t.slice(1) : "xl/" + t.replace(/^\.\//, "");
     const xml = get(path); if (!xml) continue;
     const rows: Sheet["rows"] = [];
-    for (const r of xml.matchAll(/<row\b([^>]*)>([\s\S]*?)<\/row>|<row\b([^>]*)\/>/g)) {
+    for (const r of xml.matchAll(/<row\b([^>]*?)(?:\/>|>([\s\S]*?)<\/row>)/g)) {   // B42: the short empty row first
       const ri = Number(attr(r[0], "r") ?? rows.length + 1) - 1;
       const row: Sheet["rows"][number] = [];
       for (const c of (r[2] ?? "").matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)) {

@@ -26,6 +26,7 @@ export async function verifyPassword(c: Credential, password: string): Promise<b
 /** Why a new own password isn't accepted, or null. */
 export function passwordProblem(pw: string, repeat?: string): string | null {
   if (pw.length < MIN_PASSWORD) return `At least ${MIN_PASSWORD} characters.`;
+  if (pw.replace(/\s/g, "").length < MIN_PASSWORD) return `At least ${MIN_PASSWORD} characters that aren't spaces.`;   // B44
   if (repeat !== undefined && pw !== repeat) return "The two passwords are not the same.";
   return null;
 }

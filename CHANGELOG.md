@@ -1,5 +1,19 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — Stage 7: all 29 bugs fixed (Danny's GO, Q27–Q29 = A)
+- **Controlled drugs:** archiving, restoring, adding a place, deleting as a mistake and importing can no longer change a controlled drug's stock outside the register (B35); unticking is refused while a take-out waits, and a drug that is no longer controlled can't be approved or corrected (B36); only a current doctor gives the right (B45); 5 wrong PINs pause PIN approval for that doctor for 15 minutes, logged, and the doctor sees a note (B46).
+- **Amounts:** “12,0”, “1,000” and other commas or points are refused with “for example 1000” (B32, B33, Q28 = A); above 1,000,000 is refused (B34). **Double clicks** save once, on every save button (B37).
+- **People:** a password changes only with the current or one-time password, logged (B43); no all-spaces passwords (B44); set-up only by an active Manage person (B47); two offline computers can no longer leave nobody at Manage level (B48); details of people in an archived department can be changed (B50); deleting a mistaken person removes their training (B52); names tidied, at most 80 letters (B56); settings and restore check the record exists and is the right kind (B53–B55).
+- **Backup and two computers:** restore with a server sends and fetches again (B29; Q30 parked); safety copies never overwrite each other (B30); a damaged version number is refused (B49); stock below zero is shown in red until counted (B31, Q27 = A).
+- **Excel check:** counts typed as text, full month names and month-year headers are read; a sheet with no count column must be fixed; another lot isn't a duplicate; names compared the loading way; row numbers right after a short empty row (B38–B42). On the real files (counts only): Store 24 rows must be fixed (was 21), bags 53 (was 39). Most of the new ones are a count with a unit in the cell (52 like “2 pkt” in the bags).
+- **Screens:** a register line on a phone is a card with every part labelled (B51; a 720 px minimum width was the cause); a bag line with required 0 is OK (B57, Q29 = A).
+- Tests: 27 new tests (22 unit, 4 program, plus the Excel block); each fix undone on its own made its test fail (35 of 35). 172 of 172 and 98 of 98 pass.
+
+## 2026-11-28 — Stage 7: hostile pass of release 1
+- F15 committed first (c76bd31).
+- Three independent testers (data, sync and backup · stock and register · people, settings and screens) and my own pass on the screens found 29 bugs, each made to happen in a test: B29–B57 in BUGS.md. 11 can lose or falsify data, 5 are security, 5 broken, 8 minor. Nothing fixed yet.
+- Shown to Danny with a before/after for each and three questions (Q27–Q29): https://claude.ai/artifact/AkyM73Bj5RU7iktEmozZxc. Fixes wait for his GO.
+
 ## 2026-11-28 — F15: Training and certificates (release 1 is now fully built)
 - F14 committed first (2eca1aa).
 - Staff and training: two new counts, **Certificates expired** and **Due in 30 days** (active people only), and a Training column per person: Expired certificate, Due soon / required, All valid or No courses.

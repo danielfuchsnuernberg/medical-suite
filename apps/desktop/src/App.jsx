@@ -16,6 +16,7 @@ import ItemPage from "./screens/ItemPage.jsx";
 import Count from "./screens/Count.jsx";
 import StockTakes from "./screens/StockTakes.jsx";
 import Staff from "./screens/Staff.jsx";
+import { installSaveGuard } from "./state/saveGuard.js";
 import Register from "./screens/Register.jsx";
 import Dialog from "./components/Dialog.jsx";
 import { SignIn, ChooseOwn, SetUp, MedicalCode } from "./screens/SignIn.jsx";
@@ -87,6 +88,8 @@ export default function App() {
     catch (e) { toast(e.message || "Not saved. Nothing was changed.", "danger"); return null; }
   }, [door, toast, me]);
   useEffect(() => { if (door && window.__mdTest) window.__mdTest.save = save; }, [door, save]);
+  useEffect(() => { if (door) installSaveGuard(door); }, [door]);   // B37: one click saves once
+  useEffect(() => { if (accounts) accounts.repairLockout().catch(() => {}); }, [accounts, tick]);   // B48: never nobody at Manage level
 
   // What the screens read: records from the door, joined by ID (R5).
   const data = useMemo(() => {
@@ -142,11 +145,11 @@ export default function App() {
   const signOut = () => { if (typedCounts) { setLeaving({ id: "signout" }); return; } signOutNow(); };
   const after = (t) => { if (t.id === "signout") signOutNow(); else goNow(t.id, t.f); };
   if (accounts.needsSetUp()) return <SetUp accounts={accounts} baseName={settings.baseName} demo={demo} onDone={(id) => setAuth({ id, mustChange: false, ready: true })} />;
-  if (me && me.state === "Active" && auth.mustChange) return <ChooseOwn accounts={accounts} person={me} demo={demo} onDone={() => setAuth(a => ({ ...a, mustChange: false }))} onCancel={signOut} />;
+  if (me && me.state === "Active" && auth.mustChange) return <ChooseOwn accounts={accounts} person={me} proof={auth.proof} demo={demo} onDone={() => setAuth(a => ({ ...a, mustChange: false, proof: "" }))} onCancel={signOut} />;
   if (signedIn && needsMedicalCode(me)) return <MedicalCode accounts={accounts} person={me} demo={demo} onDone={() => {}} onCancel={signOut} />;
   if (!signedIn) return <SignIn accounts={accounts} demo={demo} baseName={settings.baseName} onSignedIn={async (id, o) => {
     if (o.stay && !o.mustChange) { try { await accounts.stay(id); } catch (e) { toast(String(e.message || e), "danger"); } }
-    setAuth({ id, mustChange: o.mustChange, ready: true });
+    setAuth({ id, mustChange: o.mustChange, proof: o.proof, ready: true });
   }} />;
 
   const status = door.status();
@@ -156,6 +159,9 @@ export default function App() {
   const emergencies = waitingCd.filter(r => r.status === "emergency");
   // F12.14: Management is told when there is no Head Doctor (nobody can mark a controlled drug until it names one)
   const noHead = can(me.level, "changeLevels") && register.heads().length === 0;
+  // B48: Management is told (for a week) when the program had to give someone Manage level back
+  const lockEv = can(me.level, "changeLevels") ? door.records("event").filter(e => e.what === "nobody was left at Manage level" && door.now() - Number(e.createdAt) < 7 * 864e5).sort((a, b) => Number(b.createdAt) - Number(a.createdAt))[0] : null;
+  const lockout = lockEv ? String(door.get("person", String(lockEv.personId))?.name ?? "someone") : null;
   const entry = findEntry(view);
   const title = view === "home" ? "Home" : view === "item" ? String(door.get("item", itemId)?.name ?? "Item") : entry ? entry.label : "";
   const openResult = (kind, hit) => { if (kind === "person") { go("staff"); setPersonId(hit?.id ?? null); } else go("where"); };
@@ -172,7 +178,7 @@ export default function App() {
         </header>
         <Banners status={status} flags={door.flags()} nameOf={nameOfLine} timeZone={settings.timeZone} offlineClosed={offlineClosed} onCloseOffline={() => setOfflineClosed(true)} />
         <main className="content" id="content">
-          {view === "home" ? <Home go={go} today={today} baseName={settings.baseName} emergencies={emergencies.length} noHead={noHead} />
+          {view === "home" ? <Home go={go} today={today} baseName={settings.baseName} emergencies={emergencies.length} noHead={noHead} lockout={lockout} below={data.inv.lines.filter(l => Number(l.qty) < 0).length} />
             : view === "overview" ? <Overview inv={data.inv} today={today} dateStyle={settings.dateStyle} open={(f) => go("where", f)} openItem={(id) => { setItemId(id); setView("item"); }} />
             : view === "where" ? <StockList inv={data.inv} today={today} dateStyle={settings.dateStyle} filter={filter} setFilter={setFilter} openItem={(id) => { setItemId(id); setView("item"); }} me={me} store={inventory} toast={toast} openRegister={() => go("cd")} />
             : view === "item" ? <ItemPage itemId={itemId} me={me} door={door} inv={data.inv} store={inventory} tick={tick} today={today} timeZone={settings.timeZone} dateStyle={settings.dateStyle} back={() => setView("where")} toast={toast} openRegister={() => go("cd")} register={register} />

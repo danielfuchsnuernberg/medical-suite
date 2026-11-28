@@ -37,7 +37,7 @@ describe("accounts until the server (Q22 = A)", () => {
     const code = await acc.giveOneTime(cara, "demo-p4");
     expect((await acc.signIn("demo-p4", "demo")).ok).toBe(false);                 // demo no longer works for her here
     expect(await acc.signIn("demo-p4", code.toLowerCase().replace("-", " "))).toEqual({ ok: true, mustChange: true });
-    await acc.setOwnPassword("demo-p4", "dina-own-pass", "dina-own-pass");
+    await acc.setOwnPassword("demo-p4", code, "dina-own-pass", "dina-own-pass");
     expect(await acc.signIn("demo-p4", "dina-own-pass")).toEqual({ ok: true, mustChange: false });
     expect((await acc.signIn("demo-p4", code)).ok).toBe(false);
     await door.sync();
@@ -81,7 +81,7 @@ describe("accounts until the server (Q22 = A)", () => {
   it("stay signed in survives reopening; passwords stay on this computer (F2.6)", async () => {
     const b = new MemoryBackend();
     const a1 = (await open(b)).acc;
-    await a1.setOwnPassword("demo-p1", "anna-own-pass");
+    await a1.setOwnPassword("demo-p1", "demo", "anna-own-pass");
     await a1.stay("demo-p1");
     const a2 = (await open(b)).acc;
     expect(a2.stayed()).toBe("demo-p1");

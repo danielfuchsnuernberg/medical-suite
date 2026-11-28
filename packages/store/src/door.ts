@@ -88,6 +88,18 @@ export class Door {
   subscribe(f: () => void): () => void { this.listeners.add(f); return () => this.listeners.delete(f); }
 
   status(): DoorStatus { return { ...this.st }; }
+
+  // B37: the screens keep a save button locked while anything is queued or saving (busy), and for a moment after something
+  // was really saved (saved() went up), so a double click can't save twice; a refusal (nothing saved) unlocks at once.
+  private busyN = 0; private savedN = 0;
+  busy(): number { return this.busyN; }
+  saved(): number { return this.savedN; }
+  /** Counts a queued change from the moment it is asked for; call the returned function when it is done. */
+  hold(): () => void { this.busyN++; let open = true; return () => { if (open) { open = false; this.busyN--; } }; }
+  private async counted<T>(fn: () => Promise<T>): Promise<T> { const done = this.hold(); try { const r = await fn(); this.savedN++; return r; } finally { done(); } }
+  apply(p: Parameters<Door["_apply"]>[0]) { return this.counted(() => this._apply(p)); }
+  applyAll(ps: Parameters<Door["_applyAll"]>[0]) { return this.counted(() => this._applyAll(ps)); }
+  restore(changes: Change[], fromVersion: number) { return this.counted(() => this._restore(changes, fromVersion)); }
   records(type: string): StoredRecord[] { return [...(this.folded.records.get(type)?.values() ?? [])]; }
   get(type: string, id: string): StoredRecord | undefined { return this.folded.records.get(type)?.get(id); }
   flags(): CountFlag[] { return this.folded.flags; }
@@ -105,7 +117,7 @@ export class Door {
   now(): Moment { return this.o.now ? this.o.now() : Date.now(); }
 
   /** Saves one change. Throws DoorError if this computer couldn't store it; then nothing changed. */
-  async apply(p: { recordType: string; recordId?: string; op: ChangeOp; data?: Record<string, unknown>; by: string }): Promise<Change> {
+  private async _apply(p: { recordType: string; recordId?: string; op: ChangeOp; data?: Record<string, unknown>; by: string }): Promise<Change> {
     const c = makeChange({ ...p, at: this.o.now ? this.o.now() : Date.now(), device: this.o.device });
     try {
       await this.o.backend.commit([c], { toOutbox: true });
@@ -125,7 +137,7 @@ export class Door {
   }
 
   /** Saves several changes together: all of them or none (a move is a take here and an add there, F8.2). */
-  async applyAll(ps: { recordType: string; recordId?: string; op: ChangeOp; data?: Record<string, unknown>; by: string }[]): Promise<Change[]> {
+  private async _applyAll(ps: { recordType: string; recordId?: string; op: ChangeOp; data?: Record<string, unknown>; by: string }[]): Promise<Change[]> {
     const at = this.o.now ? this.o.now() : Date.now();
     const cs = ps.map((p, i) => makeChange({ ...p, at: at + i, device: this.o.device }));     // one after the other, in this order
     try {
@@ -148,16 +160,20 @@ export class Door {
    * F13.4/F13.5: replaces everything on this computer with these messages (a restore), all or nothing, and every screen
    * shows it at once (B2). Messages from an older version are carried forward first (B3).
    */
-  async restore(changes: Change[], fromVersion: number): Promise<void> {
+  private async _restore(changes: Change[], fromVersion: number): Promise<void> {
     let cs = changes;
+    if (!Number.isInteger(fromVersion) || fromVersion < 0 || fromVersion > SCHEMA_VERSION) throw new DoorError("This backup is damaged. Refused: nothing was changed.");
     for (let v = fromVersion; v < SCHEMA_VERSION; v++) cs = MIGRATIONS[v](cs);
-    try { await this.o.backend.replace(cs); }
+    const send = !!this.o.transport;   // B29: with a server, the restored messages go to it and everything is fetched again
+    try { await this.o.backend.replace(cs, { toOutbox: send }); }
     catch { this.st.error = "Not restored. This computer couldn't store the backup, so nothing was changed."; this.emit(); throw new DoorError(this.st.error); }
     this.st.error = null;
     this.changes = new Map(cs.map(c => [c.messageId, frozen(c)]));
-    this.outbox.clear(); this.st.waiting = 0;
+    this.outbox = new Set(send ? cs.map(c => c.messageId) : []); this.st.waiting = this.outbox.size;
+    if (send) { this.meta.cursor = 0; await this.o.backend.setMeta({ cursor: 0 }); }
     this.refold();
     this.emit();
+    if (send) await this.sync().catch(() => undefined);
   }
 
   /** Sends what's waiting and fetches what other computers sent. Safe to call any time; does nothing without a server. */

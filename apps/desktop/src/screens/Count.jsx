@@ -1,4 +1,4 @@
-import { can } from "@md/core";
+import { can, wholeNumber } from "@md/core";
 import { InventoryStore } from "@md/store";
 import Icon from "../components/Icon.jsx";
 
@@ -39,7 +39,7 @@ export default function Count({ inv, me, state, setState, save, result }) {
                 const v = state.drafts[l.id] ?? "";
                 const has = String(v).trim() !== "";
                 const why = has ? InventoryStore.countProblem(v) : null;
-                const diff = has && !why ? Number(String(v).trim()) - Number(l.qty) : null;
+                const diff = has && !why ? (wholeNumber(v, { min: 0 }).n ?? 0) - Number(l.qty) : null;
                 const cd = it?.controlled === true;
                 return (
                   <tr key={l.id} data-line={l.id}>

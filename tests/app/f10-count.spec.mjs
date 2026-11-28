@@ -103,7 +103,7 @@ test("F10.2 typed counts survive searching and switching place; leaving with uns
 test("F10.3 a count that isn't a whole number of 0 or more shows red and blocks saving", async () => {
   await launch();
   await box("Gauze 10×10 cm").fill("11");
-  for (const [bad, why] of [["-1", "It can't be below 0."], ["2.5", "Whole numbers only. 2.5 isn't allowed."], ["four", "“four” isn't a number."]]) {
+  for (const [bad, why] of [["-1", "It can't be below 0."], ["2.5", "Whole numbers only. 2.5 isn't allowed: type it without commas or points, for example 1000."], ["four", "“four” isn't a number."]]) {
     await box("Saline 0.9% 500 ml").fill(bad);
     await expect(box("Saline 0.9% 500 ml")).toHaveClass(/bad/);
     await expect(page.locator('tr[data-line="demo-s2"] [data-testid="count-error"]')).toHaveText(why);

@@ -64,7 +64,7 @@ export default function ItemPage({ itemId, me, door, inv, store, tick, today, ti
         </div>
         {work ? (
           <div className="acts">
-            {item.state === "Active" ? <button type="button" className="btn" onClick={() => open({ kind: "add" })}><Icon name="plus" width={14} stroke={2.2} />Add a place</button> : null}
+            {item.state === "Active" && item.controlled !== true ? <button type="button" className="btn" onClick={() => open({ kind: "add" })}><Icon name="plus" width={14} stroke={2.2} />Add a place</button> : null}
             {item.state === "Active"
               ? <button type="button" className="btn" onClick={() => run(() => store.archive(me, "item", itemId), "Item archived. It can be restored.")}>Archive item</button>
               : <button type="button" className="btn" onClick={() => run(() => store.restore(me, "item", itemId), "Item restored.")}>Restore item</button>}
@@ -82,7 +82,7 @@ export default function ItemPage({ itemId, me, door, inv, store, tick, today, ti
             <ul className="plines" data-testid="lines">
               {lines.map(l => {
                 const isStore = place(l.locationId)?.kind === "store";
-                const [cls, word] = STOCK_WORDS[stockStatus(l)](isStore);
+                const [cls, word] = Number(l.qty) < 0 ? ["b-danger", "Below zero: count it"] : STOCK_WORDS[stockStatus(l, { store: isStore })](isStore);   // Q27 = A
                 const arch = l.state !== "Active";
                 const del = store.deleteProblem(me, "line", l.id) === null;
                 return (
@@ -92,7 +92,8 @@ export default function ItemPage({ itemId, me, door, inv, store, tick, today, ti
                       <div className="d"><b>{Number(l.qty)}</b>{item.unit ? ` ${String(item.unit)}` : ""}
                         {l.required !== null && l.required !== undefined ? ` · ${isStore ? "reorder at" : "required"} ${Number(l.required)}` : ""}
                         {l.lot ? ` · lot ${String(l.lot)}` : ""}</div>
-                      <div className="badges"><span className={`badge ${cls}`} data-stock={stockStatus(l)}>{word}</span><ExpiryBadge expiry={l.expiry} today={today} dateStyle={dateStyle} /></div>
+                      <div className="badges"><span className={`badge ${cls}`} data-stock={Number(l.qty) < 0 ? "below" : stockStatus(l, { store: isStore })}>{word}</span><ExpiryBadge expiry={l.expiry} today={today} dateStyle={dateStyle} /></div>
+                      {Number(l.qty) < 0 ? <div className="form-err" data-testid="below-zero">Below zero: two computers took the same stock. Count {placeName(l.locationId)}.</div> : null}
                     </div>
                     {work ? (
                       <div className="pl-acts">
@@ -101,7 +102,7 @@ export default function ItemPage({ itemId, me, door, inv, store, tick, today, ti
                           <button type="button" className="btn small" aria-label={`Dispense ${placeName(l.locationId)}`} title="Dispense (−)" onClick={() => open({ kind: "dispense", lineId: l.id })}><Icon name="minus" width={13} stroke={2.4} />Dispense</button>
                           <button type="button" className="btn small" onClick={() => open({ kind: "move", lineId: l.id })}>Move</button>
                           <button type="button" className="btn small" onClick={() => open({ kind: "edit", lineId: l.id })}>Edit</button>
-                          <button type="button" className="btn small" onClick={() => run(() => store.archive(me, "line", l.id), "Line archived. It can be reactivated.")}>Archive</button>
+                          {item.controlled === true && Number(l.qty) !== 0 ? null : <button type="button" className="btn small" onClick={() => run(() => store.archive(me, "line", l.id), "Line archived. It can be reactivated.")}>Archive</button>}
                         </>}
                         {del ? <button type="button" className="btn small danger" onClick={() => open({ kind: "delete", type: "line", id: l.id })}>Delete (mistake)</button> : null}
                       </div>

@@ -10,7 +10,7 @@ export interface LineValues { qty: unknown; required: unknown; lot?: unknown; ex
 export class InventoryStore {
   private queue: Promise<unknown> = Promise.resolve();
   constructor(private door: Door) {}
-  private one<T>(fn: () => Promise<T>): Promise<T> { const p = this.queue.then(fn, fn); this.queue = p.catch(() => undefined); return p; }
+  private one<T>(fn: () => Promise<T>): Promise<T> { const done = this.door.hold(); const p = this.queue.then(fn, fn).finally(done); this.queue = p.catch(() => undefined); return p; }   // B37: counted from the click
   private allowed(actor: StoredRecord, action: "changeStock" | "archiveStock"): StoredRecord {
     const p = this.door.get("person", actor.id);
     if (!p || p.state !== "Active" || !can(p.level, action)) throw new Refused("View level can look but not change anything.");
@@ -53,6 +53,7 @@ export class InventoryStore {
     return this.one(async () => {
       const me = this.allowed(actor, "changeStock");
       const it = this.item(itemId); if (it.state !== "Active") throw new Refused("Restore the item first.");
+      if (it.controlled === true) throw new Refused(InventoryStore.CD_REGISTER);   // B35: a new place for a controlled drug is a Receive in the register
       this.place(locationId);
       const clean = this.values(v);
       return (await this.door.apply({ recordType: "line", op: "create", data: { itemId, locationId, ...clean }, by: me.id })).recordId;
@@ -102,7 +103,7 @@ export class InventoryStore {
         const l = this.line(id);
         if (l.state !== "Active") throw new Refused("A line you counted was archived meanwhile. Nothing was saved.");
         if (this.controlled(l)) throw new Refused(InventoryStore.CD_REGISTER);
-        const n = Number(String(v).trim());
+        const n = (wholeNumber(v, { min: 0, what: "count" }) as { n: number }).n;   // B32: the number exactly as checked
         if (n === Number(l.qty)) same++; else changed++;
         msgs.push({ recordType: "line", recordId: id, op: "count", data: { qty: n, basedOn: l.lastCountAt ?? null }, by: me.id });
       }
@@ -146,6 +147,7 @@ export class InventoryStore {
       const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").replace(/[^a-z0-9 ]/g, "").trim();
       const bagIds = new Map<string, string>();
       const itemIds = new Map(this.door.records("item").filter(i => i.state === "Active").map(i => [norm(String(i.name)), i.id] as const));
+      const controlledNames = new Set(this.door.records("item").filter(i => i.controlled === true).map(i => norm(String(i.name))));   // B35: archived ones too
       const lines = this.door.records("line").filter(l => l.state === "Active");
       let loaded = 0, waiting = 0;
       for (const s of plan.sheets) {
@@ -163,6 +165,7 @@ export class InventoryStore {
             msgs.push({ recordType: "importwait", op: "create", data: { item: r.item, itemId: r.itemId, unit: r.unit, locationId: placeId, qty: r.qty, lot: r.lot, expiry: r.expiry, required: r.required, month: r.month, file: fileName, sheet: r.sheet, row: r.row, why: r.waits }, by });
             continue;
           }
+          if (controlledNames.has(norm(r.item))) throw new Refused(`${r.item} is a controlled drug: it can only wait for the Head Doctor. Nothing was loaded.`);
           let itemId = r.itemId ?? itemIds.get(norm(r.item)) ?? null;
           if (!itemId) { itemId = newRecordId(); itemIds.set(norm(r.item), itemId); msgs.push({ recordType: "item", recordId: itemId, op: "create", data: { name: r.item, categoryId: null, unit: r.unit, controlled: false }, by }); }
           else if (this.door.get("item", itemId)?.controlled === true) throw new Refused(`${r.item} is a controlled drug: it can only wait for the Head Doctor. Nothing was loaded.`);
@@ -225,6 +228,7 @@ export class InventoryStore {
       const me = this.allowed(actor, "archiveStock");
       const r = type === "line" ? this.line(id) : this.item(id);
       if (r.state !== "Active") return;
+      if (type === "line" && this.controlled(r) && Number(r.qty) !== 0) throw new Refused(InventoryStore.CD_REGISTER);   // B35: archiving would take it off the shelves
       if (type === "item") {
         const n = this.door.records("line").filter(l => l.itemId === id && l.state === "Active").length;
         if (n) throw new Refused(`${String(r.name)} still has ${n} ${n === 1 ? "line" : "lines"} in use. Archive or move them first.`);
@@ -238,6 +242,7 @@ export class InventoryStore {
       const r = type === "line" ? this.line(id) : this.item(id);
       if (r.state === "Active") return;
       if (type === "line" && this.door.get("item", String(r.itemId))?.state !== "Active") throw new Refused("Restore the item first.");
+      if (type === "line" && this.controlled(r) && Number(r.qty) !== 0) throw new Refused(InventoryStore.CD_REGISTER);   // B35: restoring would put it back on the shelves
       await this.door.apply({ recordType: type, recordId: id, op: "restore", data: {}, by: me.id });
     });
   }
@@ -248,6 +253,7 @@ export class InventoryStore {
     const r = this.door.get(type, id);
     if (!p || p.state !== "Active" || !r) return "Not found.";
     const ok = checkDelete(type, r, p as any, this.door.now()); if (!ok.ok) return ok.why;
+    if (type === "line" && this.controlled(r) && Number(r.qty) !== 0) return InventoryStore.CD_REGISTER;   // B35
     if (type === "item") {
       const n = this.door.records("line").filter(l => l.itemId === id).length;
       if (n) return `${String(r.name)} still has ${n} ${n === 1 ? "line" : "lines"} (archived ones count too). Delete or archive those instead.`;

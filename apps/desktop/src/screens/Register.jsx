@@ -34,6 +34,7 @@ export default function Register({ door, me, reg, tick, timeZone, dateStyle, toa
 
   return (
     <div className="register" data-testid="register">
+      {reg.pinAlerts(me.id).length ? <div className="form-err" role="alert" data-testid="pin-alert">Someone typed a wrong PIN for you {Number(reg.pinAlerts(me.id)[0].tries)} times ({when(reg.pinAlerts(me.id)[0].createdAt)}, by {name(String(reg.pinAlerts(me.id)[0].createdBy))}), so PIN approval for you was paused for 15 minutes on that computer. If that wasn't a mistake, change your PIN.</div> : null}
       {reg.isDoctor(me.id) && waitingAll.length ? (
         <section className="panel waitpanel" data-testid="waiting">
           <div className="panel-head"><div><h2>Waiting for a doctor ({waitingAll.length})</h2><p className="muted">You're a doctor, so these come to you</p></div></div>
@@ -101,18 +102,18 @@ export default function Register({ door, me, reg, tick, timeZone, dateStyle, toa
             <tbody>
               {rows.map(r => (
                 <tr key={r.line.id} data-cd={r.line.id} data-status={r.status} className={`st-${r.status} k-${r.line.kind}`}>
-                  <td className="nowrap">{when(r.at)}</td>
-                  <td>{KIND[r.line.kind]}
+                  <td className="nowrap" data-label="When">{when(r.at)}</td>
+                  <td data-label="Line">{KIND[r.line.kind]}
                     {r.status === "pending" ? <><br /><span className="badge b-warning nodot">waiting for doctor</span></> : null}
                     {r.status === "emergency" ? <><br /><span className="badge b-danger nodot">emergency · waiting for doctor</span></> : null}
                     {r.status === "queried" ? <><br /><span className="badge b-warning nodot">emergency · asked about</span></> : null}
                     {r.status === "refused" ? <><br /><span className="badge b-muted nodot">refused</span></> : null}</td>
-                  <td className="n">{r.line.kind === "correction" ? (r.line.qty > 0 ? "+" : "") + r.line.qty : r.line.qty}</td>
-                  <td className="n">{r.balance === null ? "—" : r.balance}</td>
-                  <td>{name(r.line.createdBy)}</td>
-                  <td>{r.doctor ? <>{name(r.doctor)}<br /><span className="muted small">{r.line.kind === "correction" ? "made the correction" : HOW[r.how] ?? ""}</span></> : r.line.kind === "in" || r.line.kind === "moved" ? <span className="muted">not needed</span> : "—"}</td>
-                  <td>{name(r.line.witness)}</td>
-                  <td className="reason">{String(r.line.reason ?? "")}{r.line.ref ? <><br /><span className="muted small">corrects the line of {when(door.get("cdline", r.line.ref)?.createdAt)}</span></> : null}
+                  <td className="n" data-label="Qty">{r.line.kind === "correction" ? (r.line.qty > 0 ? "+" : "") + r.line.qty : r.line.qty}</td>
+                  <td className="n" data-label="Balance">{r.balance === null ? "—" : r.balance}</td>
+                  <td data-label="By">{name(r.line.createdBy)}</td>
+                  <td data-label="Doctor">{r.doctor ? <>{name(r.doctor)}<br /><span className="muted small">{r.line.kind === "correction" ? "made the correction" : HOW[r.how] ?? ""}</span></> : r.line.kind === "in" || r.line.kind === "moved" ? <span className="muted">not needed</span> : "—"}</td>
+                  <td data-label="Witness">{name(r.line.witness)}</td>
+                  <td className="reason" data-label="Reason / case">{String(r.line.reason ?? "")}{r.line.ref ? <><br /><span className="muted small">corrects the line of {when(door.get("cdline", r.line.ref)?.createdAt)}</span></> : null}
                     {r.queries.length ? <><br /><span className="muted small">{name(r.queries.at(-1).createdBy)} asked: “{r.queries.at(-1).note}”</span></> : null}</td>
                   {doctor ? <td>{r.counts && r.line.kind !== "moved" && r.line.kind !== "correction" ? <button type="button" className="btn small" onClick={() => setDlg({ kind: "correct", row: r })}>Correct</button> : null}</td> : null}
                 </tr>

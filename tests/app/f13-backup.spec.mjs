@@ -83,6 +83,7 @@ test("F13.3 an import with no stock, or with no people, is refused with the reas
 
 test("F13.4 a restore shows now vs after, needs a tick, and saves a backup of today first (B15)", async () => {
   await launch();
+  await page.evaluate(() => window.__mdTest.setOnline(false));   // no server yet (SD2): a restore is this computer only. With a server, what a restore undoes is Q30.
   const f = await exportFile();
   await page.evaluate(async () => { const t = window.__mdTest; await t.inventory.addItem(t.door.get("person", "demo-p3"), { name: "Burn dressing", locationId: "demo-l0", qty: 4 }); });
   await panel().getByLabel("Restore from a backup file").setInputFiles(f);
@@ -107,6 +108,7 @@ test("F13.4 a restore shows now vs after, needs a tick, and saves a backup of to
 
 test("F13.5 after a restore every screen shows the restored data at once, with no reload (B2)", async () => {
   await launch();
+  await page.evaluate(() => window.__mdTest.setOnline(false));   // no server yet (SD2): a restore is this computer only. With a server, what a restore undoes is Q30.
   const f = await exportFile();
   await page.evaluate(() => window.__mdTest.save({ recordType: "line", recordId: "demo-s1", op: "delta", data: { field: "qty", by: -12 } }));
   await page.click('.side [data-view="overview"]');
@@ -131,7 +133,7 @@ test("F13.6 an Excel list shows its problems first: impossible dates, doubles, d
       [null, "Gauze 10×10 cm", "pack", "G-1", 46357, 28],
       [null, "Needle  20G", "", "N-1", 2, 50],
       [null, "Betadine 10%", "bottle", 46539, null, 3],
-      [null, "Gauze 10×10 cm", "pack", "G-2", 46357, 2]],
+      [null, "Gauze 10×10 cm", "pack", "G-1", 46357, 2]],   // same lot and expiry (another lot would be fine, B40)
     "Bag 1 (DEMO)": [["Section", "List Items", "Required Qty", "Batch", "Exp Date", "Feb"], ["Airway", "Oxygen mask", 2, "O-1", "05/2028", 2]],
   });
   await panel().getByLabel("Check a stock list (Excel)").setInputFiles({ name: "Stock list (DEMO).xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: Buffer.from(x) });
@@ -142,7 +144,7 @@ test("F13.6 an Excel list shows its problems first: impossible dates, doubles, d
   await expect(store.locator('tr[data-row="3"]')).toContainText("no unit");
   await expect(store.locator('tr[data-row="3"]')).toContainText("must fix: the date looks wrong (1900)");
   await expect(store.locator('tr[data-row="4"]')).toContainText("must fix: the lot number looks like a date: is it the expiry?");
-  await expect(store.locator('tr[data-row="5"]')).toContainText("must fix: the same item twice in this place (also row 2)");
+  await expect(store.locator('tr[data-row="5"]')).toContainText("must fix: the same item twice in this place, same lot and expiry (also row 2)");
   await expect(d.locator('[data-sheet="Bag 1 (DEMO)"] tr')).toHaveCount(0);                    // a clean sheet lists nothing
   await expect(d).toContainText("Nothing has been loaded.");
   expect(await page.evaluate(() => window.__mdTest.door.records("item").some(i => i.name === "Betadine 10%"))).toBe(false);
