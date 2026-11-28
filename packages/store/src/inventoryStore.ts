@@ -1,7 +1,7 @@
 // Inventory (F8) behind the store door: add, edit, move, archive, restore, delete for good.
 // Every rule is checked here, against the actor as stored now, one change at a time (as Accounts, B27).
 // Rights (F2.7): View looks only; Work and Manage change and archive stock; delete for good only Manage, a mistake, within 24 hours.
-import { can, checkDelete, wholeNumber, itemNameProblem, matchingLine, expiryProblem, newRecordId, type StoredRecord } from "@md/core";
+import { can, checkDelete, wholeNumber, itemNameProblem, matchingLine, expiryProblem, newRecordId, type StoredRecord, type Plan } from "@md/core";
 import { Door } from "./door";
 import { Refused } from "./accounts";
 
@@ -127,6 +127,55 @@ export class InventoryStore {
         .sort((a, b) => a.place.localeCompare(b.place) || a.item.localeCompare(b.item));
       if (!lines.length) throw new Refused("There are no stock lines to freeze yet.");
       return (await this.door.apply({ recordType: "stocktake", op: "create", data: { name, lines }, by: me.id })).recordId;
+    });
+  }
+
+  /**
+   * F13.6: load a checked, planned stock list in one save (all or nothing). Manage level only (F13.8). Refused while any row
+   * must be fixed in the spreadsheet. New bags and items are made; a line already there (same item, place, lot and expiry)
+   * gets the imported amount as a count, otherwise a new line starts. Rows that wait (a controlled drug, or suggested as one)
+   * become waiting records for the Head Doctor; they never come in as ordinary stock.
+   */
+  loadImport(actor: StoredRecord, plan: Plan, fileName: string, blocking: number) {
+    return this.one(async () => {
+      const p = this.door.get("person", actor.id);
+      if (!p || p.state !== "Active" || !can(p.level, "changeSettings")) throw new Refused("Only Manage level imports stock lists.");
+      if (blocking > 0) throw new Refused(`${blocking} ${blocking === 1 ? "row has" : "rows have"} to be fixed in the spreadsheet first. Nothing was loaded.`);
+      const msgs: any[] = [];
+      const by = p.id;
+      const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").replace(/[^a-z0-9 ]/g, "").trim();
+      const bagIds = new Map<string, string>();
+      const itemIds = new Map(this.door.records("item").filter(i => i.state === "Active").map(i => [norm(String(i.name)), i.id] as const));
+      const lines = this.door.records("line").filter(l => l.state === "Active");
+      let loaded = 0, waiting = 0;
+      for (const s of plan.sheets) {
+        if (s.target.kind === "skip") continue;
+        let placeId: string;
+        if (s.target.kind === "place") { const pl = this.door.get("location", s.target.id); if (!pl || pl.state !== "Active") throw new Refused(`The place for “${s.name}” isn't in use any more. Nothing was loaded.`); placeId = pl.id; }
+        else {
+          const k = norm(s.target.name);
+          placeId = bagIds.get(k) ?? "";
+          if (!placeId) { placeId = newRecordId(); bagIds.set(k, placeId); msgs.push({ recordType: "location", recordId: placeId, op: "create", data: { name: s.target.name, kind: "bag" }, by }); }
+        }
+        for (const r of s.rows) {
+          if (r.waits) {
+            waiting++;
+            msgs.push({ recordType: "importwait", op: "create", data: { item: r.item, itemId: r.itemId, unit: r.unit, locationId: placeId, qty: r.qty, lot: r.lot, expiry: r.expiry, required: r.required, month: r.month, file: fileName, sheet: r.sheet, row: r.row, why: r.waits }, by });
+            continue;
+          }
+          let itemId = r.itemId ?? itemIds.get(norm(r.item)) ?? null;
+          if (!itemId) { itemId = newRecordId(); itemIds.set(norm(r.item), itemId); msgs.push({ recordType: "item", recordId: itemId, op: "create", data: { name: r.item, categoryId: null, unit: r.unit, controlled: false }, by }); }
+          else if (this.door.get("item", itemId)?.controlled === true) throw new Refused(`${r.item} is a controlled drug: it can only wait for the Head Doctor. Nothing was loaded.`);
+          const same = lines.find(l => l.itemId === itemId && l.locationId === placeId && String(l.lot ?? "").trim().toLowerCase() === r.lot.trim().toLowerCase() && String(l.expiry ?? "") === String(r.expiry ?? ""));
+          if (same) msgs.push({ recordType: "line", recordId: same.id, op: "count", data: { qty: r.qty, basedOn: same.lastCountAt ?? null, from: fileName }, by });
+          else msgs.push({ recordType: "line", op: "create", data: { itemId, locationId: placeId, qty: r.qty, required: r.required, lot: r.lot, expiry: r.expiry }, by });
+          loaded++;
+        }
+      }
+      if (!loaded && !waiting) throw new Refused("There is nothing to load (every sheet is skipped). Nothing was loaded.");
+      msgs.push({ recordType: "event", op: "create", data: { what: "imported a stock list", file: fileName, lines: loaded, waiting }, by });
+      await this.door.applyAll(msgs);
+      return { loaded, waiting, newBags: bagIds.size };
     });
   }
 

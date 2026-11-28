@@ -7,7 +7,7 @@ import BackupImport from "./BackupImport.jsx";
 // changes them, and only Manage level sees People and access (Q23 = C). Every rule is checked again where the
 // change is saved (SettingsStore, Accounts), not only here.
 
-export default function Settings({ me, accounts, store, door, tick, toast, backups, register }) {
+export default function Settings({ me, accounts, store, door, tick, toast, backups, register, inventory }) {
   const edit = can(me.level, "changeSettings");
   return (
     <div className="settings">
@@ -23,7 +23,7 @@ export default function Settings({ me, accounts, store, door, tick, toast, backu
         </div>
       </div>
       {can(me.level, "seePeopleAccess") ? <PeopleAccess me={me} accounts={accounts} tick={tick} toast={toast} register={register} /> : null}
-      {can(me.level, "changeSettings") && backups ? <BackupImport me={me} store={backups} tick={tick} toast={toast} /> : null}
+      {can(me.level, "changeSettings") && backups ? <BackupImport me={me} store={backups} tick={tick} toast={toast} door={door} inventory={inventory} /> : null}
     </div>
   );
 }

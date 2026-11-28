@@ -385,3 +385,11 @@ button.att:hover{filter:brightness(.97)}
 .cdtick.head{border-color:var(--accent-border)}
 .prof{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
 .prof select{font:inherit;font-size:var(--fs-sm);padding:4px 8px;border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--text)}
+
+/* F13.6: load preview, import rows waiting for the Head Doctor */
+.lp-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.lp-head select{font:inherit;font-size:var(--fs-sm);padding:4px 8px;border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);color:var(--text)}
+.lc-table tr.waits td{background:var(--warning-soft)}
+.dialog[data-testid="load-preview"]{max-width:min(860px,100%)}
+.reqs .acts select{font:inherit;font-size:var(--fs-sm);color:var(--text);padding:5px 9px;border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface)}
+.entries .en .badge{align-self:flex-start;margin:2px 0}

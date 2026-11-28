@@ -9,7 +9,7 @@ import { isCalendarDate } from "../reachCore/dates";
 export type Col = "item" | "unit" | "lot" | "expiry" | "required" | "section";
 export interface Columns { item: number; unit?: number; lot?: number; expiry?: number; required?: number; section?: number; counts: { index: number; label: string }[] }
 export interface Flag { text: string; blocking: boolean }
-export interface CheckedRow { sheet: string; row: number; item: string; tidied: string; unit: string; lot: string; expiry: string; counts: (number | null)[]; flags: Flag[] }
+export interface CheckedRow { sheet: string; row: number; item: string; tidied: string; unit: string; lot: string; expiry: string; required: number | null; counts: (number | null)[]; flags: Flag[] }
 export interface CheckedSheet { name: string; header: number; columns: Columns | null; rows: CheckedRow[]; note?: string }
 export interface Checked { sheets: CheckedSheet[]; rows: number; blocking: number; notes: number }
 
@@ -91,7 +91,8 @@ export function checkStockList(sheets: Sheet[]): Checked {
       if (seen.has(key)) flags.push({ text: `the same item twice in this place (also row ${seen.get(key)})`, blocking: true });
       else seen.set(key, i + 1);
       const lot = lotRaw === null || lotRaw === undefined ? "" : typeof lotRaw === "number" && looksLikeDate(lotRaw) ? excelDate(lotRaw) : String(lotRaw).trim();
-      rows.push({ sheet: s.name.trim(), row: i + 1, item: raw, tidied, unit, lot, expiry: exp && "date" in exp ? exp.date : "", counts: c.counts.map(k => typeof r[k.index] === "number" ? (r[k.index] as number) : null), flags });
+      const req = c.required !== undefined && typeof r[c.required] === "number" ? Math.max(0, Math.round(r[c.required] as number)) : null;
+      rows.push({ sheet: s.name.trim(), row: i + 1, item: raw, tidied, unit, lot, expiry: exp && "date" in exp ? exp.date : "", required: req, counts: c.counts.map(k => typeof r[k.index] === "number" ? (r[k.index] as number) : null), flags });
     }
     out.push({ name: s.name.trim(), header, columns: c, rows });
   }

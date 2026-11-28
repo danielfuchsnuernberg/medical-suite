@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { readXlsx, checkStockList, problemsText } from "@md/core";
+import { readXlsx, checkStockList, problemsText, planImport, rowKey } from "@md/core";
 import Icon from "../components/Icon.jsx";
 import Dialog from "../components/Dialog.jsx";
 
@@ -9,7 +9,7 @@ import Dialog from "../components/Dialog.jsx";
 
 const ROWS = [["people", "People"], ["items", "Items"], ["lines", "Stock lines"], ["register", "Controlled-drug register lines"], ["stockTakes", "Stock takes"], ["messages", "Activity log entries"]];
 
-export default function BackupImport({ me, store, tick, toast }) {
+export default function BackupImport({ me, store, tick, toast, door, inventory }) {
   const [saved, setSaved] = useState([]);
   const [preview, setPreview] = useState(null);     // { label, check, text }
   const [list, setList] = useState(null);           // { file, checked }
@@ -61,7 +61,8 @@ export default function BackupImport({ me, store, tick, toast }) {
         ) : <span className="muted small">None yet.</span>}
       </div>
       {preview ? <RestoreDialog me={me} store={store} preview={preview} close={() => setPreview(null)} done={(r) => { setPreview(null); refresh(); toast(`Restored. A copy of what was there before is kept: ${r.safety}`, "success"); }} /> : null}
-      {list ? <ListCheck list={list} close={() => setList(null)} toast={toast} /> : null}
+      {list && !list.load ? <ListCheck list={list} close={() => setList(null)} toast={toast} prepare={() => setList(l => ({ ...l, load: true }))} /> : null}
+      {list?.load ? <LoadPreview list={list} door={door} me={me} inventory={inventory} close={() => setList(null)} done={(r) => { setList(null); toast(`Loaded ${r.loaded} ${r.loaded === 1 ? "line" : "lines"}${r.newBags ? `, ${r.newBags} new ${r.newBags === 1 ? "bag" : "bags"}` : ""}. ${r.waiting ? `${r.waiting} wait for the Head Doctor under Controlled drugs.` : ""}`, "success"); }} /> : null}
     </section>
   );
 }
@@ -98,16 +99,17 @@ function RestoreDialog({ me, store, preview, close, done }) {
   );
 }
 
-function ListCheck({ list, close, toast }) {
+function ListCheck({ list, close, toast, prepare }) {
   const c = list.checked;
   const copy = async () => {
     try { await navigator.clipboard.writeText(problemsText(c, list.file)); toast("Copied. Paste it into an email or message for the medics.", "success"); }
     catch { toast("Couldn't copy here. Select the list and copy it by hand.", "danger"); }
   };
   return (
-    <Dialog title={`Stock list: ${list.file}`} onClose={close} testid="list-check" footer={<><button type="button" className="btn" onClick={copy}>Copy the list for the medics</button><button type="button" className="btn primary" onClick={close}>Close</button></>}>
+    <Dialog title={`Stock list: ${list.file}`} onClose={close} testid="list-check" footer={<><button type="button" className="btn" onClick={copy}>Copy the list for the medics</button>
+      {c.blocking ? <button type="button" className="btn primary" onClick={close}>Close</button> : <><button type="button" className="btn" onClick={close}>Close</button><button type="button" className="btn primary" onClick={prepare}>Prepare loading…</button></>}</>}>
       <p data-testid="list-summary"><b>{c.rows}</b> rows in {c.sheets.filter(s => s.rows.length).length} {c.sheets.filter(s => s.rows.length).length === 1 ? "sheet" : "sheets"} · <b className="danger">{c.blocking}</b> must be fixed in the spreadsheet · {c.notes} with notes only</p>
-      <p className="muted small">Nothing has been loaded. Rows marked “must fix” have to be corrected in the medics' spreadsheet first, so the file stays the true list. Loading the lists waits for your answer to Q26 (how the sheets are read).</p>
+      <p className="muted small" data-testid="list-next">Nothing has been loaded. {c.blocking ? `Loading is possible once the ${c.blocking} “must fix” ${c.blocking === 1 ? "row is" : "rows are"} corrected in the medics' spreadsheet and the file is checked again, so the file stays the true list.` : "No row has to be fixed: the next step shows exactly what would be loaded, before anything is."}</p>
       <div className="listcheck">
         {c.sheets.map(s => (
           <div key={s.name} className="lc-sheet" data-sheet={s.name}>
@@ -123,6 +125,53 @@ function ListCheck({ list, close, toast }) {
           </div>
         ))}
       </div>
+    </Dialog>
+  );
+}
+
+// F13.6 — what would be loaded, before anything is (Q26 = A, A, A; Head Doctor page part 6 = A). One save; Manage only.
+function LoadPreview({ list, door, me, inventory, close, done }) {
+  const places = door.records("location").filter(l => l.state === "Active").map(l => ({ id: l.id, name: String(l.name), kind: l.kind, state: l.state }))
+    .sort((a, b) => (a.kind === "store" ? 0 : 1) - (b.kind === "store" ? 0 : 1) || a.name.localeCompare(b.name));
+  const items = door.records("item").map(i => ({ id: i.id, name: String(i.name), unit: i.unit, controlled: i.controlled, state: i.state }));
+  const [targets, setTargets] = useState({});
+  const [suggested, setSuggested] = useState(() => new Set());
+  const [why, setWhy] = useState("");
+  const plan = planImport(list.checked, list.file, places, items, { targets, suggested });
+  const pick = (sheet, v) => setTargets(t => ({ ...t, [sheet]: v === "skip" ? { kind: "skip" } : v === "new" ? { kind: "new", name: sheet.trim().replace(/\s+/g, " ") } : { kind: "place", id: v } }));
+  const toggle = (key) => setSuggested(s => { const n = new Set(s); n.has(key) ? n.delete(key) : n.add(key); return n; });
+  const load = async () => { setWhy(""); try { done(await inventory.loadImport(me, plan, list.file, list.checked.blocking)); } catch (e) { setWhy(String(e.message || e)); } };
+  return (
+    <Dialog title={`Load: ${list.file}`} onClose={close} testid="load-preview" footer={<><button type="button" className="btn" onClick={close}>Cancel</button><button type="button" className="btn primary" onClick={load}>Load {plan.load} {plan.load === 1 ? "line" : "lines"}</button></>}>
+      <p data-testid="load-summary"><b>{plan.load}</b> {plan.load === 1 ? "line loads" : "lines load"} now · <b>{plan.waiting}</b> {plan.waiting === 1 ? "waits" : "wait"} for the Head Doctor · {plan.newItems} new {plan.newItems === 1 ? "item" : "items"}{plan.newBags.length ? ` · new ${plan.newBags.length === 1 ? "bag" : "bags"}: ${plan.newBags.join(", ")}` : ""}{plan.skipped ? ` · ${plan.skipped} skipped` : ""}</p>
+      <p className="muted small">For each row the newest month with a number is loaded. A line already there (same item, place, lot and expiry) gets this number as a count. Tick a row if it is a controlled drug: it then waits for the Head Doctor, who confirms it with a witness. Controlled drugs never come in as ordinary stock.</p>
+      <div className="listcheck">
+        {plan.sheets.map(s => (
+          <div key={s.name} className="lc-sheet" data-sheet={s.name}>
+            <div className="lp-head"><b>{s.name}</b>
+              <select aria-label={`Place for ${s.name}`} value={s.target.kind === "place" ? s.target.id : s.target.kind} onChange={e => pick(s.name, e.target.value)}>
+                {places.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                <option value="new">New bag: {s.name.trim().replace(/\s+/g, " ")}</option>
+                <option value="skip">Skip this sheet</option>
+              </select></div>
+            {s.target.kind === "skip" ? <span className="muted small">Skipped: nothing from this sheet is loaded.</span> : (
+              <table className="table lc-table"><tbody>
+                {s.rows.map(r => (
+                  <tr key={r.key} data-row={r.row} className={r.waits ? "waits" : ""}>
+                    <td className="n nowrap">row {r.row}</td>
+                    <td><b>{r.item}</b>{r.itemId ? null : <span className="badge b-accent nodot">new item</span>}</td>
+                    <td className="n nowrap" data-testid="lp-qty">{r.qty}{r.unit ? ` ${r.unit}` : ""} <span className="muted">{r.month ? `(${r.month})` : "(no count)"}</span></td>
+                    <td className="muted">{[r.lot && `lot ${r.lot}`, r.expiry && `exp ${r.expiry}`, r.required !== null && `required ${r.required}`].filter(Boolean).join(" · ")}</td>
+                    <td>{r.waits === "controlled" ? <span className="badge b-warning nodot">controlled drug: waits for the Head Doctor</span>
+                      : <label className="check inline small"><input type="checkbox" aria-label={`Controlled drug: ${r.item} (${s.name})`} checked={r.waits === "suggested"} onChange={() => toggle(r.key)} /><span>controlled drug?</span></label>}</td>
+                  </tr>
+                ))}
+              </tbody></table>
+            )}
+          </div>
+        ))}
+      </div>
+      {why ? <div className="form-err" role="alert" data-testid="refusal">{why}</div> : null}
     </Dialog>
   );
 }

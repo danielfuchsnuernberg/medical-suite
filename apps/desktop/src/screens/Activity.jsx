@@ -6,7 +6,7 @@ import Icon from "../components/Icon.jsx";
 // The entries come from door.log() (worked out from the change messages). This screen only puts them into words.
 
 const AREAS = [["all", "Everything"], ["Inventory", "Inventory"], ["People", "People"], ["Settings", "Settings"], ["EDP", "EDP"]];
-const KIND = { item: "item", line: "stock line", location: "place", person: "person", case: "case", department: "department", category: "category", course: "course", stocktake: "stock take", cdline: "register line", cddecision: "register decision", settings: "" };
+const KIND = { item: "item", line: "stock line", location: "place", person: "person", case: "case", department: "department", category: "category", course: "course", stocktake: "stock take", cdline: "register line", cddecision: "register decision", importwait: "import row", settings: "" };
 const FIELD = { qty: "quantity", required: "required", expiry: "expiry", lot: "lot", name: "name", job: "job", level: "level", state: "state",
   itemId: "item", locationId: "place", category: "category", unit: "unit", kind: "kind", staffNo: "staff number", itemNo: "item number",
   controlled: "controlled drug", cdRight: "doctor's right", caseNo: "case number", baseName: "base name", country: "country", timeZone: "time zone",
@@ -115,12 +115,17 @@ export function words(door, log) {
       const about = e.data.personId ? name("person", String(e.data.personId)) : "";
       if (e.data.what === "one-time password given") return <>gave {about} a one-time password on this computer</>;
       if (e.data.what === "this computer set up") return <>set up this computer</>;
+      if (e.data.what === "imported a stock list") return <>imported the stock list {String(e.data.file)}: {Number(e.data.lines)} {Number(e.data.lines) === 1 ? "line" : "lines"} loaded, {Number(e.data.waiting)} waiting for the Head Doctor</>;
       return <>{String(e.data.what)}{about ? ` (${about})` : ""}</>;
     }
     // F11.1: a stock take never changes; a message that tried to is kept in the log, and says it was ignored
     if (e.recordType === "stocktake" && e.op !== "create") return <>tried to change stock take {link}: ignored, a stock take never changes</>;
     // F12: the register. Lines and decisions never change; an attempt is kept and says it was ignored.
     if ((e.recordType === "cdline" || e.recordType === "cddecision") && e.op !== "create") return <>tried to change the controlled-drug register: ignored, register lines never change</>;
+    if (e.recordType === "importwait") {
+      if (e.op === "create") return <>{String(e.data.item)} from {String(e.data.file)} waits for the Head Doctor ({Number(e.data.qty)})</>;
+      return <>decided {String(door.get("importwait", e.recordId)?.item ?? "an import row")}: {e.data.decided === "controlled" ? "a controlled drug, into the register" : "not a controlled drug, loaded as ordinary stock"}</>;
+    }
     if (e.recordType === "cdline") {
       const d = e.data, drug = String(door.get("item", String(d.itemId))?.name ?? "a controlled drug"), w = d.witness ? ` (witness ${who(String(d.witness))})` : "";
       if (d.kind === "opening") return <>opened the register for {drug}: {Number(d.qty)}{w}</>;

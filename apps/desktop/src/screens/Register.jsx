@@ -26,7 +26,9 @@ export default function Register({ door, me, reg, tick, timeZone, dateStyle, toa
   const close = () => setDlg(null);
   const done = (t) => { setDlg(null); toast(t, "success"); };
 
-  if (!drugs.length) return <div className="placeholder" data-testid="register"><Icon name="pill" width={42} /><h2>No controlled drugs yet</h2><p>An item marked as a controlled drug gets its register here.</p></div>;
+  const imports = reg.waitingImports();
+  const importPanel = imports.length ? <ImportWaits door={door} me={me} reg={reg} waits={imports} name={name} when={when} toast={toast} /> : null;
+  if (!drugs.length) return importPanel ? <div className="register" data-testid="register">{importPanel}</div> : <div className="placeholder" data-testid="register"><Icon name="pill" width={42} /><h2>No controlled drugs yet</h2><p>An item marked as a controlled drug gets its register here.</p></div>;
   const rows = reg.ledger(drug.id);
   const bal = reg.balance(drug.id), shelves = reg.onShelves(drug.id);
 
@@ -57,6 +59,7 @@ export default function Register({ door, me, reg, tick, timeZone, dateStyle, toa
           </ul>
         </section>
       ) : null}
+      {importPanel}
       {mine.length ? (
         <div className="att att-warning" data-testid="my-requests"><Icon name="clock" width={16} stroke={2} /><span>
           {mine.map(r => <span key={r.line.id} className="myreq">Your request: {r.line.qty} × {String(door.get("item", r.line.itemId)?.name)} is waiting for {name(r.line.askedDoctor)}{r.queries.length ? <> · {name(r.queries.at(-1).createdBy)} asked: “{r.queries.at(-1).note}”</> : null}. </span>)}
@@ -131,6 +134,48 @@ export default function Register({ door, me, reg, tick, timeZone, dateStyle, toa
       {dlg?.kind === "open" ? <OpenRegister door={door} me={me} reg={reg} drug={drug} close={close} done={done} /> : null}
       {dlg?.kind === "pin" ? <SetPin me={me} reg={reg} close={close} done={done} /> : null}
     </div>
+  );
+}
+
+// ---- import rows waiting for the Head Doctor (F13.6) ----
+function ImportWaits({ door, me, reg, waits, name, when, toast }) {
+  const head = reg.isHead(me.id);
+  const [open, setOpen] = useState(null);
+  const [witness, setWitness] = useState("");
+  const [why, setWhy] = useState("");
+  const place = (id) => String(door.get("location", String(id))?.name ?? "?");
+  const people = door.records("person").filter(p => p.state === "Active" && p.id !== me.id).sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  const decide = async (w, controlled) => {
+    setWhy("");
+    try { await reg.confirmImport(me, w.id, controlled, witness); setOpen(null); setWitness(""); toast(controlled ? `${String(w.item)}: in the register now.` : `${String(w.item)} loaded as ordinary stock.`, "success"); }
+    catch (e) { setWhy(String(e.message || e)); }
+  };
+  return (
+    <section className="panel waitpanel" data-testid="import-waits">
+      <div className="panel-head"><div><h2>From an import: waiting for the Head Doctor ({waits.length})</h2>
+        <p className="muted">{head ? "Decide each one: a controlled drug comes in through the register with a witness; otherwise it loads as ordinary stock." : "Only the Head Doctor decides these. Nothing has been loaded for them yet."}</p></div></div>
+      <ul className="reqs">
+        {waits.map(w => (
+          <li key={w.id} data-wait={w.id}>
+            <div><b>{String(w.item)}</b> · {Number(w.qty)}{w.unit ? ` ${String(w.unit)}` : ""} into {place(w.locationId)}{w.lot ? ` · lot ${String(w.lot)}` : ""}{w.expiry ? ` · exp ${String(w.expiry)}` : ""}</div>
+            <div className="muted small">{String(w.file)} · {String(w.sheet)}, row {String(w.row)} · {w.why === "controlled" ? "already a controlled drug" : `marked as a controlled drug by ${name(w.createdBy)}`} · {when(w.createdAt)}</div>
+            {head ? (open === w.id ? (
+              <div className="acts">
+                <select aria-label={`Witness for ${String(w.item)}`} value={witness} onChange={e => setWitness(e.target.value)}><option value="">Pick who saw it…</option>{people.map(p => <option key={p.id} value={p.id}>{String(p.name)}</option>)}</select>
+                <button type="button" className="btn small primary" onClick={() => decide(w, true)}>Confirm as controlled drug</button>
+                <button type="button" className="btn small" onClick={() => { setOpen(null); setWhy(""); }}>Cancel</button>
+              </div>
+            ) : (
+              <div className="acts">
+                <button type="button" className="btn small primary" onClick={() => { setOpen(w.id); setWhy(""); }}>Controlled drug…</button>
+                {w.why === "controlled" ? null : <button type="button" className="btn small" onClick={() => decide(w, false)}>Not a controlled drug</button>}
+              </div>
+            )) : null}
+            {why && (open === w.id || !open) ? <div className="form-err" role="alert" data-testid="refusal">{why}</div> : null}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

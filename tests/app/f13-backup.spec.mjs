@@ -180,3 +180,68 @@ test("F13.8 only Manage level imports or restores", async () => {
   });
   expect(why).toEqual(Array(3).fill("Only Manage level exports, imports or restores backups."));
 });
+
+test("F13.6 loading (Q26 = A, A, A): only without must-fix rows; newest month; sheets to places; controlled drugs wait for the Head Doctor", async () => {
+  await launch();
+  const upload = async (name, sheets) => panel().getByLabel("Check a stock list (Excel)").setInputFiles({ name, mimeType: "application/octet-stream", buffer: Buffer.from(await makeXlsx(sheets)) });
+  // a list with a row to fix can't be loaded
+  await upload("Bad list (DEMO).xlsx", { "Store (DEMO)": [[null, "Medication /Consumables", "Unites", "Batch", "Expiry", "SOH FEB"], [null, "Needle 20G", "box", "N-1", 2, 50]] });
+  await expect(page.getByTestId("list-next")).toContainText("Loading is possible once the 1 “must fix” row is corrected");
+  await expect(page.getByTestId("list-check").getByRole("button", { name: "Prepare loading…" })).toHaveCount(0);
+  await page.getByTestId("list-check").getByRole("button", { name: "Close" }).click();
+  // a clean list
+  await upload("Stock Take (DEMO).xlsx", {
+    Sheet1: [[null, "Medication /Consumables", "Unites", "Batch", "Expiry", "SOH Jan", "SOH FEB", "SOH MAR"],
+      [null, "Gauze 10×10 cm", "pack", "G-2190", 46661, 30, 28, null],            // the Store line already there: a count of 28 (Feb)
+      [null, "Burn dressing (DEMO)", "pack", "B-1", 46661, 6, null, 5],
+      [null, "Morphine 10 mg/ml (demo)", "amp", "M-3", 46592, 5, 5, 5],           // already controlled: waits
+      [null, "Ketamine (DEMO)", "vial", "K-1", 46600, 3, 3, 3]],                    // ticked as controlled: waits
+    "Snake Bite Kit (DEMO)": [["Items  List", "Standard", "Batch", "Expiry", "SOH Mar", 46113], ["Crepe bandage", 6, "C-1", "05/2028", 6, 4]],
+  });
+  await page.getByTestId("list-check").getByRole("button", { name: "Prepare loading…" }).click();
+  const d = page.getByTestId("load-preview");
+  await expect(d.getByLabel("Place for Sheet1")).toHaveValue("demo-l0");                                // the stock take is the Store
+  await expect(d.getByLabel("Place for Snake Bite Kit (DEMO)")).toHaveValue("new");                       // no such bag: a new one
+  await expect(d.locator('[data-sheet="Sheet1"] tr[data-row="2"] [data-testid="lp-qty"]')).toHaveText("28 pack (SOH FEB)");
+  await expect(d.locator('[data-sheet="Sheet1"] tr[data-row="3"] [data-testid="lp-qty"]')).toHaveText("5 pack (SOH MAR)");
+  await expect(d.locator('[data-sheet="Sheet1"] tr[data-row="4"]')).toContainText("controlled drug: waits for the Head Doctor");
+  await d.getByLabel("Controlled drug: Ketamine (DEMO) (Sheet1)").check();
+  await expect(d.getByTestId("load-summary")).toContainText("3 lines load now · 2 wait for the Head Doctor · 3 new items · new bag: Snake Bite Kit (DEMO)");
+  await d.getByRole("button", { name: "Load 3 lines" }).click();
+  await expect(d).toHaveCount(0);
+  expect(await page.evaluate(() => window.__mdTest.door.get("line", "demo-s6").qty)).toBe(28);
+  await page.click('.side [data-view="where"]');
+  await expect(page.getByTestId("lines").locator("tr", { hasText: "Burn dressing (DEMO)" })).toHaveCount(1);
+  await expect(page.getByTestId("lines").locator("tr", { hasText: "Ketamine" })).toHaveCount(0);           // waits, not loaded
+  await expect(page.getByTestId("lines").locator("tr", { hasText: "Crepe bandage" })).toContainText("Snake Bite Kit (DEMO)");
+  expect(await page.evaluate(() => window.__mdTest.door.get("line", "demo-s7").qty)).toBe(5);              // Morphine untouched
+  // Cara (not a doctor) sees what waits but can't decide
+  await page.click('.side [data-view="cd"]');
+  await expect(page.getByTestId("import-waits")).toContainText("Only the Head Doctor decides these.");
+  await expect(page.getByTestId("import-waits").getByRole("button")).toHaveCount(0);
+  // the Head Doctor decides
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await signIn(page, "Dr Ben Sample");
+  await page.click('.side [data-view="cd"]');
+  const w = page.getByTestId("import-waits");
+  const ket = w.locator("li", { hasText: "Ketamine" });
+  await ket.getByRole("button", { name: "Controlled drug…" }).click();
+  await ket.getByRole("button", { name: "Confirm as controlled drug" }).click();
+  await expect(w.getByTestId("refusal")).toContainText("A witness has to sign");
+  await ket.getByLabel("Witness for Ketamine (DEMO)").selectOption({ label: "Dina Test" });
+  await ket.getByRole("button", { name: "Confirm as controlled drug" }).click();
+  await expect(w.locator("li")).toHaveCount(1);
+  const mor = w.locator("li", { hasText: "Morphine" });
+  await expect(mor.getByRole("button", { name: "Not a controlled drug" })).toHaveCount(0);                   // it is one already
+  await mor.getByRole("button", { name: "Controlled drug…" }).click();
+  await mor.getByLabel("Witness for Morphine 10 mg/ml (demo)").selectOption({ label: "Dina Test" });
+  await mor.getByRole("button", { name: "Confirm as controlled drug" }).click();
+  await expect(page.getByTestId("import-waits")).toHaveCount(0);
+  await page.locator('[data-drug="demo-i5"]').click();
+  await expect(page.getByTestId("balance")).toHaveText("Balance 10 amp");
+  await expect(page.getByTestId("mismatch")).toHaveCount(0);
+  const k = await page.evaluate(() => { const t = window.__mdTest; const i = t.door.records("item").find(x => x.name === "Ketamine (DEMO)"); return [i.controlled, t.register.balance(i.id), t.register.onShelves(i.id)]; });
+  expect(k).toEqual([true, 3, 3]);
+  await page.click('.side [data-view="log"]');
+  await expect(page.getByTestId("log")).toContainText("imported the stock list Stock Take (DEMO).xlsx: 3 lines loaded, 2 waiting for the Head Doctor");
+});

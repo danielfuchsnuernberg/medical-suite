@@ -1,5 +1,13 @@
 # CHANGELOG — REACH Medical Suite
 
+## 2026-11-28 — F13.6: loading the Excel lists (Q26 = A, A, A)
+- F13 and the Head Doctor committed first (22a3fd0).
+- After the check, a list with no row to fix shows “Prepare loading…”: a preview of exactly what would be loaded, before anything is. Per sheet a place: the bag with the same name, the Store for the stock-take sheet, otherwise a new bag named after the sheet; each can be changed or the sheet skipped. Per row the newest month with a number, shown e.g. “28 pack (SOH FEB)”. Required amounts come in for bags only.
+- Loading is one save (all or nothing), Manage level only, refused while any row must be fixed. A line already there (same item, place, lot and expiry) gets the number as a count; otherwise a new line, and new items as needed. Logged as “imported the stock list …”.
+- Controlled drugs never come in as ordinary stock: rows of an item that already is one, and rows ticked “controlled drug?” in the preview, wait under Controlled drugs for the Head Doctor. The Head Doctor confirms each as a controlled drug (with a witness, through the register; opening it if new) or, for a ticked row, as not one (then it loads as ordinary stock). Everyone else sees them but can't decide.
+- Tests: 6 new unit tests, 1 new program test; 10 rules broken on purpose, each made its test fail. 132 of 132 and 82 of 82 pass. Real files: still refused for loading until the medics fix the must-fix rows (21 in the Store sheet, 39 in the bags).
+- Found while testing: the witness box in the waiting list had the browser's plain look (B8) and the Head Doctor badge stretched: both fixed.
+
 ## 2026-11-28 — One Head Doctor
 - Danny: “No. We just stick to one head doctor.” Changed from several to exactly one: ticking Head Doctor for another doctor takes it from the first, in the same save. Should two computers name two while offline, the one named last counts. Tests changed to match; two rules broken on purpose (naming a second keeps the first; two named both count), each failed. 126 of 126 and 81 of 81 pass.
 

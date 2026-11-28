@@ -278,6 +278,45 @@ export class RegisterStore {
     });
   }
 
+  // ---- import rows waiting for the Head Doctor (F13.6, Head Doctor page part 6 = A) ----
+  waitingImports() { return this.door.records("importwait").filter(w => w.state === "Active").sort((a, b) => Number(a.createdAt) - Number(b.createdAt)); }
+  /**
+   * The Head Doctor decides a waiting import row: a controlled drug (with a witness: the stock comes in through the register,
+   * opening it if needed) or not one (it loads as ordinary stock). Either way the row is then done.
+   */
+  confirmImport(actor: StoredRecord, waitId: string, controlled: boolean, witness?: string) {
+    return this.one(async () => {
+      const me = this.head(actor);
+      const w = this.door.get("importwait", waitId); if (!w || w.state !== "Active") throw new Refused("That row has already been decided.");
+      const place = this.door.get("location", String(w.locationId)); if (!place || place.state !== "Active") throw new Refused("Its place isn't in use any more. Restore it first.");
+      const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").replace(/[^a-z0-9 ]/g, "").trim();
+      let item = (w.itemId ? this.door.get("item", String(w.itemId)) : undefined) ?? this.door.records("item").find(i => i.state === "Active" && norm(String(i.name)) === norm(String(w.item)));
+      if (!controlled && item?.controlled === true) throw new Refused(`${String(item.name)} is a controlled drug: its stock comes in through the register.`);
+      if (controlled) this.witnessOk(witness, me.id);
+      const qty = Number(w.qty) || 0;
+      const msgs: Msg[] = [];
+      const itemId = item ? item.id : newRecordId();
+      if (!item) msgs.push({ recordType: "item", recordId: itemId, op: "create", data: { name: String(w.item), categoryId: null, unit: String(w.unit ?? ""), controlled }, by: me.id });
+      else if (controlled && item.controlled !== true) msgs.push({ recordType: "item", recordId: itemId, op: "set", data: { controlled: true, controlledNote: "" }, by: me.id });
+      const probe = { id: "", itemId, locationId: place.id, lot: String(w.lot ?? ""), expiry: (w.expiry as string) ?? null };
+      const dest = item ? matchingLine(this.door.records("line"), probe, place.id) : undefined;
+      const destId = dest ? dest.id : newRecordId();
+      const cdId = newRecordId();
+      if (!dest) msgs.push({ recordType: "line", recordId: destId, op: "create", data: { itemId, locationId: place.id, qty: 0, required: w.required ?? null, lot: String(w.lot ?? ""), expiry: w.expiry ?? null }, by: me.id });
+      msgs.push({ recordType: "line", recordId: destId, op: "delta", data: { field: "qty", by: qty, ...(controlled ? { cdline: cdId } : {}), from: String(w.file ?? "") }, by: me.id });
+      if (controlled) {
+        const had = this.ledger(itemId), before = this.onShelves(itemId), bal = balanceOf(had);
+        if (!had.length) msgs.push(this.line({ itemId, kind: "opening", qty: before + qty, witness, reason: `Opening balance: the Store and bags, with ${qty} from the import of ${String(w.file)}`, doctor: me.id, how: "self" }, me.id, cdId));
+        else {
+          if (item?.controlled !== true && before !== bal) msgs.push(this.line({ itemId, kind: "correction", qty: before - bal, witness, reason: "Made a controlled drug again: the register set to what the Store and bags hold", doctor: me.id, how: "self", ref: null }, me.id));
+          msgs.push(this.line({ itemId, kind: "in", qty, lineId: destId, witness, reason: `From the import of ${String(w.file)} (${String(w.sheet)}, row ${String(w.row)})` }, me.id, cdId));
+        }
+      }
+      msgs.push({ recordType: "importwait", recordId: waitId, op: "archive", data: { decided: controlled ? "controlled" : "ordinary" }, by: me.id });
+      await this.save(msgs);
+    });
+  }
+
   // ---- the doctors' list (F12.6, F12.7, Q16 = B) ----
   /** Only a doctor gives the right, never to themselves. While nobody has it, a Manage-level person sets the first doctor, once. */
   grant(actor: StoredRecord, personId: string) {

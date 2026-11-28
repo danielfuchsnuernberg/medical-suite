@@ -19,6 +19,11 @@ What this app built or decided that touches the REACH ecosystem: the shared Peop
 3. **Offices and levels (ACCESS.md, R3).** In the Medical Suite, controlled-drug rights don't follow levels or offices: they come from the doctors' list. Management (office) at Manage level names the Head Doctor and nothing more. **For REACH to note** in ACCESS.md for MD1.
 4. **Medical item catalogue (R2: keeper Medical Suite).** Items carry a `controlled` flag, set only by a Head Doctor. EDP F79 ("medication used on a case", not built) will need to read it, because a controlled drug taken out for a case must go through this app's register (witness, doctor's approval, running balance). Recorded in this app's PLAN › "EDP link — what it would need".
 
+## 28 Nov 2026 — Loading the medics' Excel lists (F13.6)
+
+- The medical item catalogue (R2: keeper Medical Suite) gets its first real items from the medics' spreadsheets through this import, never built in (R11). Item names are tidied (double spaces) but otherwise kept as the medics wrote them; near-duplicates (“Asprin” / “Aspirin”) are not merged automatically. **For REACH to note:** EDP F79 will point to these item IDs (R5), so names can be corrected later without breaking links.
+- Bags named after the sheets can appear as new places in this app (Store and bags). They are this app's own places, not EDP's Places list (R2: keeper EDP, airstrips and towns). **For REACH to note** that “place” means two different things in the two apps.
+
 ## 28 Nov 2026 — Shapes this app follows (for the record)
 
 - **R9 change log:** every change is one message (who, record, op, data, when, app code MD, device); the activity log is worked out from the messages. Matches R9.
